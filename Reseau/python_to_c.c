@@ -43,15 +43,16 @@ void init_winsock(void) {
 }
 
 int main(void) {
-    SOCKET listen_socket;
-    struct sockaddr_in local_addr;
+    SOCKET udp_socket;
+    struct sockaddr_in local_addr, client_addr;
     char buffer[BUFFER_SIZE];
     GameState state = {0};
+    int addr_len = sizeof(client_addr);
 
     init_winsock();
 
-    // Création socket
-    if ((listen_socket = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) {
+    // Création socket UDP
+    if ((udp_socket = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET) {
         perror("Socket creation failed");
         return 1;
     }
@@ -62,41 +63,32 @@ int main(void) {
     local_addr.sin_port = htons(PORT);
 
     // Bind
-    if (bind(listen_socket, (struct sockaddr*)&local_addr, sizeof(local_addr)) < 0) {
+    if (bind(udp_socket, (struct sockaddr*)&local_addr, sizeof(local_addr)) < 0) {
         perror("Bind failed");
         return 1;
     }
 
-    // Listen
-    if (listen(listen_socket, 1) < 0) {
-        perror("Listen failed");
-        return 1;
-    }
-
-    printf("Listening on port %d...\n", PORT);
+    printf("Listening for UDP packets on port %d...\n", PORT);
 
     while (1) {
-        struct sockaddr_in client_addr;
-        int addr_len = sizeof(client_addr);
         uint32_t data_size;
         
-        // Accept
-        SOCKET client_socket = accept(listen_socket, (struct sockaddr*)&client_addr, &addr_len);
-        if (client_socket == INVALID_SOCKET) {
-            perror("Accept failed");
-            continue;
-        }
-
-        printf("Connection received from %s:%d\n", 
-               inet_ntoa(client_addr.sin_addr), 
-               ntohs(client_addr.sin_port));
-
-        // Receive data size first
-        if (recv(client_socket, (char*)&data_size, sizeof(uint32_t), 0) == sizeof(uint32_t)) {
+        // Recevoir la taille des données
+        int recv_size = recvfrom(udp_socket, (char*)&data_size, sizeof(uint32_t), 0,
+                                (struct sockaddr*)&client_addr, &addr_len);
+        
+        if (recv_size == sizeof(uint32_t)) {
             data_size = ntohl(data_size);
             
-            // Receive actual data
-            if (recv(client_socket, buffer, data_size, 0) == data_size) {
+            // Recevoir les données
+            recv_size = recvfrom(udp_socket, buffer, data_size, 0,
+                                (struct sockaddr*)&client_addr, &addr_len);
+            
+            if (recv_size == data_size) {
+                printf("Received packet from %s:%d\n",
+                       inet_ntoa(client_addr.sin_addr),
+                       ntohs(client_addr.sin_port));
+
                 int offset = 0;
                 
                 // Unpack data in order
@@ -143,14 +135,14 @@ int main(void) {
                 printf("Housing Crisis: %s\n", state.housing_crisis ? "Yes" : "No");
             }
         }
-
-        // Close client socket
-        #ifdef _WIN32
-            closesocket(client_socket);
-        #else
-            close(client_socket);
-        #endif
     }
+
+    #ifdef _WIN32
+        closesocket(udp_socket);
+        WSACleanup();
+    #else
+        close(udp_socket);
+    #endif
 
     return 0;
 }
