@@ -9,6 +9,7 @@
 
 char name[20];
 int PORT;
+int port_used[20];
 
 void sending();
 void receiving(int server_fd);
@@ -18,8 +19,12 @@ int main(int argc, char const *argv[]) {
   printf("Enter name:");
   scanf("%s", name);
 
-  printf("Enter your port number:");
-  scanf("%d", &PORT);
+  // Initialiser le tableau port_used
+  for (int i = 0; i < 20; i++) {
+    port_used[i] = 0;
+  }
+
+  PORT = choose_port();
 
   int server_fd, new_socket, valread;
   struct sockaddr_in address;
@@ -170,3 +175,55 @@ void receiving(int server_fd) {
       break;
   }
 }
+
+// Choose an available port by actually testing if it can be bound
+int choose_port() {
+  int port = 8000; // Starting port number
+  
+  for (int attempt = 0; attempt < 1000; attempt++) {
+    // Try to create a socket and bind to the port
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0) {
+      perror("Socket creation failed");
+      return -1;
+    }
+    
+    // Set socket option to reuse address
+    int opt = 1;
+    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+      close(sock);
+      port++;
+      continue;
+    }
+    
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = INADDR_ANY;
+    addr.sin_port = htons(port);
+    
+    // Try to bind to the port
+    if (bind(sock, (struct sockaddr *)&addr, sizeof(addr)) == 0) {
+      close(sock); // Close the socket, we'll reopen it properly later
+      
+      // Store the port in the port_used array
+      for (int i = 0; i < 20; i++) {
+        if (port_used[i] == 0) {
+          port_used[i] = port;
+          break;
+        }
+      }
+      
+      printf("Successfully found available port: %d\n", port);
+      return port;
+    }
+    
+    // If we couldn't bind, try the next port
+    close(sock);
+    port++;
+  }
+  
+  printf("Could not find an available port after 1000 attempts\n");
+  return -1; // No available ports found
+}
+
