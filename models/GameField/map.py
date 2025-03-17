@@ -3,6 +3,7 @@ from ImageProcessingDisplay.minimap import *
 from AITools.isorange import *
 import random
 import math
+import threading
 from AITools.player import *
 from AITools.clustergenerator import *
 
@@ -27,6 +28,7 @@ class Map:
         self.iso_refresh_time_acc = 0 # refresh for the iso
 
         self.players_dict = {} # each element is a player, and the key is the team number 1 : team1 2 : team2
+        self.start_time = time.time()
 
         # for the minimap
         self.minimap = MiniMap(PVector2(1000,300), _nb_CellX, _nb_CellY)
@@ -517,6 +519,12 @@ class Map:
     def _place_player_starting_areas(self, mode, num_players):
         
         polygon = angle_distribution(self.nb_CellY, self.nb_CellX, num_players, scale=0.75, rand_rot=0x1)
+        if num_players == 1:
+            angle = random.uniform(0, 2 * math.pi) 
+            radius = min(self.nb_CellX, self.nb_CellY) * 0.3 
+            center_X = int(self.nb_CellX // 2 + radius * math.cos(angle))
+            center_Y = int(self.nb_CellY // 2 + radius * math.sin(angle))
+            polygon = [(center_X, center_Y)] 
         for i in range(len(polygon)):
             
             # Base position for this player's starting area
@@ -664,7 +672,7 @@ class Map:
                     self.players_dict.pop(team, None)
                     self.score_players.append((player.team, convert_seconds(player.life_time)))
 
-        if len(self.players_dict) == 1:
+        if len(self.players_dict) == 1  and (time.time() - self.start_time) >= 180:
             player = list(self.players_dict.values())[0]
             self.state = "end"
             self.score_players.append((player.team, convert_seconds(player.life_time)))
