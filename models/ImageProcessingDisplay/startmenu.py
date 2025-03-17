@@ -20,7 +20,7 @@ class StartMenu:
         self.selected_mode_index = LEAN
 
         # Player count options
-        self.selected_player_count = 2
+        self.selected_player_count = 1
         self.editing_player_count = False
 
         self.display_mode = ISO2D
@@ -42,7 +42,8 @@ class StartMenu:
             "right_player_count": pygame.Rect(0, 0, 50, 50),
             "Terminal": pygame.Rect(0, 0, 115, 50),
             "2.5D": pygame.Rect(0, 0, 115, 50),
-            "Lancer la Partie": pygame.Rect(0, 0, 300, 50)
+            "Lancer la Partie": pygame.Rect(0, 0, 300, 50),
+            "Multijoueur": pygame.Rect(0, 0, 200, 50) # Nouveau bouton Multijoueur
         }
 
         # Slider for volume
@@ -58,7 +59,7 @@ class StartMenu:
                 # Update slider position dynamically to always be at the bottom right
         self.slider_rect.topleft = (screen_width - 320, screen_height - 50)
         self.slider_thumb_rect.topleft = (self.slider_rect.x + int(self.volume * 300), self.slider_rect.y - 5)
-        
+
         # Calculate positions based on screen size
         center_x = screen_width // 2
         center_y = screen_height // 2
@@ -76,6 +77,8 @@ class StartMenu:
         self.buttons["Terminal"].topleft = (center_x - 120, center_y + 40)
         self.buttons["2.5D"].topleft = (center_x + 5, center_y + 40)
         self.buttons["Lancer la Partie"].topleft = (center_x - 150, center_y + 100)
+        self.buttons["Multijoueur"].topleft = (center_x - 100, center_y + 160) # Positionné en dessous de "Lancer la Partie"
+
 
         # Draw map cell count for X
         self._draw_button("left_map_x", "<")
@@ -113,6 +116,9 @@ class StartMenu:
 
         # Draw launch game button
         self._draw_button("Lancer la Partie", "Lancer la Partie")
+
+        # Draw multiplayer button
+        self._draw_button("Multijoueur", "Multijoueur")
 
         # Draw volume control slider
         self._draw_slider()
@@ -162,7 +168,7 @@ class StartMenu:
         elif self.buttons["right_mode"].collidepoint(pos):
             self.selected_mode_index = (self.selected_mode_index + 1) % len(self.game_mode_options)
         elif self.buttons["left_player_count"].collidepoint(pos):
-            self.selected_player_count = max(2, self.selected_player_count - 1)
+            self.selected_player_count = max(1, self.selected_player_count-1)
         elif self.buttons["right_player_count"].collidepoint(pos):
             self.selected_player_count += 1
         elif self.buttons["Terminal"].collidepoint(pos):
@@ -170,7 +176,9 @@ class StartMenu:
         elif self.buttons["2.5D"].collidepoint(pos):
             self.display_mode = ISO2D
         elif self.buttons["Lancer la Partie"].collidepoint(pos):
-            return True  # Indicate that the game can start
+            return "jeu_solo"  # Indicate that the game can start
+        elif self.buttons["Multijoueur"].collidepoint(pos):
+            return "multijoueur" # Indicate to go to multiplayer menu
 
         # Handle volume slider interaction
         if self.slider_rect.collidepoint(pos):
@@ -179,7 +187,7 @@ class StartMenu:
             self.slider_thumb_rect.x = self.slider_rect.x + int(self.volume * self.slider_rect.width)
             pygame.mixer.music.set_volume(self.volume)  # Update volume of the music
 
-        return False
+        return None
 
     def handle_keydown(self, event):
         """Handle keyboard input for editable fields."""
@@ -200,7 +208,7 @@ class StartMenu:
         elif self.editing_map_cell_count_y:
             if event.key == pygame.K_RETURN:  # Confirm input
                 self.editing_map_cell_count_y = False
-                self.map_cell_count_y = min(1020, max(120, self.map_cell_count_y)) 
+                self.map_cell_count_y = min(1020, max(120, self.map_cell_count_y))
                 self.map_cell_count_y = (self.map_cell_count_y // 5) * 5
             elif event.key == pygame.K_BACKSPACE:  # Remove last digit
                 self.map_cell_count_y = int(str(self.map_cell_count_y)[:-1] or "120")

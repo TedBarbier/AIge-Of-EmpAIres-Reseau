@@ -12,18 +12,18 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 import pickle
 
+      
 class GameState:
-    def __init__(self):
+    def __init__(self): # Keep the __init__ without parameters
         self.states = START
         self.speed = 1
         self.selected_map_type = MAP_NORMAL
         self.selected_mode = LEAN
         self.selected_players = 2
         self.map = Map(MAP_CELLX, MAP_CELLY)
-        self.display_mode = ISO2D # Mode d'affichage par défaut
-        # Pour gérer le délai de basculement d'affichage
+        self.display_mode = ISO2D
         self.switch_time_acc = 0
-        self.switch_cooldown = ONE_SEC*(0.2) # Délai de 200ms (0,2 secondes)
+        self.switch_cooldown = ONE_SEC*(0.2)
         self.full_screen = False
         self.mouse_held = False
         self.screen_width = SCREEN_WIDTH
@@ -31,6 +31,38 @@ class GameState:
         self.camera = Camera()
         self.terminal_camera = TerminalCamera()
         self.music_state = ""
+        self.is_multiplayer = False  # Initialize is_multiplayer to False by default (for solo)
+
+    def reset_for_new_game(self):
+        """
+        Resets the GameState to its initial state, ready for a new game (solo).
+        This includes resetting the is_multiplayer flag to False.
+        """
+        self.states = START
+        self.speed = 1
+        self.selected_map_type = MAP_NORMAL
+        self.selected_mode = LEAN
+        self.selected_players = 2
+        self.map = Map(MAP_CELLX, MAP_CELLY) # Or potentially re-generate a default map if needed
+        self.display_mode = ISO2D
+        self.switch_time_acc = 0
+        self.switch_cooldown = ONE_SEC * (0.2)
+        self.full_screen = False
+        self.mouse_held = False
+        self.screen_width = SCREEN_WIDTH
+        self.screen_height = SCREEN_HEIGHT
+        self.camera = Camera()
+        self.terminal_camera = TerminalCamera()
+        self.music_state = ""
+        self.is_multiplayer = False # Ensure is_multiplayer is reset to False for a new solo game
+
+
+    def get_is_multiplayer(self):
+        """
+        Returns True if the game is in multiplayer mode, False otherwise.
+        """
+        return self.is_multiplayer
+
 
     def change_music(self, state):
         
@@ -60,7 +92,10 @@ class GameState:
 
     def start_game(self):
         """Méthode pour démarrer la génération de la carte après que l'utilisateur ait validé ses choix."""
-        self.map.generate_map(self.selected_map_type, self.selected_mode, self.selected_players)
+        if self.get_is_multiplayer():
+            self.map.generate_map_multi(self.selected_map_type, self.selected_mode, self.selected_players)
+        else:
+            self.map.generate_map(self.selected_map_type, self.selected_mode, self.selected_players)
 
     def set_map_size(self, X, Y):
         self.map = Map(X, Y)
