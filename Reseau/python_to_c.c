@@ -43,17 +43,18 @@ void init_winsock(void) {
 }
 
 int main(void) {
-    SOCKET listen_socket;
+    SOCKET udp_socket;
     struct sockaddr_in local_addr, client_addr;
     char buffer[BUFFER_SIZE];
     int addr_len = sizeof(client_addr);
     uint32_t data_size;
     GameState state = {0};
+    int addr_len = sizeof(client_addr);
 
     init_winsock();
 
     // Création socket UDP
-    if ((listen_socket = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET) {
+    if ((udp_socket = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET) {
         perror("Socket creation failed");
         return 1;
     }
@@ -64,66 +65,86 @@ int main(void) {
     local_addr.sin_port = htons(PORT);
 
     // Bind
-    if (bind(listen_socket, (struct sockaddr*)&local_addr, sizeof(local_addr)) < 0) {
+    if (bind(udp_socket, (struct sockaddr*)&local_addr, sizeof(local_addr)) < 0) {
         perror("Bind failed");
         return 1;
     }
 
-    printf("Listening on port %d...\n", PORT);
+    printf("Listening for UDP packets on port %d...\n", PORT);
 
     while (1) {
-        // Receive data
-        if (recvfrom(listen_socket, buffer, sizeof(buffer), 0, (struct sockaddr*)&client_addr, &addr_len) > 0) {
-            printf("Received message from %s:%d\n", 
-                   inet_ntoa(client_addr.sin_addr), 
-                   ntohs(client_addr.sin_port));
+        uint32_t data_size;
+        
+        // Recevoir la taille des données
+        int recv_size = recvfrom(udp_socket, (char*)&data_size, sizeof(uint32_t), 0,
+                                (struct sockaddr*)&client_addr, &addr_len);
+        
+        if (recv_size == sizeof(uint32_t)) {
+            data_size = ntohl(data_size);
+            
+            // Recevoir les données
+            recv_size = recvfrom(udp_socket, buffer, data_size, 0,
+                                (struct sockaddr*)&client_addr, &addr_len);
+            
+            if (recv_size == data_size) {
+                printf("Received packet from %s:%d\n",
+                       inet_ntoa(client_addr.sin_addr),
+                       ntohs(client_addr.sin_port));
 
-            // Unpack data in order
-            int offset = 0;
-
-            memcpy(&state.villager_count, buffer + offset, sizeof(int));
-            offset += sizeof(int);
-
-            memcpy(&state.resources.wood, buffer + offset, sizeof(int));
-            offset += sizeof(int);
-            memcpy(&state.resources.food, buffer + offset, sizeof(int));
-            offset += sizeof(int);
-            memcpy(&state.resources.stone, buffer + offset, sizeof(int));
-            offset += sizeof(int);
-            memcpy(&state.resources.gold, buffer + offset, sizeof(int));
-            offset += sizeof(int);
-
-            memcpy(&state.military_ratio, buffer + offset, sizeof(float));
-            offset += sizeof(float);
-
-            memcpy(&state.storage_count, buffer + offset, sizeof(unsigned short));
-            offset += sizeof(unsigned short);
-            memcpy(&state.training_count, buffer + offset, sizeof(unsigned short));
-            offset += sizeof(unsigned short);
-
-            memcpy(&state.military_free, buffer + offset, sizeof(unsigned short));
-            offset += sizeof(unsigned short);
-            memcpy(&state.villager_total, buffer + offset, sizeof(unsigned short));
-            offset += sizeof(unsigned short);
-            memcpy(&state.villager_free, buffer + offset, sizeof(unsigned short));
-            offset += sizeof(unsigned short);
-
-            memcpy(&state.housing_crisis, buffer + offset, sizeof(unsigned char));
-
-            // Print received state
-            printf("\nGame State Update:\n");
-            printf("Villager Count: %d\n", state.villager_count);
-            printf("Resources - Wood: %d, Food: %d, Stone: %d, Gold: %d\n",
-                   state.resources.wood, state.resources.food,
-                   state.resources.stone, state.resources.gold);
-            printf("Military Ratio: %.2f\n", state.military_ratio);
-            printf("Buildings - Storage: %d, Training: %d\n",
-                   state.storage_count, state.training_count);
-            printf("Units - Military Free: %d, Villagers: %d (Free: %d)\n",
-                   state.military_free, state.villager_total, state.villager_free);
-            printf("Housing Crisis: %s\n", state.housing_crisis ? "Yes" : "No");
+                int offset = 0;
+                
+                // Unpack data in order
+                memcpy(&state.villager_count, buffer + offset, sizeof(int));
+                offset += sizeof(int);
+                
+                memcpy(&state.resources.wood, buffer + offset, sizeof(int));
+                offset += sizeof(int);
+                memcpy(&state.resources.food, buffer + offset, sizeof(int));
+                offset += sizeof(int);
+                memcpy(&state.resources.stone, buffer + offset, sizeof(int));
+                offset += sizeof(int);
+                memcpy(&state.resources.gold, buffer + offset, sizeof(int));
+                offset += sizeof(int);
+                
+                memcpy(&state.military_ratio, buffer + offset, sizeof(float));
+                offset += sizeof(float);
+                
+                memcpy(&state.storage_count, buffer + offset, sizeof(unsigned short));
+                offset += sizeof(unsigned short);
+                memcpy(&state.training_count, buffer + offset, sizeof(unsigned short));
+                offset += sizeof(unsigned short);
+                
+                memcpy(&state.military_free, buffer + offset, sizeof(unsigned short));
+                offset += sizeof(unsigned short);
+                memcpy(&state.villager_total, buffer + offset, sizeof(unsigned short));
+                offset += sizeof(unsigned short);
+                memcpy(&state.villager_free, buffer + offset, sizeof(unsigned short));
+                offset += sizeof(unsigned short);
+                
+                memcpy(&state.housing_crisis, buffer + offset, sizeof(unsigned char));
+                
+                // Print received state
+                printf("\nGame State Update:\n");
+                printf("Villager Count: %d\n", state.villager_count);
+                printf("Resources - Wood: %d, Food: %d, Stone: %d, Gold: %d\n",
+                       state.resources.wood, state.resources.food,
+                       state.resources.stone, state.resources.gold);
+                printf("Military Ratio: %.2f\n", state.military_ratio);
+                printf("Buildings - Storage: %d, Training: %d\n",
+                       state.storage_count, state.training_count);
+                printf("Units - Military Free: %d, Villagers: %d (Free: %d)\n",
+                       state.military_free, state.villager_total, state.villager_free);
+                printf("Housing Crisis: %s\n", state.housing_crisis ? "Yes" : "No");
+            }
         }
     }
+
+    #ifdef _WIN32
+        closesocket(udp_socket);
+        WSACleanup();
+    #else
+        close(udp_socket);
+    #endif
 
     return 0;
 }
