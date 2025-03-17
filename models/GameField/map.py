@@ -416,6 +416,18 @@ class Map:
 
         self.c_generate_clusters(num_players, gen_mode)
 
+    def generate_map_multi(self,gen_mode = MAP_NORMAL , mode = MARINES ,num_players=3):
+
+        # Ensure consistent random generation
+
+        #random.seed(0xba)
+        
+        if gen_mode == "Carte Centrée":
+            self.generate_gold_center(num_players)
+        self._place_player_starting_areas_multi(mode, num_players)
+
+        self.c_generate_clusters(num_players, gen_mode)
+    
     def c_generate_clusters(self, num_players, gen_mode):
 
         current_directory = os.path.dirname(__file__)
@@ -535,8 +547,38 @@ class Map:
             
             current_player_resources = gen_option.get("resources").copy() # we dont want togive it as a pointer else all players will share the same resources haha
             current_player.add_resources(current_player_resources)
+    
+
+    def _place_player_starting_areas_multi(self, mode, num_players):
+        polygon = angle_distribution(self.nb_CellY, self.nb_CellX, num_players, scale=0.75, rand_rot=0x1)
+        # Base position for this player's starting area
+        center_Y, center_X = polygon[num_players-1][1], polygon[num_players-1][0]
+ 
+
+        current_player = Player(center_Y, center_X, num_players)
+        current_player.linked_map = self
+        self.players_dict[current_player.team] = current_player
+
+        if not(self.check_cell(center_Y, center_X)) :
+            gen_option = MODE_GENERATION.get(mode)
+                
+            entities_gen = gen_option.get("entities")
+            for entity_type, number in entities_gen.items():
+
+                EntityClass = CLASS_MAPPING.get(entity_type, None)
+                    
+                    
+                for i in range(number):    
+                    entity_instance = EntityClass(self.id_generator,None, None, None, current_player.team)
+                    if isinstance(entity_instance, Unit):
+                        current_player.add_population()
+                        current_player.current_population += 1
+
+                    self.add_entity_to_closest(entity_instance, current_player.cell_Y, current_player.cell_X, random_padding=0x01)
             
-            
+        current_player_resources = gen_option.get("resources").copy() # we dont want togive it as a pointer else all players will share the same resources haha
+        current_player.add_resources(current_player_resources)
+    
         
 
     def _add_starting_resources(self, center_Y, center_X):
