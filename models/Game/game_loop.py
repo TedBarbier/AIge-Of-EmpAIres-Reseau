@@ -182,6 +182,18 @@ class GameLoop:
         elif event.type == pygame.KEYDOWN:
             self.multimenu.handle_keydown(event) # Handle keydown events in MultiplayerMenu
 
+    def handle_config_events(self,dt, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            self.iamenu.handle_click(event.pos, self.state)
+
+    def handle_pause_events(self,dt, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            self.pausemenu.handle_click(event.pos, self.state)
+    
+    def handle_end_events(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            self.endmenu.handle_click(event.pos, self.state)
+
     def handle_play_events(self, event, mouse_x, mouse_y, dt):
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == LEFT_CLICK:
@@ -340,7 +352,7 @@ class GameLoop:
                 elif self.state.states == MULTIMENU: # Handle events for MULTIMENU state
                     self.handle_multimenu_events(event)
                 elif self.state.states == PAUSE:
-                    self.pausemenu.handle_pause_events(dt, event)
+                    self.handle_pause_events(dt, event)
                 elif self.state.states == PLAY:
                     self.state.change_music(self.state.map.state)
                     self.handle_play_events(event, mouse_x, mouse_y, dt)
