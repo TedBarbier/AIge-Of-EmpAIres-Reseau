@@ -1,0 +1,3 @@
+yattag
+shapely
+pygame

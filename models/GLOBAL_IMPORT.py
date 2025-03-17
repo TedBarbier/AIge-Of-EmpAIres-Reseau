@@ -1,0 +1,10 @@
+from PACKAGE_IMPORT import *
+PACKAGE_DYNAMIC_IMPORT("Entity")
+PACKAGE_DYNAMIC_IMPORT("Projectile")
+PACKAGE_DYNAMIC_IMPORT("Entity.Building")
+PACKAGE_DYNAMIC_IMPORT("Entity.Building.TrainingBuilding")
+PACKAGE_DYNAMIC_IMPORT("Entity.Building.DefensiveBuilding")
+PACKAGE_DYNAMIC_IMPORT("Entity.Resources")
+PACKAGE_DYNAMIC_IMPORT("Entity.Unit")
+PACKAGE_DYNAMIC_IMPORT("Entity.Unit.RangedUnit")
+PACKAGE_DYNAMIC_IMPORT("Entity.Unit.MeleeUnit")
