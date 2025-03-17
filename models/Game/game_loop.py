@@ -36,9 +36,18 @@ class GameLoop:
         self.server_ip = server_ip
         self.ipc_connexion = None
         self.ipc_socket = None
+        self.num_players = 1
 
         if self.multiplayer_mode:
             self.initialiser_ipc()
+
+    def add_new_player(self, mode=MARINES):
+        self.num_players += 1
+        self.state.map._place_player_starting_areas_multi(mode, self.num_players)
+    
+    def handle_new_players(self):
+        if self.num_players <2:     # test à remplacer par la connexion d'un nouveau joueur mais c'est pour tester la méthode
+            self.add_new_player(self)
 
     def initialiser_ipc(self):
         IPC_SOCKET_PATH = "/tmp/aoe_ipc.sock"
@@ -347,6 +356,8 @@ class GameLoop:
             self.state.update(dt)
             if self.state.states == PLAY:
                 self.update_game_state(dt)
+                if self.state.get_is_multiplayer():
+                    self.handle_new_players()
             self.render_display(dt, mouse_x, mouse_y)
 
             if self.multiplayer_mode is None and self.ipc_connexion:
