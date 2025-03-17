@@ -20,7 +20,7 @@ class StartMenu:
         self.selected_mode_index = LEAN
 
         # Player count options
-        self.selected_player_count = 2
+        self.selected_player_count = 1
         self.editing_player_count = False
 
         self.display_mode = ISO2D
@@ -168,7 +168,7 @@ class StartMenu:
         elif self.buttons["right_mode"].collidepoint(pos):
             self.selected_mode_index = (self.selected_mode_index + 1) % len(self.game_mode_options)
         elif self.buttons["left_player_count"].collidepoint(pos):
-            self.selected_player_count = max(2, self.selected_player_count - 1)
+            self.selected_player_count = max(1, self.selected_player_count-1)
         elif self.buttons["right_player_count"].collidepoint(pos):
             self.selected_player_count += 1
         elif self.buttons["Terminal"].collidepoint(pos):

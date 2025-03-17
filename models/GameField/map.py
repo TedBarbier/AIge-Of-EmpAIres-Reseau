@@ -3,6 +3,7 @@ from ImageProcessingDisplay.minimap import *
 from AITools.isorange import *
 import random
 import math
+import threading
 from AITools.player import *
 from AITools.clustergenerator import *
 
@@ -27,6 +28,7 @@ class Map:
         self.iso_refresh_time_acc = 0 # refresh for the iso
 
         self.players_dict = {} # each element is a player, and the key is the team number 1 : team1 2 : team2
+        self.start_time = time.time()
 
         # for the minimap
         self.minimap = MiniMap(PVector2(1000,300), _nb_CellX, _nb_CellY)
@@ -416,6 +418,18 @@ class Map:
 
         self.c_generate_clusters(num_players, gen_mode)
 
+    def generate_map_multi(self,gen_mode = MAP_NORMAL , mode = MARINES ,num_players=3):
+
+        # Ensure consistent random generation
+
+        #random.seed(0xba)
+        
+        if gen_mode == "Carte Centrée":
+            self.generate_gold_center(num_players)
+        self._place_player_starting_areas_multi(mode, num_players)
+
+        self.c_generate_clusters(num_players, gen_mode)
+    
     def c_generate_clusters(self, num_players, gen_mode):
 
         current_directory = os.path.dirname(__file__)
@@ -505,6 +519,12 @@ class Map:
     def _place_player_starting_areas(self, mode, num_players):
         
         polygon = angle_distribution(self.nb_CellY, self.nb_CellX, num_players, scale=0.75, rand_rot=0x1)
+        if num_players == 1:
+            angle = random.uniform(0, 2 * math.pi) 
+            radius = min(self.nb_CellX, self.nb_CellY) * 0.3 
+            center_X = int(self.nb_CellX // 2 + radius * math.cos(angle))
+            center_Y = int(self.nb_CellY // 2 + radius * math.sin(angle))
+            polygon = [(center_X, center_Y)] 
         for i in range(len(polygon)):
             
             # Base position for this player's starting area
@@ -535,8 +555,38 @@ class Map:
             
             current_player_resources = gen_option.get("resources").copy() # we dont want togive it as a pointer else all players will share the same resources haha
             current_player.add_resources(current_player_resources)
+    
+
+    def _place_player_starting_areas_multi(self, mode, num_players):
+        polygon = angle_distribution(self.nb_CellY, self.nb_CellX, num_players, scale=0.75, rand_rot=0x1)
+        # Base position for this player's starting area
+        center_Y, center_X = polygon[num_players-1][1], polygon[num_players-1][0]
+ 
+
+        current_player = Player(center_Y, center_X, num_players)
+        current_player.linked_map = self
+        self.players_dict[current_player.team] = current_player
+
+        if not(self.check_cell(center_Y, center_X)) :
+            gen_option = MODE_GENERATION.get(mode)
+                
+            entities_gen = gen_option.get("entities")
+            for entity_type, number in entities_gen.items():
+
+                EntityClass = CLASS_MAPPING.get(entity_type, None)
+                    
+                    
+                for i in range(number):    
+                    entity_instance = EntityClass(self.id_generator,None, None, None, current_player.team)
+                    if isinstance(entity_instance, Unit):
+                        current_player.add_population()
+                        current_player.current_population += 1
+
+                    self.add_entity_to_closest(entity_instance, current_player.cell_Y, current_player.cell_X, random_padding=0x01)
             
-            
+        current_player_resources = gen_option.get("resources").copy() # we dont want togive it as a pointer else all players will share the same resources haha
+        current_player.add_resources(current_player_resources)
+    
         
 
     def _add_starting_resources(self, center_Y, center_X):
@@ -622,7 +672,7 @@ class Map:
                     self.players_dict.pop(team, None)
                     self.score_players.append((player.team, convert_seconds(player.life_time)))
 
-        if len(self.players_dict) == 1:
+        if len(self.players_dict) == 1  and (time.time() - self.start_time) >= 180:
             player = list(self.players_dict.values())[0]
             self.state = "end"
             self.score_players.append((player.team, convert_seconds(player.life_time)))
