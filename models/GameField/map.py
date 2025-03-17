@@ -507,6 +507,12 @@ class Map:
     def _place_player_starting_areas(self, mode, num_players):
         
         polygon = angle_distribution(self.nb_CellY, self.nb_CellX, num_players, scale=0.75, rand_rot=0x1)
+        if num_players == 1:
+            angle = random.uniform(0, 2 * math.pi) 
+            radius = min(self.nb_CellX, self.nb_CellY) * 0.3 
+            center_X = int(self.nb_CellX // 2 + radius * math.cos(angle))
+            center_Y = int(self.nb_CellY // 2 + radius * math.sin(angle))
+            polygon = [(center_X, center_Y)] 
         for i in range(len(polygon)):
             
             # Base position for this player's starting area
