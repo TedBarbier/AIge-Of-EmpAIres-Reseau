@@ -53,7 +53,7 @@ class GameLoop:
         IPC_SOCKET_PATH = "/tmp/aoe_ipc.sock"
 
         if self.multiplayer_mode == "heberger":
-            self.ipc_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            self.ipc_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             try:
                 self.ipc_socket.bind(IPC_SOCKET_PATH)
                 self.ipc_socket.listen(1)
@@ -67,7 +67,7 @@ class GameLoop:
             self.generer_et_envoyer_carte_initiale()
 
         elif self.multiplayer_mode == "rejoindre":
-            self.ipc_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            self.ipc_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             try:
                 self.ipc_socket.connect(IPC_SOCKET_PATH)
                 self.ipc_connexion = self.ipc_socket
