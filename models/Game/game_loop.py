@@ -8,6 +8,12 @@ from Game.game_state import *
 import socket
 import json
 
+import socket
+import argparse
+
+HOST = '127.0.0.1'
+PORT = 12345
+BUFFER_SIZE = 1024
 
 class GameLoop:
     def __init__(self, multiplayer_mode=None, server_ip=None):
@@ -46,8 +52,14 @@ class GameLoop:
         self.state.map._place_player_starting_areas_multi(mode, self.num_players)
     
     def handle_new_players(self):
-        if self.num_players <2:     # test à remplacer par la connexion d'un nouveau joueur mais c'est pour tester la méthode
-            self.add_new_player(self)
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s: # SOCK_DGRAM pour UDP
+            s.bind((HOST, PORT))
+            print(f"Serveur UDP en écoute sur le port {PORT}...")
+            data, addr = s.recvfrom(BUFFER_SIZE)
+            if data:
+                received_message = data.decode('utf-8')
+                if received_message == "Rejoindre la partie":
+                    self.add_new_player(self)
 
     def initialiser_ipc(self):
         IPC_SOCKET_PATH = "/tmp/aoe_ipc.sock"
