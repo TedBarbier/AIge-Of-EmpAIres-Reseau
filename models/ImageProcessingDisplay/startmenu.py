@@ -20,7 +20,7 @@ class StartMenu:
         self.selected_mode_index = LEAN
 
         # Player count options
-        self.selected_player_count = 2
+        self.selected_player_count = 1
         self.editing_player_count = False
 
         self.display_mode = ISO2D
