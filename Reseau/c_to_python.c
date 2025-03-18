@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
 
             if (recv_len > 0) {
                 printf("Message reçu de %s:%d: \"%s\"\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port), buffer);
-                char expected_message[] = "Bonjour Python depuis C!";
+                char expected_message[] = "Rejoindre la partie";
                 if (strcmp(buffer, expected_message) == 0) {
                     printf("Message vérifié avec succès!\n");
                 } else {
