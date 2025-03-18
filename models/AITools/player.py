@@ -278,6 +278,7 @@ class Player:
         self.is_busy = False
 
         self.life_time = 0
+        self.all_context = GameEventHandler.get_context_for_player(self.game_handler)
 
     def add_entity(self, entity):
 
