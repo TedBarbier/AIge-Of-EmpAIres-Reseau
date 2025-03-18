@@ -67,3 +67,21 @@ class GameEventHandler:
             'housing_crisis': (self.players.current_population >= self.players.get_current_population_capacity())
         }
         return context
+
+    def get_context_to_send(self):
+        context ={
+            'resources': self.players.get_current_resources(),
+            'buildings': {
+                'storage': self.players.get_entities_by_class(['T','C']),
+                'training': self.players.get_entities_by_class(['B','S','A'])
+            },
+            'units': {
+                'military_free': [self.players.linked_map.get_entity_by_id(m_id) for m_id in self.players.get_entities_by_class(['h', 'a', 's', 'm', 'c', 'x'], is_free=True)],
+                'villager': [self.players.linked_map.get_entity_by_id(v_id) for v_id in self.players.get_entities_by_class(['v'])],
+                'villager_free': [self.players.linked_map.get_entity_by_id(v_id) for v_id in self.players.get_entities_by_class(['v'], is_free=True)],
+            },
+            'enemy_id': None,
+            'drop_off_id': self.players.ect(['T', 'C'], self.players.cell_Y, self.players.cell_X)[0] if self.players.ect(['T', 'C'], self.players.cell_Y, self.players.cell_X) else None,
+            'player': self.players
+        }
+        return context
