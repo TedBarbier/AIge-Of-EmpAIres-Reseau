@@ -1,10 +1,25 @@
+#ifdef _WIN32
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+    #pragma comment(lib, "ws2_32.lib")
+    typedef SOCKET socket_t;
+    #define SOCKET_ERROR_TYPE SOCKET_ERROR
+    #define INVALID_SOCKET_TYPE INVALID_SOCKET
+    #define CLOSE_SOCKET(s) closesocket(s)
+#else
+    #include <unistd.h>
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <arpa/inet.h>
+    typedef int socket_t;
+    #define SOCKET_ERROR_TYPE -1
+    #define INVALID_SOCKET_TYPE -1
+    #define CLOSE_SOCKET(s) close(s)
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
 // Variables globales
 char name[20];
@@ -61,10 +76,10 @@ void sending() {
         for (int i = 0; i < 20; i++) {
             if (port_used[i] != 0 && port_used[i] != PORT) {
                 int PORT_server = port_used[i];
-                int sock = 0;
+                socket_t sock = INVALID_SOCKET_TYPE;
                 struct sockaddr_in serv_addr;
                 
-                if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+                if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET_TYPE) {
                     printf("\nSocket creation error for port %d\n", PORT_server);
                     continue;
                 }
@@ -72,14 +87,14 @@ void sending() {
                 serv_addr.sin_family = AF_INET;
                 if (inet_pton(AF_INET, global_ip_address, &serv_addr.sin_addr) <= 0) {
                     printf("\nInvalid IP address\n");
-                    close(sock);
+                    CLOSE_SOCKET(sock);
                     continue;
                 }
                 serv_addr.sin_port = htons(PORT_server);
                 
-                if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+                if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) == SOCKET_ERROR_TYPE) {
                     printf("\nConnection Failed to port %d\n", PORT_server);
-                    close(sock);
+                    CLOSE_SOCKET(sock);
                     continue;
                 }
                 
@@ -90,7 +105,7 @@ void sending() {
                     printf("Failed to send message to port %d\n", PORT_server);
                 }
                 
-                close(sock);
+                CLOSE_SOCKET(sock);
             }
         }
         
@@ -101,10 +116,10 @@ void sending() {
         }
     } else {
         // Envoyer à une adresse IP et port spécifiques
-        int sock = 0;
+        socket_t sock = INVALID_SOCKET_TYPE;
         struct sockaddr_in serv_addr;
         
-        if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET_TYPE) {
             printf("\nSocket creation error\n");
             return;
         }
@@ -112,14 +127,14 @@ void sending() {
         serv_addr.sin_family = AF_INET;
         if (inet_pton(AF_INET, target_ip, &serv_addr.sin_addr) <= 0) {
             printf("\nInvalid IP address\n");
-            close(sock);
+            CLOSE_SOCKET(sock);
             return;
         }
         serv_addr.sin_port = htons(target_port);
         
-        if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+        if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) == SOCKET_ERROR_TYPE) {
             printf("\nConnection Failed to %s:%d\n", target_ip, target_port);
-            close(sock);
+            CLOSE_SOCKET(sock);
             return;
         }
         
@@ -148,6 +163,6 @@ void sending() {
             printf("Failed to send message to %s:%d\n", target_ip, target_port);
         }
         
-        close(sock);
+        CLOSE_SOCKET(sock);
     }
 }
