@@ -62,6 +62,9 @@ class GameState:
         Returns True if the game is in multiplayer mode, False otherwise.
         """
         return self.is_multiplayer
+    
+    def menu_multi(self):
+        self.states = MULTIMENU
 
 
     def change_music(self, state):
@@ -92,10 +95,7 @@ class GameState:
 
     def start_game(self):
         """Méthode pour démarrer la génération de la carte après que l'utilisateur ait validé ses choix."""
-        if self.get_is_multiplayer():
-            self.map.generate_map_multi(self.selected_map_type, self.selected_mode, self.selected_players)
-        else:
-            self.map.generate_map(self.selected_map_type, self.selected_mode, self.selected_players)
+        self.map.generate_map(self.selected_map_type, self.selected_mode, self.selected_players)
 
     def set_map_size(self, X, Y):
         self.map = Map(X, Y)

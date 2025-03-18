@@ -176,9 +176,12 @@ class StartMenu:
         elif self.buttons["2.5D"].collidepoint(pos):
             self.display_mode = ISO2D
         elif self.buttons["Lancer la Partie"].collidepoint(pos):
-            return "jeu_solo"  # Indicate that the game can start
+            return "play"  # Indicate that the game can start # CHANGEMENT ICI : "jeu_solo" -> "play"
         elif self.buttons["Multijoueur"].collidepoint(pos):
-            return "multijoueur" # Indicate to go to multiplayer menu
+            return "multiplayer"
+            
+
+    
 
         # Handle volume slider interaction
         if self.slider_rect.collidepoint(pos):
