@@ -26,10 +26,7 @@ class GameEventHandler:
     def send_action_via_udp(self, action):
         try:
             # Encapsuler l'action dans un objet JSON
-            action_data = {
-                "action_name": str(action),
-                "parameters": str(action)
-            }
+            action_data = self.get_context_to_send()
             action_json = json.dumps(action_data)  # Convertir en JSON
             self.udp_socket.sendto(action_json.encode('utf-8'), (self.udp_host, self.udp_port))
             print(f"Action envoyée via UDP : {action_json}")
@@ -90,12 +87,12 @@ class GameEventHandler:
                 'training': self.players.get_entities_by_class(['B','S','A'])
             },
             'units': {
-                'military_free': [self.players.linked_map.get_entity_by_id(m_id) for m_id in self.players.get_entities_by_class(['h', 'a', 's', 'm', 'c', 'x'], is_free=True)],
-                'villager': [self.players.linked_map.get_entity_by_id(v_id) for v_id in self.players.get_entities_by_class(['v'])],
-                'villager_free': [self.players.linked_map.get_entity_by_id(v_id) for v_id in self.players.get_entities_by_class(['v'], is_free=True)],
+                'military_free': [self.players.get_entities_by_class(['h', 'a', 's', 'm', 'c', 'x'], is_free=True)],
+                'villager': [self.players.get_entities_by_class(['v'])],
+                'villager_free': [self.players.get_entities_by_class(['v'], is_free=True)],
             },
             'enemy_id': None,
             'drop_off_id': self.players.ect(['T', 'C'], self.players.cell_Y, self.players.cell_X)[0] if self.players.ect(['T', 'C'], self.players.cell_Y, self.players.cell_X) else None,
-            'player': self.players
+            'player': self.players.team
         }
         return context
