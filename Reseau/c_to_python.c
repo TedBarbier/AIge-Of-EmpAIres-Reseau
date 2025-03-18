@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
         printf("Démarrage en mode client UDP...\n");
         SOCKET client_socket;
         struct sockaddr_in server_addr;
-        char message[] = "Bonjour Python depuis C!";
+        char message[] = "Rejoindre la partie";
 
         if ((client_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET) {
             perror("socket creation failed");

@@ -302,7 +302,7 @@ class GameLoop:
 
             if self.state.states == PLAY:
                 self.update_game_state(dt)
-                if self.state.is_multiplayer and self.state.selected_players == self.state.num_players:
+                if self.state.is_multiplayer and self.state.selected_players > self.num_players:
                     self.handle_new_players()
             self.render_display(dt, mouse_x, mouse_y)
 
