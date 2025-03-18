@@ -26,16 +26,27 @@ class GameEventHandler:
     def send_action_via_udp(self, action):
         try:
             # Encapsuler l'action dans un objet JSON
-            action_data = {
-                "action_name": str(action),
-                "parameters": str(action)
-            }
+            action_data = self.get_context_to_send()
             action_json = json.dumps(action_data)  # Convertir en JSON
             self.udp_socket.sendto(action_json.encode('utf-8'), (self.udp_host, self.udp_port))
             print(f"Action envoyée via UDP : {action_json}")
         except Exception as e:
             print(f"Erreur lors de l'envoi de l'action UDP : {e}")
-
+ 
+    def receive_action_via_udp(self):
+        host = '127.0.0.1'
+        port = 12345
+        buffer_size = 1024
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s: # SOCK_DGRAM pour UDP
+                s.bind((host, port))
+                data, addr = s.recvfrom(buffer_size)
+                if data:
+                    received_message = data.decode('utf-8')
+                    return received_message
+        except Exception as e:
+            print(f"Erreur lors de la reception du message : {e}")
+            return None
 
     def get_context_for_player(self):
         context = {
@@ -76,12 +87,12 @@ class GameEventHandler:
                 'training': self.players.get_entities_by_class(['B','S','A'])
             },
             'units': {
-                'military_free': [self.players.linked_map.get_entity_by_id(m_id) for m_id in self.players.get_entities_by_class(['h', 'a', 's', 'm', 'c', 'x'], is_free=True)],
-                'villager': [self.players.linked_map.get_entity_by_id(v_id) for v_id in self.players.get_entities_by_class(['v'])],
-                'villager_free': [self.players.linked_map.get_entity_by_id(v_id) for v_id in self.players.get_entities_by_class(['v'], is_free=True)],
+                'military_free': [self.players.get_entities_by_class(['h', 'a', 's', 'm', 'c', 'x'], is_free=True)],
+                'villager': [self.players.get_entities_by_class(['v'])],
+                'villager_free': [self.players.get_entities_by_class(['v'], is_free=True)],
             },
             'enemy_id': None,
             'drop_off_id': self.players.ect(['T', 'C'], self.players.cell_Y, self.players.cell_X)[0] if self.players.ect(['T', 'C'], self.players.cell_Y, self.players.cell_X) else None,
-            'player': self.players
+            'player': self.players.team
         }
         return context
