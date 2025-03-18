@@ -32,6 +32,21 @@ class GameLoop:
         #self.iamenu = IAMenu(self.screen, self.state.selected_players) # Assuming IAMenu is used somewhere
         self.multiplayer_menu = MultiplayerMenu(self.screen) # Instantiate MultiplayerMenu
         self.action_in_progress = False
+        self.num_players = 1
+    
+    def add_new_player(self, mode=MARINES):
+        self.num_players += 1
+        self.state.map._place_player_starting_areas_multi(mode, self.num_players)
+    
+    def handle_new_players(self):
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s: # SOCK_DGRAM pour UDP
+            s.bind((HOST, PORT))
+            print(f"Serveur UDP en écoute sur le port {PORT}...")
+            data, addr = s.recvfrom(BUFFER_SIZE)
+            if data:
+                received_message = data.decode('utf-8')
+                if received_message == "Rejoindre la partie":
+                    self.add_new_player(self)
 
 
     def handle_start_events(self, event):
