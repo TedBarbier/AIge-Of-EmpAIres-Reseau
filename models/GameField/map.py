@@ -557,7 +557,7 @@ class Map:
             current_player.add_resources(current_player_resources)
     
 
-    def _place_player_starting_areas_multi(self, mode, selected_player, team=0):
+    def _place_player_starting_areas_multi(self, mode, selected_player, team=1):
         print("place player starting areas multi num_players : ", selected_player) 
         polygon = angle_distribution(self.nb_CellY, self.nb_CellX, selected_player, scale=0.75, rand_rot=0x1)
         # Base position for this player's starting area
