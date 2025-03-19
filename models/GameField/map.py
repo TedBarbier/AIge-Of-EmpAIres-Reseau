@@ -418,17 +418,17 @@ class Map:
 
         self.c_generate_clusters(num_players, gen_mode)
 
-    def generate_map_multi(self,gen_mode = MAP_NORMAL , mode = MARINES ,num_players=3):
+    def generate_map_multi(self,gen_mode = MAP_NORMAL , mode = MARINES ,selected_player=3):
 
         # Ensure consistent random generation
 
         #random.seed(0xba)
         
         if gen_mode == "Carte Centrée":
-            self.generate_gold_center(num_players)
-        self._place_player_starting_areas_multi(mode, num_players)
+            self.generate_gold_center(selected_player)
+        self._place_player_starting_areas_multi(mode, selected_player)
 
-        self.c_generate_clusters(num_players, gen_mode)
+        self.c_generate_clusters(selected_player, gen_mode)
     
     def c_generate_clusters(self, num_players, gen_mode):
 
@@ -557,13 +557,14 @@ class Map:
             current_player.add_resources(current_player_resources)
     
 
-    def _place_player_starting_areas_multi(self, mode, num_players):
-        polygon = angle_distribution(self.nb_CellY, self.nb_CellX, num_players, scale=0.75, rand_rot=0x1)
+    def _place_player_starting_areas_multi(self, mode, selected_player, team=0):
+        print("place player starting areas multi num_players : ", selected_player) 
+        polygon = angle_distribution(self.nb_CellY, self.nb_CellX, selected_player, scale=0.75, rand_rot=0x1)
         # Base position for this player's starting area
-        center_Y, center_X = polygon[num_players-1][1], polygon[num_players-1][0]
+        center_Y, center_X = polygon[team][1], polygon[team][0]
  
 
-        current_player = Player(center_Y, center_X, num_players)
+        current_player = Player(center_Y, center_X, team)
         current_player.linked_map = self
         self.players_dict[current_player.team] = current_player
 
