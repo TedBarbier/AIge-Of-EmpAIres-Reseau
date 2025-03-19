@@ -14,8 +14,8 @@ class MultiplayerMenu:
         self.input_actif = False # Si le champ IP est actif pour la saisie
 
         # Paramètres de la partie pour l'hébergement (ajouté)
-        self.map_cell_count_x = 50
-        self.map_cell_count_y = 50
+        self.map_cell_count_x = 250
+        self.map_cell_count_y = 250
         self.selected_map_index = MAP_NORMAL
         self.selected_mode_index = LEAN
         self.selected_player_count = 2
