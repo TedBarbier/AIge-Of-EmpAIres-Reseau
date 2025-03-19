@@ -562,7 +562,7 @@ class Map:
         if polygon == None:
             polygon = angle_distribution(self.nb_CellY, self.nb_CellX, selected_player, scale=0.75, rand_rot=0x1)
         # Base position for this player's starting area
-        center_Y, center_X = polygon[team][1], polygon[team][0]
+        center_Y, center_X = polygon[team-1][1], polygon[team-1][0]
  
 
         current_player = Player(center_Y, center_X, team)
