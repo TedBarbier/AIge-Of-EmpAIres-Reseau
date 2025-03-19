@@ -8,7 +8,6 @@ class MultiplayerMenu:
 
         # États du menu multijoueur
         self.menu_state = "principal" # "principal", "rejoindre", "hebergement", "attente", "attente_rejoindre" (nouveau)
-        self.menu_state = "principal"
 
         # Pour stocker l'IP à rejoindre
         self.ip_adresse_rejoindre = ""
@@ -63,7 +62,7 @@ class MultiplayerMenu:
 
         # Options
         self.map_options = ["Carte Normal", "Carte Centrée"]
-        self.game_mode_options = ["Lean", "Mean", "Marines"]
+        self.modes_options = ["Lean", "Mean", "Marines"]
 
 
     def get_local_ip(self):
@@ -124,13 +123,13 @@ class MultiplayerMenu:
             line_height = 40
             self.hebergement_buttons["left_map_x"].topleft = (center_x - 150, param_y_start)
             self._draw_button("left_map_x", "<", button_dict=self.hebergement_buttons)
-            map_cell_label_x = f"Map Width: {self.map_cell_count_x}"
+            map_cell_label_x = f"Map X: {self.map_cell_count_x}"
             self._draw_text(map_cell_label_x, (center_x, param_y_start + 15), centered=True)
             self.hebergement_buttons["right_map_x"].topleft = (center_x + 120, param_y_start)
             self._draw_button("right_map_x", ">", button_dict=self.hebergement_buttons)
             self.hebergement_buttons["left_map_y"].topleft = (center_x - 150, param_y_start + line_height)
             self._draw_button("left_map_y", "<", button_dict=self.hebergement_buttons)
-            map_cell_label_y = f"Map Height: {self.map_cell_count_y}"
+            map_cell_label_y = f"Map Y: {self.map_cell_count_y}"
             self._draw_text(map_cell_label_y, (center_x, param_y_start + line_height + 15), centered=True)
             self.hebergement_buttons["right_map_y"].topleft = (center_x + 120, param_y_start + line_height)
             self._draw_button("right_map_y", ">", button_dict=self.hebergement_buttons)

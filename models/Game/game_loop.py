@@ -109,12 +109,12 @@ class GameLoop:
             elif multiplayer_menu_action == "heberger":
                 print("Hosting game (placeholder)") # Placeholder for hosting logic
                 self.state.is_multiplayer = True # Set multiplayer flag
-                self.state.states = START # Retour à l'état START pour le moment, ou peut-être un état d'attente
+                #self.state.states = START # Retour à l'état START pour le moment, ou peut-être un état d'attente
             elif isinstance(multiplayer_menu_action, tuple) and multiplayer_menu_action[0] == "rejoindre":
                 ip_to_join = multiplayer_menu_action[1]
                 print(f"Joining game at IP: {ip_to_join} (placeholder)") # Placeholder for joining logic
                 self.state.is_multiplayer = True # Set multiplayer flag
-                self.state.states = START # Retour à l'état START pour le moment, ou peut-être un état d'attente
+                #self.state.states = START # Retour à l'état START pour le moment, ou peut-être un état d'attente
             elif multiplayer_menu_action == "annuler_hebergement":
                 self.multiplayer_menu.menu_state = "principal" # Reset multiplayer menu state
 
