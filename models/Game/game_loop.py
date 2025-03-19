@@ -1,6 +1,8 @@
 # gameloop.py
 import pygame
 import tkinter as tk
+import socket
+import select
 from tkinter import messagebox, Button, Tk
 
 from ImageProcessingDisplay import UserInterface, EndMenu, StartMenu, PauseMenu, IAMenu, MultiplayerMenu
@@ -33,25 +35,25 @@ class GameLoop:
         self.multiplayer_menu = MultiplayerMenu(self.screen) # Instantiate MultiplayerMenu
         self.action_in_progress = False
         self.num_players = 1
+        self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
+        self.udp_socket.bind(("127.0.0.1", 12345))
     
-    def add_new_player(self, mode=MARINES):
+    def add_new_player(self):
         self.num_players += 1
+        mode=self.state.selected_mode
         self.state.map._place_player_starting_areas_multi(mode, self.num_players)
     
 
     def handle_new_players(self):
-        host = '127.0.0.1'
-        port = 12345
-        buffer_size = 1024
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s: # SOCK_DGRAM pour UDP
-            s.bind((host, port))
-            print(f"Serveur UDP en écoute sur le port {port}...")
-            data, addr = s.recvfrom(buffer_size)
+        buffersize = 1024
+        readable, _ , _ = select.select([self.udp_socket], [], [], 0.1) 
+        for s in readable:
+            data, addr = s.recvfrom(buffersize)
             if data:
                 print("Message reçu : ", data)
                 received_message = data.decode('utf-8')
                 if received_message == "Rejoindre la partie":
-                    self.add_new_player(self)
+                    self.add_new_player()
 
 
     def handle_start_events(self, event):
@@ -302,8 +304,7 @@ class GameLoop:
 
             if self.state.states == PLAY:
                 self.update_game_state(dt)
-                if self.state.is_multiplayer and self.state.selected_players > self.num_players:
-                    self.handle_new_players()
+                self.handle_new_players()
             self.render_display(dt, mouse_x, mouse_y)
 
 
