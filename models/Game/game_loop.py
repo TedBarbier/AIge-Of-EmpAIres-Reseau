@@ -2,6 +2,7 @@
 import pygame
 import tkinter as tk
 from tkinter import messagebox, Button, Tk
+import socket # Import socket for networking
 
 from ImageProcessingDisplay import UserInterface, EndMenu, StartMenu, PauseMenu, IAMenu, MultiplayerMenu
 from GLOBAL_VAR import *
@@ -33,11 +34,11 @@ class GameLoop:
         self.multiplayer_menu = MultiplayerMenu(self.screen) # Instantiate MultiplayerMenu
         self.action_in_progress = False
         self.num_players = 1
-    
+
     def add_new_player(self, mode=MARINES):
         self.num_players += 1
         self.state.map._place_player_starting_areas_multi(mode, self.num_players)
-    
+
 
     def handle_new_players(self):
         host = '127.0.0.1'
@@ -119,6 +120,23 @@ class GameLoop:
                 #self.state.states = START # Retour à l'état START pour le moment, ou peut-être un état d'attente
             elif multiplayer_menu_action == "annuler_hebergement":
                 self.multiplayer_menu.menu_state = "principal" # Reset multiplayer menu state
+            elif multiplayer_menu_action == "start_hosting": # Handle "Heberger_config" click
+                self.state.is_multiplayer = True
+                map_type = self.multiplayer_menu.map_options[self.multiplayer_menu.selected_map_index]
+                mode = self.multiplayer_menu.modes_options[self.multiplayer_menu.selected_mode_index]
+                player_count = self.multiplayer_menu.selected_player_count
+                map_cell_count_x = self.multiplayer_menu.map_cell_count_x
+                map_cell_count_y = self.multiplayer_menu.map_cell_count_y
+
+                self.state.set_map_size(map_cell_count_x, map_cell_count_y) # Set map size from multiplayer menu
+                self.state.set_players(player_count) # Set player count
+                self.state.set_difficulty_mode(mode) # Set mode based on string
+                self.state.set_map_type(map_type) # set map type based on string
+                self.state.map.generate_map_multi(map_type, mode, player_count) # Call generate_map_multi
+
+                self.state.start_game() # Start the game
+                self.state.states = PLAY # Change state to PLAY
+
 
         elif event.type == pygame.KEYDOWN:
             keydown_action = self.multiplayer_menu.handle_keydown(event)

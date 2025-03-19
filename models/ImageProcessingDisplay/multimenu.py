@@ -152,7 +152,7 @@ class MultiplayerMenu:
             self.hebergement_buttons["right_player_count"].topleft = (center_x + 120, param_y_start + 4 * line_height)
             self._draw_button("right_player_count", ">", button_dict=self.hebergement_buttons)
             self.hebergement_buttons["Heberger_config"].topleft = (center_x - 100, center_y + 140)
-            self._draw_button("Heberger_config", "Heberger", button_dict=self.hebergement_buttons)
+            self._draw_button("Heberger_config", "Lancer la partie", button_dict=self.hebergement_buttons)
             self.hebergement_buttons["Annuler"].topleft = (center_x - 100, center_y + 200)
             self._draw_button("Annuler", "Annuler", button_dict=self.hebergement_buttons)
             if self.connection_status:
