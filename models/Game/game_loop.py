@@ -37,7 +37,7 @@ class GameLoop:
         self.action_in_progress = False
         self.num_players = 1
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
-        self.udp_socket.bind(("127.0.0.1", 12345))
+        self.udp_socket.bind(("127.0.0.1", 1234))
     
     def add_new_player(self):
         self.num_players += 1

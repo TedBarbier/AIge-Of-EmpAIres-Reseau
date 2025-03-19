@@ -1,16 +1,12 @@
-import socket
-import json
+
+from Game.reseau import Send
 
 class GameEventHandler:
-    def __init__(self, map, players, ai_profiles, udp_host, udp_port):
+    def __init__(self, map, players, ai_profiles):
         self.map = map
         self.players = players
         self.ai_profiles = ai_profiles
-        self.udp_host = '127.0.0.1'
-        self.udp_port = 12345
-        # Création du socket UDP
-        self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        
+        self.send = Send()
 
 
     def process_ai_decisions(self, tree):
@@ -18,22 +14,13 @@ class GameEventHandler:
         context = self.get_context_for_player()
         actions = self.ai_profiles.decide_action(tree, context)
         all_action.append(actions)
+        # self.send.send_action_via_udp(context)
 
         # Envoi des actions via UDP
-        for action in all_action:
-            self.send_action_via_udp(action)
+        # for action in all_action:
+        #     self.send.send_action_via_udp(action)
             # Vous pouvez également envoyer via IPC si nécessaire
             # self.send_action_via_ipc(action)
-
-    def send_action_via_udp(self, action):
-        try:
-            # Encapsuler l'action dans un objet JSON
-            action_data = self.get_context_to_send()
-            action_json = json.dumps(action_data)  # Convertir en JSON
-            self.udp_socket.sendto(action_json.encode('utf-8'), (self.udp_host, self.udp_port))
-            print(f"Action envoyée via UDP : {action_json}")
-        except Exception as e:
-            print(f"Erreur lors de l'envoi de l'action UDP : {e}")
  
     def receive_context(self):
         host = '127.0.0.1'
