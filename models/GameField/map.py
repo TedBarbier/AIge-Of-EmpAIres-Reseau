@@ -566,6 +566,7 @@ class Map:
         current_player = Player(center_Y, center_X, num_players)
         current_player.linked_map = self
         self.players_dict[current_player.team] = current_player
+        print(self.players_dict.items())
 
         if not(self.check_cell(center_Y, center_X)) :
             gen_option = MODE_GENERATION.get(mode)

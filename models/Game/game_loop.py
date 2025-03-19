@@ -136,7 +136,6 @@ class GameLoop:
                 self.state.set_map_type(map_type) # set map type based on string
                 self.state.map.generate_map_multi(map_type, mode, player_count) # Call generate_map_multi
 
-                self.state.start_game() # Start the game
                 self.state.states = PLAY # Change state to PLAY
 
 
