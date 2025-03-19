@@ -426,9 +426,10 @@ class Map:
         
         if gen_mode == "Carte Centrée":
             self.generate_gold_center(selected_player)
-        self._place_player_starting_areas_multi(mode, selected_player)
+        polygon = self._place_player_starting_areas_multi(mode, selected_player)
 
         self.c_generate_clusters(selected_player, gen_mode)
+        return polygon
     
     def c_generate_clusters(self, num_players, gen_mode):
 
@@ -557,11 +558,11 @@ class Map:
             current_player.add_resources(current_player_resources)
     
 
-    def _place_player_starting_areas_multi(self, mode, selected_player, team=1):
-        print("place player starting areas multi num_players : ", selected_player) 
-        polygon = angle_distribution(self.nb_CellY, self.nb_CellX, selected_player, scale=0.75, rand_rot=0x1)
+    def _place_player_starting_areas_multi(self, mode, selected_player, team=1, polygon=None):
+        if polygon == None:
+            polygon = angle_distribution(self.nb_CellY, self.nb_CellX, selected_player, scale=0.75, rand_rot=0x1)
         # Base position for this player's starting area
-        center_Y, center_X = polygon[team][1], polygon[team][0]
+        center_Y, center_X = polygon[team-1][1], polygon[team-1][0]
  
 
         current_player = Player(center_Y, center_X, team)
@@ -588,6 +589,7 @@ class Map:
             
         current_player_resources = gen_option.get("resources").copy() # we dont want togive it as a pointer else all players will share the same resources haha
         current_player.add_resources(current_player_resources)
+        return polygon
     
         
 

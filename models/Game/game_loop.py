@@ -37,17 +37,20 @@ class GameLoop:
         self.action_in_progress = False
         self.num_players = 1
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
-        self.udp_socket.bind(("127.0.0.1", 1234))
+        self.udp_socket.bind(("127.0.0.1", 12345))
+        self.udp_socket_to_receive = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.udp_socket_to_receive.bind(("127.0.0.1", 1234))
+        self.polygon = None
     
     def add_new_player(self):
         self.num_players += 1
         mode=self.state.selected_mode
-        self.state.map._place_player_starting_areas_multi(mode, self.state.selected_players,self.num_players)
+        self.state.map._place_player_starting_areas_multi(mode, self.state.selected_players,self.num_players, self.polygon)
 
 
     def handle_new_players(self):
         buffersize = 1024
-        readable, _ , _ = select.select([self.udp_socket], [], [], 0.1) 
+        readable, _ , _ = select.select([self.udp_socket_to_receive], [], [], 0.1) 
         for s in readable:
             data, addr = s.recvfrom(buffersize)
             if data:
@@ -55,7 +58,17 @@ class GameLoop:
                 received_message = data.decode('utf-8')
                 if received_message == "Rejoindre la partie":
                     self.add_new_player()
-
+                    print("Nouveau joueur ajoute")
+    
+    def handle_message(self):
+        buffersize = 1024
+        readable, _ , _ = select.select([self.udp_socket_to_receive], [], [], 0.1) 
+        for s in readable:
+            data, addr = s.recvfrom(buffersize)
+            if data:
+                print("Message reçu : ", data)
+                received_message = data.decode('utf-8')
+                return(received_message)
 
     def handle_start_events(self, event):
         if pygame.key.get_pressed()[pygame.K_F12]:
@@ -134,7 +147,7 @@ class GameLoop:
                 self.state.set_players(player_count) # Set player count
                 self.state.set_difficulty_mode(mode) # Set mode based on string
                 self.state.set_map_type(map_type) # set map type based on string
-                self.state.map.generate_map_multi(map_type, mode, player_count) # Call generate_map_multi
+                self.polygon = self.state.map.generate_map_multi(map_type, mode, player_count) # Call generate_map_multi
 
                 self.state.states = PLAY # Change state to PLAY
 
@@ -323,7 +336,9 @@ class GameLoop:
 
             if self.state.states == PLAY:
                 self.update_game_state(dt)
-                self.handle_new_players()
+                if self.state.is_multiplayer and self.num_players < self.state.selected_players:
+                    self.handle_new_players()
+                self.handle_message()
             self.render_display(dt, mouse_x, mouse_y)
 
 
