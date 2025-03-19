@@ -272,7 +272,7 @@ class Player:
         self.ai_profile = AIProfile(strategy = strat[0], aggressiveness= strat[1], defense = strat[2])
         udp_host = "127.0.0.1"
         udp_port = 12345
-        self.game_handler = GameEventHandler(self.linked_map,self,self.ai_profile, udp_host, udp_port)
+        self.game_handler = GameEventHandler(self.linked_map,self,self.ai_profile)
 
         self.refl_acc = 0
         self.is_busy = False
@@ -631,7 +631,8 @@ class Player:
 
     def player_turn(self,dt):
         decision = self.game_handler.process_ai_decisions(self.decision_tree)
-        self.game_handler.send_action_via_udp(self.decision_tree)
+        context_to_send = self.game_handler.get_context_to_send()
+        self.game_handler.send.send_action_via_udp(context_to_send)
         self.refl_acc=0
 
         # # decision = self.ai_profile.decide_action(self.decision_tree, context)
