@@ -125,7 +125,7 @@ class GameLoop:
             elif multiplayer_menu_action == "start_hosting": # Handle "Heberger_config" click
                 self.state.is_multiplayer = True
                 map_type = self.multiplayer_menu.map_options[self.multiplayer_menu.selected_map_index]
-                mode = self.multiplayer_menu.modes_options[self.multiplayer_menu.selected_mode_index]
+                mode = self.multiplayer_menu.selected_mode_index
                 player_count = self.multiplayer_menu.selected_player_count
                 map_cell_count_x = self.multiplayer_menu.map_cell_count_x
                 map_cell_count_y = self.multiplayer_menu.map_cell_count_y

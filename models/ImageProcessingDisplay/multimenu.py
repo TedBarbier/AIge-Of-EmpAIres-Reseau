@@ -18,7 +18,7 @@ class MultiplayerMenu:
         self.map_cell_count_y = 50
         self.selected_map_index = MAP_NORMAL
         self.selected_mode_index = LEAN
-        self.selected_player_count = 2
+        self.selected_player_count = 1
 
         # Pour l'hébergement
         self.local_ip = self.get_local_ip()
