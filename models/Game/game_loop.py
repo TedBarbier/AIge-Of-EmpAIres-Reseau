@@ -36,8 +36,6 @@ class GameLoop:
         self.multiplayer_menu = MultiplayerMenu(self.screen) # Instantiate MultiplayerMenu
         self.action_in_progress = False
         self.num_players = 1
-        self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
-        self.udp_socket.bind(("127.0.0.1", 12345))
         self.udp_socket_to_receive = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.udp_socket_to_receive.bind(("127.0.0.1", 1234))
         self.polygon = None
