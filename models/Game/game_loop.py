@@ -38,6 +38,7 @@ class GameLoop:
         self.num_players += 1
         self.state.map._place_player_starting_areas_multi(mode, self.num_players)
     
+
     def handle_new_players(self):
         host = '127.0.0.1'
         port = 12345
@@ -47,6 +48,7 @@ class GameLoop:
             print(f"Serveur UDP en écoute sur le port {port}...")
             data, addr = s.recvfrom(buffer_size)
             if data:
+                print("Message reçu : ", data)
                 received_message = data.decode('utf-8')
                 if received_message == "Rejoindre la partie":
                     self.add_new_player(self)
@@ -302,6 +304,8 @@ class GameLoop:
 
             if self.state.states == PLAY:
                 self.update_game_state(dt)
+                if self.state.is_multiplayer and self.state.selected_players > self.num_players:
+                    self.handle_new_players()
             self.render_display(dt, mouse_x, mouse_y)
 
 

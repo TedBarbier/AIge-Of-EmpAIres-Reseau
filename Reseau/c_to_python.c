@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
 
             if (recv_len > 0) {
                 printf("Message reçu de %s:%d: \"%s\"\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port), buffer);
-                char expected_message[] = "Bonjour Python depuis C!";
+                char expected_message[] = "Rejoindre la partie";
                 if (strcmp(buffer, expected_message) == 0) {
                     printf("Message vérifié avec succès!\n");
                 } else {
@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
         printf("Démarrage en mode client UDP...\n");
         SOCKET client_socket;
         struct sockaddr_in server_addr;
-        char message[] = "Bonjour Python depuis C!";
+        char message[] = "Rejoindre la partie";
 
         if ((client_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET) {
             perror("socket creation failed");

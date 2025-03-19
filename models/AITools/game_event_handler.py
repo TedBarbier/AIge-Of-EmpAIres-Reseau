@@ -10,6 +10,8 @@ class GameEventHandler:
         self.udp_port = 12345
         # Création du socket UDP
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        
+
 
     def process_ai_decisions(self, tree):
         all_action = []
@@ -33,7 +35,7 @@ class GameEventHandler:
         except Exception as e:
             print(f"Erreur lors de l'envoi de l'action UDP : {e}")
  
-    def receive_action_via_udp(self):
+    def receive_context(self):
         host = '127.0.0.1'
         port = 12345
         buffer_size = 1024
@@ -43,6 +45,7 @@ class GameEventHandler:
                 data, addr = s.recvfrom(buffer_size)
                 if data:
                     received_message = data.decode('utf-8')
+                    print("Message reçu : ", received_message)
                     return received_message
         except Exception as e:
             print(f"Erreur lors de la reception du message : {e}")
@@ -96,3 +99,11 @@ class GameEventHandler:
             'player': self.players.team
         }
         return context
+    
+    def get_all_context(self):
+        return self.players.all_context
+
+    def update_all_context(self, send):
+        all_context=self.players.all_context
+        all_context[send['player']]=send
+        
