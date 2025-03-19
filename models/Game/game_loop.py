@@ -38,11 +38,12 @@ class GameLoop:
         self.num_players = 1
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
         self.udp_socket.bind(("127.0.0.1", 12345))
+        self.polygon = None
     
     def add_new_player(self):
         self.num_players += 1
         mode=self.state.selected_mode
-        self.state.map._place_player_starting_areas_multi(mode, self.state.selected_players,self.num_players)
+        self.state.map._place_player_starting_areas_multi(mode, self.state.selected_players,self.num_players, self.polygon)
 
 
     def handle_new_players(self):
@@ -134,7 +135,7 @@ class GameLoop:
                 self.state.set_players(player_count) # Set player count
                 self.state.set_difficulty_mode(mode) # Set mode based on string
                 self.state.set_map_type(map_type) # set map type based on string
-                self.state.map.generate_map_multi(map_type, mode, player_count) # Call generate_map_multi
+                self.polygon = self.state.map.generate_map_multi(map_type, mode, player_count) # Call generate_map_multi
 
                 self.state.states = PLAY # Change state to PLAY
 
