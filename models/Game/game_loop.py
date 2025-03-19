@@ -47,19 +47,6 @@ class GameLoop:
         mode=self.state.selected_mode
         self.state.map._place_player_starting_areas_multi(mode, self.state.selected_players,self.num_players, self.polygon)
 
-
-    def handle_new_players(self):
-        buffersize = 1024
-        readable, _ , _ = select.select([self.udp_socket_to_receive], [], [], 0.1) 
-        for s in readable:
-            data, addr = s.recvfrom(buffersize)
-            if data:
-                print("Message reçu : ", data)
-                received_message = data.decode('utf-8')
-                if received_message == "Rejoindre la partie":
-                    self.add_new_player()
-                    print("Nouveau joueur ajoute")
-    
     def handle_message(self):
         buffersize = 1024
         readable, _ , _ = select.select([self.udp_socket_to_receive], [], [], 0.1) 
@@ -68,7 +55,12 @@ class GameLoop:
             if data:
                 print("Message reçu : ", data)
                 received_message = data.decode('utf-8')
-                return(received_message)
+                if received_message == "Rejoindre la partie" and self.num_players < self.state.selected_players:
+                    self.add_new_player()
+                    print("Nouveau joueur ajoute")
+                    return 0
+                else:
+                    return(received_message)
 
     def handle_start_events(self, event):
         if pygame.key.get_pressed()[pygame.K_F12]:
@@ -336,9 +328,8 @@ class GameLoop:
 
             if self.state.states == PLAY:
                 self.update_game_state(dt)
-                if self.state.is_multiplayer and self.num_players < self.state.selected_players:
-                    self.handle_new_players()
-                self.handle_message()
+                if self.state.is_multiplayer:
+                    self.handle_message()
             self.render_display(dt, mouse_x, mouse_y)
 
 
