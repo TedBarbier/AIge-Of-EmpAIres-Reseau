@@ -42,7 +42,7 @@ class GameLoop:
     def add_new_player(self):
         self.num_players += 1
         mode=self.state.selected_mode
-        self.state.map._place_player_starting_areas_multi(mode, self.num_players)
+        self.state.map._place_player_starting_areas_multi(mode, self.state.selected_players,self.num_players)
 
 
     def handle_new_players(self):
@@ -136,6 +136,7 @@ class GameLoop:
                 self.state.set_map_type(map_type) # set map type based on string
                 self.state.map.generate_map_multi(map_type, mode, player_count) # Call generate_map_multi
 
+                self.state.start_game() # Start the game
                 self.state.states = PLAY # Change state to PLAY
 
 
