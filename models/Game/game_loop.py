@@ -67,10 +67,6 @@ class GameLoop:
             print(f"Erreur de décodage JSON : La chaîne n'est pas un JSON valide.\nErreur : {e}")
             return None # Ou vous pouvez choisir de lever l'exception à nouveau, ou retourner une valeur par défaut
 
-    def add_new_player(self):
-        self.num_players += 1
-        mode=self.state.selected_mode
-        self.state.map._place_player_starting_areas_multi(mode, self.state.selected_players,self.num_players, self.polygon)
 
     def handle_message(self):
         buffersize = 1024
@@ -91,7 +87,8 @@ class GameLoop:
                     self.state.map.region_division = dict["Map"]["region_division"]
                     self.state.map.seed = dict["Map"]["seed"]
                     self.state.map.score_players = dict["Map"]["score_players"]
-                    self.state.start_game()
+                    self.num_players += 1
+                    self.state.start_game(self.num_players)
                 elif received_message == "\"Rejoindre la partie\"" and self.num_players < self.state.selected_players:
                         self.add_new_player()
                         self.reseau.send_action_via_udp("Vous avez rejoint la partie")
