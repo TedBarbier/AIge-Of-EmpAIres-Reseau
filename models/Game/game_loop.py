@@ -110,12 +110,13 @@ class GameLoop:
                     "nb_cellY" : self.state.map.nb_CellY,
                     "tile_size_2d" : self.state.map.tile_size_2d,
                     "region_division" : self.state.map.region_division,
-                    "entity_matrix" : self.state.map.entity_matrix,
-                    "entity_id_dict" : self.state.map.entity_id_dict,
-                    "resource_id_dict" : self.state.map.resource_id_dict,
-                    "dead_entities" : self.state.map.dead_entities,
+                    "seed" : self.state.map.seed,
+                    # "entity_matrix" : self.state.map.entity_matrix,
+                    # "entity_id_dict" : self.state.map.entity_id_dict,
+                    # "resource_id_dict" : self.state.map.resource_id_dict,
+                    # "dead_entities" : self.state.map.dead_entities,
                     "score_players" : self.state.map.score_players,
-                    "player_dict" : self.state.map.players_dict
+                    # "player_dict" : self.state.map.players_dict
                 }}
 
                 self.reseau.send_action_via_udp("Envoi de la map")

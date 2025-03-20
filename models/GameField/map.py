@@ -10,8 +10,8 @@ from AITools.clustergenerator import *
 class Map:
 
     def __init__(self,_nb_CellX , _nb_CellY):
-        
-        
+
+
         self.nb_CellX = _nb_CellX
         self.nb_CellY = _nb_CellY
         self.tile_size_2d = TILE_SIZE_2D
@@ -32,9 +32,10 @@ class Map:
 
         # for the minimap
         self.minimap = MiniMap(PVector2(1000,300), _nb_CellX, _nb_CellY)
-        
+
         self.id_generator = IdGenerator()
         self.state = "normal"
+        self.seed = None # Initialize seed attribute
 
 
     def get_entity_by_id(self, _entity_id):
@@ -49,8 +50,7 @@ class Map:
             if (region):
                 for team_region in region.values():
                     if team_region.get((Y_to_check, X_to_check), None) != None:
-                        return 1 
-            
+                        return 1
             return 0
         else:
             return 0xff
@@ -62,20 +62,20 @@ class Map:
         entity_in_matrix = (_entity.cell_X - (_entity.sq_size - 1) >= 0 and _entity.cell_Y - (_entity.sq_size - 1) >= 0) and ( _entity.cell_X < self.nb_CellX and _entity.cell_Y < self.nb_CellY)
 
         if (entity_in_matrix == False):
-            
+
             return 0 # to check if all the cells that will be occupied by the entity are in the map
-        
+
         cell_padding = 0
 
         if not(isinstance(_entity, Unit)):# or isinstance(_entity, Farm) or (_entity.representation in ["W", "G"])):
             cell_padding = 1
-        
+
         for Y_to_check in range(_entity.cell_Y + cell_padding,_entity.cell_Y - _entity.sq_size - cell_padding, -1): # we add minus 1 cause we need at least one cell free so that the units can reach this target
             for X_to_check in range(_entity.cell_X + cell_padding,_entity.cell_X - _entity.sq_size - cell_padding, -1):
-                
+
                 if self.check_cell(Y_to_check, X_to_check):
-                    return 0 # not all the cells are free to put the entity 
-        
+                    return 0 # not all the cells are free to put the entity
+
         for Y_to_set in range(_entity.cell_Y,_entity.cell_Y - _entity.sq_size, -1):
             for X_to_set in range(_entity.cell_X,_entity.cell_X - _entity.sq_size, -1):
 
@@ -93,25 +93,25 @@ class Map:
                     current_team_region = current_region.get(_entity.team, None)
 
                 current_cell = current_team_region.get((Y_to_set, X_to_set), None)
-                
+
                 if (current_cell == None):
                     current_team_region[(Y_to_set, X_to_set)] = set()
                     current_cell = current_team_region.get((Y_to_set, X_to_set), None)
-                
+
                 current_cell.add(_entity)
 
-        topleft_cell = PVector2(self.tile_size_2d/2 + ( _entity.cell_X - (_entity.sq_size - 1))*self.tile_size_2d, self.tile_size_2d/2 + (_entity.cell_Y - (_entity.sq_size - 1))*self.tile_size_2d) 
-        bottomright_cell =  PVector2(self.tile_size_2d/2 + ( _entity.cell_X )*self.tile_size_2d, self.tile_size_2d/2 + (_entity.cell_Y )*self.tile_size_2d) 
+        topleft_cell = PVector2(self.tile_size_2d/2 + ( _entity.cell_X - (_entity.sq_size - 1))*self.tile_size_2d, self.tile_size_2d/2 + (_entity.cell_Y - (_entity.sq_size - 1))*self.tile_size_2d)
+        bottomright_cell =  PVector2(self.tile_size_2d/2 + ( _entity.cell_X )*self.tile_size_2d, self.tile_size_2d/2 + (_entity.cell_Y )*self.tile_size_2d)
 
         _entity.position = (bottomright_cell + topleft_cell ) * (0.5)
         _entity.box_size = bottomright_cell.x - _entity.position.x  # distance from the center to the corners of the collision box
 
-        
+
         if isinstance(_entity, Unit):
-            _entity.box_size += TILE_SIZE_2D/(2 * 2.5) # for the units hitbox is smaller 
+            _entity.box_size += TILE_SIZE_2D/(2 * 2.5) # for the units hitbox is smaller
             _entity.move_position.x = _entity.position.x
             _entity.move_position.y = _entity.position.y # well when the unit is added its target pos to move its it self se it doesnt move
-            
+
         else:
             _entity.box_size += TILE_SIZE_2D/(2) # the factors used the box_size lines are to choosen values for a well scaled collision system with respec to the type and size of the entity
         if _entity.team != 0:
@@ -129,17 +129,17 @@ class Map:
             resource_set.add(_entity.id)
         _entity.linked_map = self
 
-        # at the end add the entity pointer to the id dict with the id dict 
+        # at the end add the entity pointer to the id dict with the id dict
 
         self.entity_id_dict[_entity.id] = _entity
         return 1 # added the entity succesfully
-    
-    def add_entity_to_closest(self, entity, cell_Y, cell_X, random_padding = 0x00, min_spacing = 4, max_spacing = 5):
-        
-        
-        startY = cell_Y 
-        startX = cell_X
 
+
+
+    def add_entity_to_closest(self, entity, cell_Y, cell_X, random_padding = 0x00, min_spacing = 4, max_spacing = 5):
+
+        startY = cell_Y
+        startX = cell_X
         endY = cell_Y
         endX = cell_X
 
@@ -148,35 +148,47 @@ class Map:
         offsetX = 1
         offsetY = 1
 
-        while not(added):
-            
-            startX -=1
-            startY -=1
+        # Gestion unique du seed aléatoire et des offsets si random_padding est activé
+        if random_padding:
+            if self.seed is not None:
+                random_state = random.getstate() # save current random state
+                random.seed(self.seed) # set the seed for this function's randomness
+
+            offsetY = random.randint(min_spacing, max_spacing)
+            offsetX = random.randint(min_spacing, max_spacing)
+
+        while not added:
+            startX -= 1
+            startY -= 1
             endY += 1
             endX += 1
 
             ite_list = []
 
-            if random_padding:
-                offsetY = random.randint(min_spacing, max_spacing)
-                offsetX = random.randint(min_spacing, max_spacing)
-            
             for current_Y in range(endY, (startY - 1), -offsetY):
                 for current_X in range(endX, (startX - 1), -offsetX):
                     ite_list.append((current_Y, current_X))
-        
+
             if random_padding:
-                random.shuffle(ite_list)
+                random.shuffle(ite_list) # Mélange la liste APRÈS avoir construit la liste complète
 
             for current_Y, current_X in ite_list:
-                if not(added):
+                if not added: # Cette condition est un peu redondante, mais claire
                     entity.cell_Y = current_Y
                     entity.cell_X = current_X
 
                     if (self.add_entity(entity)):
                         added = True
                 else:
-                    break
+                    break # Utile pour sortir de la boucle ite_list si l'entité est ajoutée
+            if added: # Utile pour sortir de la boucle while not added si l'entité est ajoutée
+                break
+
+        # Restauration de l'état aléatoire après utilisation (si seed initialement fourni)
+        if random_padding and self.seed is not None:
+            random.setstate(random_state)
+
+        return added # Retourne si l'entité a été ajoutée ou non (utile pour le debugging/logique)
 
 
     def add_projectile(self, _projectile):
@@ -241,7 +253,7 @@ class Map:
 
 
     def display(self, dt, screen, camera, g_width, g_height):
-        
+
         self.iso_refresh_time_acc += dt
         if self.iso_refresh_time_acc >= ONE_SEC/60:
             screen.fill(BLACK_COLOR)
@@ -263,7 +275,7 @@ class Map:
 
             bottom_Xt = max(0, min(bottom_X, self.nb_CellX - 1))
             bottom_Yt  = max(0, min(bottom_Y, self.nb_CellY - 1))
-            
+
             top = (top_Yt, top_Xt)
             left = (left_Yt, left_Xt)
             right = (right_Yt, right_Xt)
@@ -271,12 +283,12 @@ class Map:
 
             range_top = (top[0] // self.region_division, top[1] // self.region_division)
             range_left = (left[0] // self.region_division, left[1] // self.region_division)
-            range_right = (right[0] // self.region_division, right[1] // self.region_division) 
-            range_bottom = (bottom[0] // self.region_division, bottom[1] // self.region_division) 
-    
+            range_right = (right[0] // self.region_division, right[1] // self.region_division)
+            range_bottom = (bottom[0] // self.region_division, bottom[1] // self.region_division)
+
 
             entity_to_display = set()
-            
+
 
             min_X, min_Y = range_left[1], range_top[0]
             max_X, max_Y = range_right[1], range_bottom[0]
@@ -295,7 +307,7 @@ class Map:
                         # these are the real X Y of the region in the sparse matrix
 
                         REG_X, REG_Y = region_X_to_display * (self.region_division ), region_Y_to_display * (self.region_division )
-                        
+
                         tmp_topleft.x = TILE_SIZE_2D/2 + REG_X*TILE_SIZE_2D
                         tmp_topleft.y = TILE_SIZE_2D/2 + REG_Y*TILE_SIZE_2D
 
@@ -313,26 +325,26 @@ class Map:
                                 for entities in team_region.values(): # each value the region is a dict of the cells
                                     for entity in entities:
                                         entity_to_display.add(entity)
-            """             
+            """
             for Y_to_display in range(start_Y, end_Y + 1):
                 for X_to_display in range(start_X, end_X + 1):
-                    
+
                     tmp_cell.position.x = X_to_display*camera.tile_size_2d + camera.tile_size_2d/2
                     tmp_cell.position.y = Y_to_display*camera.tile_size_2d + camera.tile_size_2d/2
                     iso_x, iso_y = camera.convert_to_isometric_2d(tmp_cell.position.x, tmp_cell.position.y)
 
-                    pygame.draw.circle(screen, (255, 0, 0), (iso_x, iso_y), 1, 0) 
-            """ # debug purposes 
+                    pygame.draw.circle(screen, (255, 0, 0), (iso_x, iso_y), 1, 0)
+            """ # debug purposes
 
-                                                                                    # priority to the farm ( they are like grass so the ground is displayed first) then the normal deep sort 
+                                                                                    # priority to the farm ( they are like grass so the ground is displayed first) then the normal deep sort
             for current_entity in sorted(entity_to_display, key=lambda entity: (not(isinstance(entity, Farm)), entity.position.z, entity.position.y + entity.position.x, entity.position.y)):
-            
+
                 current_entity.display(dt, screen, camera, g_width, g_height)
 
 
-            # minimap display 
+            # minimap display
             self.minimap.update_position(g_width, g_height)
-            
+
             self.minimap.display_ground(screen)
 
             for current_region in self.entity_matrix.values():
@@ -341,10 +353,10 @@ class Map:
                         for entity in entity_set:
                             if not(isinstance(entity, Building)):
                                 self.minimap.display_on_cart(screen, entity)
-            
+
             self.minimap.display_camera(screen, top_X, top_Y, bottom_X, bottom_Y)
 
-        
+
 
     def terminal_display(self, dt, terminal_camera):
         self.refresh_time_acc += dt
@@ -353,7 +365,7 @@ class Map:
             startX, startY, endX, endY = terminal_camera.indexes_in_point_of_view_terminal()
 
             # Clear the terminal screen for animation
-            
+
             os.system('cls' if os.name == 'nt' else 'clear') # cls if windows clear if
 
             sys.stdout.write(f"[+] View Start: ({startX}, {startY}), View End: ({endX}, {endY})\n")
@@ -381,9 +393,9 @@ class Map:
                             current_string += "."
                     else:
                         current_string += " "
-                        
+
                 sys.stdout.write(current_string)
-                
+
                 sys.stdout.flush()
 
 
@@ -411,7 +423,7 @@ class Map:
         # Ensure consistent random generation
 
         #random.seed(0xba)
-        
+
         if gen_mode == "Carte Centrée":
             self.generate_gold_center(num_players)
         self._place_player_starting_areas(mode, num_players)
@@ -420,17 +432,17 @@ class Map:
 
     def generate_map_multi(self,gen_mode = MAP_NORMAL , mode = MARINES ,selected_player=3):
 
-        # Ensure consistent random generation
+        # Generate and store the seed
+        self.seed = random.randint(0, 100000) # You can choose a different range if needed
+        random.seed(self.seed)
 
-        #random.seed(0xba)
-        
         if gen_mode == "Carte Centrée":
             self.generate_gold_center(selected_player)
         polygon = self._place_player_starting_areas_multi(mode, selected_player)
 
         self.c_generate_clusters(selected_player, gen_mode)
         return polygon
-    
+
     def c_generate_clusters(self, num_players, gen_mode):
 
         current_directory = os.path.dirname(__file__)
@@ -466,9 +478,9 @@ class Map:
                             self.add_entity(gold)
             gen_n += 1
 
-            
+
     def _generate_forests(self, forest_count=30, forest_size_range=(14, 28)):
-        
+
         for _ in range(forest_count):
             # Randomly pick a forest center
             center_X = random.randint(0, self.nb_CellX - 1)
@@ -488,9 +500,9 @@ class Map:
                     if not(self.check_cell(tree_Y, tree_X)):
                         tree = Tree(self.id_generator,tree_Y, tree_X, None)
                         self.add_entity(tree)
-    
+
     def _generate_gold(self, gold_veins=30, vein_size_range=(8, 20)):
-        
+
         for _ in range(gold_veins):
             # Randomly pick a vein center
             center_X = random.randint(0, self.nb_CellX - 1)
@@ -503,7 +515,7 @@ class Map:
                 # Generate gold around the center
                 offset_X = random.randint(-GEN_DIS, GEN_DIS)
                 offset_Y = random.randint(-GEN_DIS, GEN_DIS)
-                
+
                 gold_X = center_X + offset_X
                 gold_Y = center_Y + offset_Y
 
@@ -512,25 +524,25 @@ class Map:
                     if not(self.check_cell(gold_Y, gold_X)):
                         gold = Gold(self.id_generator,gold_Y, gold_X, None)
                         self.add_entity(gold)
-    
+
 
 
 
 
     def _place_player_starting_areas(self, mode, num_players):
-        
+
         polygon = angle_distribution(self.nb_CellY, self.nb_CellX, num_players, scale=0.75, rand_rot=0x1)
         if num_players == 1:
-            angle = random.uniform(0, 2 * math.pi) 
-            radius = min(self.nb_CellX, self.nb_CellY) * 0.3 
+            angle = random.uniform(0, 2 * math.pi)
+            radius = min(self.nb_CellX, self.nb_CellY) * 0.3
             center_X = int(self.nb_CellX // 2 + radius * math.cos(angle))
             center_Y = int(self.nb_CellY // 2 + radius * math.sin(angle))
-            polygon = [(center_X, center_Y)] 
+            polygon = [(center_X, center_Y)]
         for i in range(len(polygon)):
-            
+
             # Base position for this player's starting area
             center_Y, center_X = polygon[i][1], polygon[i][0]
- 
+
 
             current_player = Player(center_Y, center_X, i + 1)
             current_player.linked_map = self
@@ -538,32 +550,32 @@ class Map:
 
             if not(self.check_cell(center_Y, center_X)) :
                 gen_option = MODE_GENERATION.get(mode)
-                
+
                 entities_gen = gen_option.get("entities")
                 for entity_type, number in entities_gen.items():
 
                     EntityClass = CLASS_MAPPING.get(entity_type, None)
-                    
-                    
+
+
                     for i in range(number):
-                        
+
                         entity_instance = EntityClass(self.id_generator,None, None, None, current_player.team)
                         if isinstance(entity_instance, Unit):
                             current_player.add_population()
                             current_player.current_population += 1
 
                         self.add_entity_to_closest(entity_instance, current_player.cell_Y, current_player.cell_X, random_padding=0x01)
-            
+
             current_player_resources = gen_option.get("resources").copy() # we dont want togive it as a pointer else all players will share the same resources haha
             current_player.add_resources(current_player_resources)
-    
+
 
     def _place_player_starting_areas_multi(self, mode, selected_player, team=1, polygon=None):
         if polygon == None:
             polygon = angle_distribution(self.nb_CellY, self.nb_CellX, selected_player, scale=0.75, rand_rot=0x1)
         # Base position for this player's starting area
         center_Y, center_X = polygon[team-1][1], polygon[team-1][0]
- 
+
 
         current_player = Player(center_Y, center_X, team)
         current_player.linked_map = self
@@ -572,26 +584,26 @@ class Map:
 
         if not(self.check_cell(center_Y, center_X)) :
             gen_option = MODE_GENERATION.get(mode)
-                
+
             entities_gen = gen_option.get("entities")
             for entity_type, number in entities_gen.items():
 
                 EntityClass = CLASS_MAPPING.get(entity_type, None)
-                    
-                    
-                for i in range(number):    
+
+
+                for i in range(number):
                     entity_instance = EntityClass(self.id_generator,None, None, None, current_player.team)
                     if isinstance(entity_instance, Unit):
                         current_player.add_population()
                         current_player.current_population += 1
 
                     self.add_entity_to_closest(entity_instance, current_player.cell_Y, current_player.cell_X, random_padding=0x01)
-            
+
         current_player_resources = gen_option.get("resources").copy() # we dont want togive it as a pointer else all players will share the same resources haha
         current_player.add_resources(current_player_resources)
         return polygon
-    
-        
+
+
 
     def _add_starting_resources(self, center_Y, center_X):
 
@@ -601,14 +613,14 @@ class Map:
             gold_X = center_X + offset_X
             gold_Y = center_Y + offset_Y
             if not(self.check_cell(gold_X, gold_Y)):
-                
+
                 gold = Gold(self.id_generator,gold_Y, gold_X, None)
                 self.add_entity(gold)
 
         for offset_X, offset_Y in [(GEN_DIS_T, GEN_DIS_T), (GEN_DIS_T, -GEN_DIS_T), (-GEN_DIS_T, GEN_DIS_T)]:
             tree_X = center_X + offset_X
             tree_Y = center_Y + offset_Y
-            if not(self.check_cell(tree_Y, tree_Y)):  
+            if not(self.check_cell(tree_Y, tree_Y)):
                 tree = Tree(self.id_generator,tree_Y, tree_X, None)
                 self.add_entity(tree)
 
@@ -626,10 +638,10 @@ class Map:
             current_set = region.get((cell_Y, cell_X))
 
             if (current_set):
-                for entity in current_set:    
+                for entity in current_set:
                     res_entity = entity.id
                     break
-        
+
         return res_entity
 
     def update_all_projectiles(self, dt):
@@ -650,7 +662,7 @@ class Map:
     def update_all_entities(self, dt, camera, screen):
         battle = False
         for id in list(self.entity_id_dict.keys()):
-            
+
             entity = self.entity_id_dict.get(id)
             if entity:
                 if isinstance(entity ,Unit):
@@ -725,7 +737,7 @@ def ellipse_distribution(ry, rx, Cy, Cx, angle_num, rand_rot = False):
             x = int(Cx + rx  * math.cos(current_theta))
             y = int(Cy + ry  * math.sin(current_theta))
             points.append((x, y))
-        
+
         return points
     else:
         return [(int(Cx),int(Cy))]
@@ -738,7 +750,7 @@ def spiral_distribution(Y, X, reg_div, player_num):
     X_step = X/2 /spiral_lvl
 
     Cy, Cx = Y/2, X/2
-    
+
     angle_num = 0
     angle_step = math.ceil(1*player_num)
 
