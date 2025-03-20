@@ -86,7 +86,7 @@ class GameLoop:
                 self.state.set_difficulty_mode(self.startmenu.selected_mode_index)
                 self.state.set_display_mode(self.startmenu.display_mode)
                 self.state.set_players(self.startmenu.selected_player_count)
-                self.state.start_game()
+                self.state.start_game(self.num_players)
                 self.state.states = PLAY
 
                 if self.state.display_mode == TERMINAL:
@@ -96,7 +96,21 @@ class GameLoop:
                         pygame.HWSURFACE | pygame.DOUBLEBUF,
                     )
             elif start_menu_action == "multiplayer": # If multiplayer is clicked
-                self.state.states = MULTIMENU # Changer l'état en MULTIMENU
+                self.state.is_multiplayer = True
+                self.state.set_map_size(self.startmenu.map_cell_count_x, self.startmenu.map_cell_count_y)
+                self.state.set_map_type(self.startmenu.map_options[self.startmenu.selected_map_index])
+                self.state.set_difficulty_mode(self.startmenu.selected_mode_index)
+                self.state.set_display_mode(self.startmenu.display_mode)
+                self.state.set_players(self.startmenu.selected_player_count)
+                self.state.start_game()
+                self.state.states = PLAY
+
+                if self.state.display_mode == TERMINAL:
+                    self.state.set_screen_size(20, 20)
+                    pygame.display.set_mode(
+                        (self.state.screen_width, self.state.screen_height),
+                        pygame.HWSURFACE | pygame.DOUBLEBUF,
+                    )
             else:
                 # Check if clicking on player count or cell count enables editing
                 center_x, center_y = self.state.screen_width // 2, self.state.screen_height // 2
@@ -115,58 +129,58 @@ class GameLoop:
             # Handle keyboard events for editing
             self.startmenu.handle_keydown(event)
 
-    def handle_multiplayer_menu_events(self, event): # New event handler for multiplayer menu
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            multiplayer_menu_action = self.multiplayer_menu.handle_click(event.pos)
-            if multiplayer_menu_action == "principal_solo":
-                self.state.states = START # Retour à l'état START
-            elif multiplayer_menu_action == "heberger":
-                print("Hosting game (placeholder)") # Placeholder for hosting logic
-                self.state.is_multiplayer = True # Set multiplayer flag
-                #self.state.states = START # Retour à l'état START pour le moment, ou peut-être un état d'attente
-            elif isinstance(multiplayer_menu_action, tuple) and multiplayer_menu_action[0] == "rejoindre":
-                ip_to_join = multiplayer_menu_action[1]
-                print([executable_path, ip_to_join])
-                run_process = subprocess.run([executable_path, ip_to_join], capture_output=True, text=True)
-                self.state.is_multiplayer = True # Set multiplayer flag
-                # Afficher la sortie du programme
-                print("Sortie du programme :")
-                print(run_process.stdout)
+    # def handle_multiplayer_menu_events(self, event): # New event handler for multiplayer menu
+    #     if event.type == pygame.MOUSEBUTTONDOWN:
+    #         multiplayer_menu_action = self.multiplayer_menu.handle_click(event.pos)
+    #         if multiplayer_menu_action == "principal_solo":
+    #             self.state.states = START # Retour à l'état START
+    #         elif multiplayer_menu_action == "heberger":
+    #             print("Hosting game (placeholder)") # Placeholder for hosting logic
+    #             self.state.is_multiplayer = True # Set multiplayer flag
+    #             #self.state.states = START # Retour à l'état START pour le moment, ou peut-être un état d'attente
+    #         elif isinstance(multiplayer_menu_action, tuple) and multiplayer_menu_action[0] == "rejoindre":
+    #             ip_to_join = multiplayer_menu_action[1]
+    #             print([executable_path, ip_to_join])
+    #             run_process = subprocess.run([executable_path, ip_to_join], capture_output=True, text=True)
+    #             self.state.is_multiplayer = True # Set multiplayer flag
+    #             # Afficher la sortie du programme
+    #             print("Sortie du programme :")
+    #             print(run_process.stdout)
 
-                # Afficher les erreurs, le cas échéant
-                if run_process.stderr:
-                    print("Erreurs :")
-                    print(run_process.stderr)
-                self.reseau.send_action_via_udp("Rejoindre la partie")
-                #self.state.states = START # Retour à l'état START pour le moment, ou peut-être un état d'attente
-            elif multiplayer_menu_action == "annuler_hebergement":
-                self.multiplayer_menu.menu_state = "principal" # Reset multiplayer menu state
-            elif multiplayer_menu_action == "start_hosting": # Handle "Heberger_config" click
-                self.state.is_multiplayer = True
-                map_type = self.multiplayer_menu.map_options[self.multiplayer_menu.selected_map_index]
-                mode = self.multiplayer_menu.selected_mode_index
-                player_count = self.multiplayer_menu.selected_player_count
-                map_cell_count_x = self.multiplayer_menu.map_cell_count_x
-                map_cell_count_y = self.multiplayer_menu.map_cell_count_y
+    #             # Afficher les erreurs, le cas échéant
+    #             if run_process.stderr:
+    #                 print("Erreurs :")
+    #                 print(run_process.stderr)
+    #             self.reseau.send_action_via_udp("Rejoindre la partie")
+    #             #self.state.states = START # Retour à l'état START pour le moment, ou peut-être un état d'attente
+    #         elif multiplayer_menu_action == "annuler_hebergement":
+    #             self.multiplayer_menu.menu_state = "principal" # Reset multiplayer menu state
+    #         elif multiplayer_menu_action == "start_hosting": # Handle "Heberger_config" click
+    #             self.state.is_multiplayer = True
+    #             map_type = self.multiplayer_menu.map_options[self.multiplayer_menu.selected_map_index]
+    #             mode = self.multiplayer_menu.selected_mode_index
+    #             player_count = self.multiplayer_menu.selected_player_count
+    #             map_cell_count_x = self.multiplayer_menu.map_cell_count_x
+    #             map_cell_count_y = self.multiplayer_menu.map_cell_count_y
 
-                self.state.set_map_size(map_cell_count_x, map_cell_count_y) # Set map size from multiplayer menu
-                self.state.set_players(player_count) # Set player count
-                self.state.set_difficulty_mode(mode) # Set mode based on string
-                self.state.set_map_type(map_type) # set map type based on string
-                self.polygon = self.state.map.generate_map_multi(map_type, mode, player_count) # Call generate_map_multi
+    #             self.state.set_map_size(map_cell_count_x, map_cell_count_y) # Set map size from multiplayer menu
+    #             self.state.set_players(player_count) # Set player count
+    #             self.state.set_difficulty_mode(mode) # Set mode based on string
+    #             self.state.set_map_type(map_type) # set map type based on string
+    #             self.polygon = self.state.map.generate_map_multi(map_type, mode, player_count) # Call generate_map_multi
 
-                self.state.states = PLAY # Change state to PLAY
+    #             self.state.states = PLAY # Change state to PLAY
 
 
-        elif event.type == pygame.KEYDOWN:
-            keydown_action = self.multiplayer_menu.handle_keydown(event)
-            if keydown_action is not None and isinstance(keydown_action, tuple) and keydown_action[0] == "rejoindre":
-                ip_to_join = keydown_action[1]
-                print(f"Joining game at IP: {ip_to_join} (from keydown) (placeholder)") # Placeholder for joining logic
-                self.state.is_multiplayer = True
-                self.state.states = START # Retour à l'état START pour le moment, ou peut-être un état d'attente
+        # elif event.type == pygame.KEYDOWN:
+        #     keydown_action = self.multiplayer_menu.handle_keydown(event)
+        #     if keydown_action is not None and isinstance(keydown_action, tuple) and keydown_action[0] == "rejoindre":
+        #         ip_to_join = keydown_action[1]
+        #         print(f"Joining game at IP: {ip_to_join} (from keydown) (placeholder)") # Placeholder for joining logic
+        #         self.state.is_multiplayer = True
+        #         self.state.states = START # Retour à l'état START pour le moment, ou peut-être un état d'attente
 
-        self.multiplayer_menu.update()
+        # self.multiplayer_menu.update()
 
 
     # def handle_config_events(self,dt, event):
@@ -322,8 +336,8 @@ class GameLoop:
                 if self.state.states == START: # Utiliser START ici
                     self.state.change_music("start")
                     self.handle_start_events(event)
-                elif self.state.states == MULTIMENU: # Utiliser MULTIMENU ici
-                    self.handle_multiplayer_menu_events(event)
+                # elif self.state.states == MULTIMENU: # Utiliser MULTIMENU ici
+                #     self.handle_multiplayer_menu_events(event)
                 elif self.state.states == PAUSE:
                     self.handle_pause_events(dt, event)
                 elif self.state.states == PLAY:
@@ -335,7 +349,7 @@ class GameLoop:
             if self.state.mouse_held:
                 self.state.map.minimap.update_camera(self.state.camera, mouse_x, mouse_y)
 
-            if not (self.state.states == START or self.state.states == MULTIMENU): # Pas d'input clavier dans le menu start et multijoueur
+            if not (self.state.states == START): # Pas d'input clavier dans le menu start et multijoueur
                 self.handle_keyboard_inputs(move_flags, dt)
 
             self.state.update(dt)
