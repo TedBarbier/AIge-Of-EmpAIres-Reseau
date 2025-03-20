@@ -1,4 +1,5 @@
 # gameloop.py
+import subprocess
 import pygame
 import tkinter as tk
 import socket
@@ -11,6 +12,7 @@ from GLOBAL_VAR import *
 from Game.game_state import *
 from Game.reseau import *
 
+executable_path = '../Reseau/boucle/serv.exe'
 
 
 class GameLoop:
@@ -124,8 +126,18 @@ class GameLoop:
                 #self.state.states = START # Retour à l'état START pour le moment, ou peut-être un état d'attente
             elif isinstance(multiplayer_menu_action, tuple) and multiplayer_menu_action[0] == "rejoindre":
                 ip_to_join = multiplayer_menu_action[1]
-                print(f"Joining game at IP: {ip_to_join} (placeholder)") # Placeholder for joining logic
+                print([executable_path, ip_to_join])
+                run_process = subprocess.run([executable_path, ip_to_join], capture_output=True, text=True)
                 self.state.is_multiplayer = True # Set multiplayer flag
+                # Afficher la sortie du programme
+                print("Sortie du programme :")
+                print(run_process.stdout)
+
+                # Afficher les erreurs, le cas échéant
+                if run_process.stderr:
+                    print("Erreurs :")
+                    print(run_process.stderr)
+                self.send_action_via_udp(self, "Rejoindre la partie")
                 #self.state.states = START # Retour à l'état START pour le moment, ou peut-être un état d'attente
             elif multiplayer_menu_action == "annuler_hebergement":
                 self.multiplayer_menu.menu_state = "principal" # Reset multiplayer menu state
