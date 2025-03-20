@@ -9,6 +9,7 @@ import socket # Import socket for networking
 from ImageProcessingDisplay import UserInterface, EndMenu, StartMenu, PauseMenu, IAMenu, MultiplayerMenu
 from GLOBAL_VAR import *
 from Game.game_state import *
+from Game.reseau import *
 
 
 
@@ -39,6 +40,7 @@ class GameLoop:
         self.udp_socket_to_receive = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.udp_socket_to_receive.bind(("127.0.0.1", 1234))
         self.polygon = None
+        self.reseau=Send()
     
     def add_new_player(self):
         self.num_players += 1
@@ -55,6 +57,8 @@ class GameLoop:
                 received_message = data.decode('utf-8')
                 if received_message == "Rejoindre la partie" and self.num_players < self.state.selected_players:
                     self.add_new_player()
+                    self.reseau.send_action_via_udp("Vous avez rejoint la partie")
+                    self.reseau.send_action_via_udp(self.state.map)
                     print("Nouveau joueur ajoute")
                     return 0
                 else:
