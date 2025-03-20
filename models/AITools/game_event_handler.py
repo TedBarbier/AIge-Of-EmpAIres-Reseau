@@ -1,4 +1,4 @@
-
+import socket
 from Game.reseau import Send
 
 class GameEventHandler:
