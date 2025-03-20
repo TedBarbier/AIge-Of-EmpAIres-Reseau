@@ -92,10 +92,10 @@ class GameState:
 
     def start_game(self, num_player=None):
         """Méthode pour démarrer la génération de la carte après que l'utilisateur ait validé ses choix."""
-        if num_player==None:
+        if self.is_multiplayer == False:
             self.map.generate_map(self.selected_map_type, self.selected_mode, self.selected_players)
         else:
-            self.map.generate_map_multi(self.selected_map_type, self.selected_mode, num_player)
+            self.map.generate_map_multi(self.selected_map_type, self.selected_mode, self.selected_players)
 
     def set_map_size(self, X, Y):
         self.map = Map(X, Y)
