@@ -86,7 +86,7 @@ class GameLoop:
                 self.state.set_difficulty_mode(self.startmenu.selected_mode_index)
                 self.state.set_display_mode(self.startmenu.display_mode)
                 self.state.set_players(self.startmenu.selected_player_count)
-                self.state.start_game(self.num_players)
+                self.state.start_game()
                 self.state.states = PLAY
 
                 if self.state.display_mode == TERMINAL:
@@ -102,7 +102,7 @@ class GameLoop:
                 self.state.set_difficulty_mode(self.startmenu.selected_mode_index)
                 self.state.set_display_mode(self.startmenu.display_mode)
                 self.state.set_players(self.startmenu.selected_player_count)
-                self.state.start_game()
+                self.state.start_game(self.num_players)
                 self.state.states = PLAY
 
                 if self.state.display_mode == TERMINAL:
