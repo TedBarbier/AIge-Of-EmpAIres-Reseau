@@ -56,7 +56,7 @@ class GameLoop:
             data, addr = s.recvfrom(buffersize)
             if data:
                 received_message = data.decode('utf-8')
-                if received_message[:3] == "\"map":
+                if received_message[:3] == "\"Map":
                     self.reseau.send_action_via_udp("Rejoindre la partie")
                 elif received_message == "\"Rejoindre la partie\"" and self.num_players < self.state.selected_players:
                         self.add_new_player()
@@ -104,6 +104,22 @@ class GameLoop:
                 self.state.set_players(self.startmenu.selected_player_count)
                 self.state.start_game()
                 self.state.states = PLAY
+
+                map_send = {"Map" :{
+                    "nb_cellX" : self.state.map.nb_CellX,
+                    "nb_cellY" : self.state.map.nb_CellY,
+                    "tile_size_2d" : self.state.map.tile_size_2d,
+                    "region_division" : self.state.map.region_division,
+                    "entity_matrix" : self.state.map.entity_matrix,
+                    "entity_id_dict" : self.state.map.entity_id_dict,
+                    "resource_id_dict" : self.state.map.resource_id_dict,
+                    "dead_entities" : self.state.map.dead_entities,
+                    "score_players" : self.state.map.score_players,
+                    "player_dict" : self.state.map.players_dict
+                }}
+
+                self.reseau.send_action_via_udp("Envoi de la map")
+                self.reseau.send_action_via_udp(map_send)
 
                 if self.state.display_mode == TERMINAL:
                     self.state.set_screen_size(20, 20)
