@@ -44,6 +44,29 @@ class GameLoop:
         self.polygon = None
         self.reseau=Send()
     
+    def string_to_dict(self, string_data):
+        """
+        Transforme une chaîne de caractères en dictionnaire Python.
+
+        Cette fonction tente d'interpréter la chaîne de caractères comme du JSON.
+        Si la chaîne est au format JSON valide, elle sera convertie en dictionnaire.
+        Sinon, une erreur sera levée.
+
+        Args:
+            string_data: La chaîne de caractères à transformer.
+
+        Returns:
+            Un dictionnaire Python si la chaîne est au format JSON valide.
+            None si la chaîne n'est pas au format JSON valide (et une erreur est affichée).
+        """
+        try:
+            # Utilise json.loads() pour parser la chaîne JSON et la convertir en dictionnaire
+            dictionnaire = json.loads(string_data)
+            return dictionnaire
+        except json.JSONDecodeError as e:
+            print(f"Erreur de décodage JSON : La chaîne n'est pas un JSON valide.\nErreur : {e}")
+            return None # Ou vous pouvez choisir de lever l'exception à nouveau, ou retourner une valeur par défaut
+
     def add_new_player(self):
         self.num_players += 1
         mode=self.state.selected_mode
@@ -56,8 +79,19 @@ class GameLoop:
             data, addr = s.recvfrom(buffersize)
             if data:
                 received_message = data.decode('utf-8')
-                if isinstance(received_message, dict) and "Map" in received_message:
-                    self.reseau.send_action_via_udp("Rejoindre la partie")
+                
+                if "Map" in received_message:
+                    dict = self.string_to_dict(received_message)
+                    self.state.selected_mode = dict["Map"]["mode"]
+                    self.state.selected_map_type = dict["Map"]["map_type"]
+                    self.state.speed = dict["Map"]["speed"]
+                    self.state.map.nb_CellX = dict["Map"]["nb_cellX"]
+                    self.state.map.nb_CellY = dict["Map"]["nb_cellY"]
+                    self.state.map.tile_size_2d = dict["Map"]["tile_size_2d"]
+                    self.state.map.region_division = dict["Map"]["region_division"]
+                    self.state.map.seed = dict["Map"]["seed"]
+                    self.state.map.score_players = dict["Map"]["score_players"]
+                    self.state.start_game()
                 elif received_message == "\"Rejoindre la partie\"" and self.num_players < self.state.selected_players:
                         self.add_new_player()
                         self.reseau.send_action_via_udp("Vous avez rejoint la partie")
