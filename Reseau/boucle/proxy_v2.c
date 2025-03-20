@@ -135,6 +135,13 @@ int main(int argc, char *argv[]) {
   timeout.tv_sec = 1;
   timeout.tv_usec = 0;
 
+  // Get the local machine's IP address
+  char local_ip[INET_ADDRSTRLEN];
+  struct sockaddr_in local_addr;
+  socklen_t local_addr_len = sizeof(local_addr);
+  getsockname(socket_fd_12345, (struct sockaddr *)&local_addr, &local_addr_len);
+  inet_ntop(AF_INET, &(local_addr.sin_addr), local_ip, INET_ADDRSTRLEN);
+
   while (1) {
     FD_ZERO(&readfds);
     FD_SET(socket_fd_12345, &readfds);
@@ -177,9 +184,11 @@ int main(int argc, char *argv[]) {
         buffer[bytes_received] = '\0'; // Null-terminate the received data
         printf("Received message from multicast group: %s\n", buffer);
 
-        // Check if the message is from the proxy server itself
-        if (client_address.sin_addr.s_addr != address_12345.sin_addr.s_addr ||
-            client_address.sin_port != htons(PORT_12345)) {
+        // Check if the message is from the local machine
+        char sender_ip[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &(client_address.sin_addr), sender_ip,
+                  INET_ADDRSTRLEN);
+        if (strcmp(sender_ip, local_ip) != 0) {
           printf("Forward it to Python server on localhost\n");
 
           // Forward to Python server on localhost:1234
