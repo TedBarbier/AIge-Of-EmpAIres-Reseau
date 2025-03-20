@@ -290,15 +290,15 @@ class GameLoop:
         self.state.camera.move(dt, 5 * scale)
 
     def update_game_state(self, dt):
-        if not (self.state.states == PAUSE or self.state.states == MULTIMENU): # Ne pas mettre à jour l'état du jeu dans le menu multijoueur ou pause
+        if not (self.state.states == PAUSE): # Ne pas mettre à jour l'état du jeu dans le menu multijoueur ou pause
             self.state.map.update_all_events(dt*self.state.speed, self.state.camera, self.screen)
             self.state.endgame()
 
     def render_display(self, dt, mouse_x, mouse_y):
         if self.state.states == START: # Utiliser START ici
             self.startmenu.draw()
-        elif self.state.states == MULTIMENU: # Utiliser MULTIMENU ici
-            self.multiplayer_menu.draw()
+        # elif self.state.states == MULTIMENU: # Utiliser MULTIMENU ici
+        #     self.multiplayer_menu.draw()
         # elif self.state.states == CONFIG:
         #     self.iamenu.draw()
         elif self.state.states == PAUSE:
