@@ -55,16 +55,16 @@ class GameLoop:
         for s in readable:
             data, addr = s.recvfrom(buffersize)
             if data:
-                print("Message reçu : ", data)
                 received_message = data.decode('utf-8')
-                if received_message == "Rejoindre la partie" and self.num_players < self.state.selected_players:
-                    self.add_new_player()
-                    self.reseau.send_action_via_udp("Vous avez rejoint la partie")
-                    self.reseau.send_action_via_udp(self.state.map)
-                    print("Nouveau joueur ajoute")
-                    return 0
+                if received_message[:3] == "\"map":
+                    self.reseau.send_action_via_udp("Rejoindre la partie")
+                elif received_message == "\"Rejoindre la partie\"" and self.num_players < self.state.selected_players:
+                        self.add_new_player()
+                        self.reseau.send_action_via_udp("Vous avez rejoint la partie")
                 else:
                     return(received_message)
+            
+
 
     def handle_start_events(self, event):
         if pygame.key.get_pressed()[pygame.K_F12]:
