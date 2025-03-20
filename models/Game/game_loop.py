@@ -12,7 +12,7 @@ from GLOBAL_VAR import *
 from Game.game_state import *
 from Game.reseau import *
 
-executable_path = '../Reseau/boucle/serv.exe'
+executable_path = '../Reseau/boucle/serv'
 
 
 class GameLoop:
@@ -137,7 +137,7 @@ class GameLoop:
                 if run_process.stderr:
                     print("Erreurs :")
                     print(run_process.stderr)
-                self.send_action_via_udp(self, "Rejoindre la partie")
+                self.reseau.send_action_via_udp("Rejoindre la partie")
                 #self.state.states = START # Retour à l'état START pour le moment, ou peut-être un état d'attente
             elif multiplayer_menu_action == "annuler_hebergement":
                 self.multiplayer_menu.menu_state = "principal" # Reset multiplayer menu state
