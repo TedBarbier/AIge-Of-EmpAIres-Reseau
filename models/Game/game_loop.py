@@ -41,7 +41,6 @@ class GameLoop:
         self.num_players = 1
         self.udp_socket_to_receive = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.udp_socket_to_receive.bind(("127.0.0.1", 1234))
-        self.polygon = None
         self.reseau=Send()
     
     def string_to_dict(self, string_data):
@@ -85,7 +84,9 @@ class GameLoop:
                     self.state.map = Map(dict["Map"]["nb_cellX"], dict["Map"]["nb_cellY"])
                     self.state.map.seed = dict["Map"]["seed"]
                     self.state.map.score_players = dict["Map"]["score_players"]
+                    self.state.polygon = dict["Map"]["polygon"]
                     self.num_players = len(self.state.map.players_dict) + 1
+                    print(self.state.map.players_dict)
                     self.state.start_game(self.num_players)
                 else:
                     return(received_message)
@@ -138,6 +139,7 @@ class GameLoop:
                     "mode" : self.state.selected_mode,
                     "speed" : self.state.speed,
                     "nb_players" : self.state.selected_players,
+                    "polygon" : self.state.polygon,
                     # "entity_matrix" : self.state.map.entity_matrix,
                     # "entity_id_dict" : self.state.map.entity_id_dict,
                     # "resource_id_dict" : self.state.map.resource_id_dict,

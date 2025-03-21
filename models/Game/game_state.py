@@ -32,29 +32,8 @@ class GameState:
         self.terminal_camera = TerminalCamera()
         self.music_state = ""
         self.is_multiplayer = False  # Initialize is_multiplayer to False by default (for solo)
+        self.polygon = None
 
-    def reset_for_new_game(self):
-        """
-        Resets the GameState to its initial state, ready for a new game (solo).
-        This includes resetting the is_multiplayer flag to False.
-        """
-        self.states = START
-        self.speed = 1
-        self.selected_map_type = MAP_NORMAL
-        self.selected_mode = LEAN
-        self.selected_players = 2
-        self.map = Map(MAP_CELLX, MAP_CELLY) # Or potentially re-generate a default map if needed
-        self.display_mode = ISO2D
-        self.switch_time_acc = 0
-        self.switch_cooldown = ONE_SEC * (0.2)
-        self.full_screen = False
-        self.mouse_held = False
-        self.screen_width = SCREEN_WIDTH
-        self.screen_height = SCREEN_HEIGHT
-        self.camera = Camera()
-        self.terminal_camera = TerminalCamera()
-        self.music_state = ""
-        self.is_multiplayer = False # Ensure is_multiplayer is reset to False for a new solo game
 
 
     def get_is_multiplayer(self):
@@ -85,17 +64,19 @@ class GameState:
         self.camera = Camera()
         self.terminal_camera = TerminalCamera()
         self.display_mode = ISO2D # Mode d'affichage par défaut
+        self.is_multiplayer = False # Ensure is_multiplayer is reset to False for a new solo game
+        self.polygon = None  # Reset the polygon attribute to None
 
     def endgame(self):
         if self.map.state == "end":
             self.states = END
 
-    def start_game(self, num_player=1):
+    def start_game(self, team=1):
         """Méthode pour démarrer la génération de la carte après que l'utilisateur ait validé ses choix."""
         if self.is_multiplayer == False:
             self.map.generate_map(self.selected_map_type, self.selected_mode, self.selected_players)
         else:
-            self.map.generate_map_multi(self.selected_map_type, self.selected_mode, self.selected_players, num_player)
+            self.polygon = self.map.generate_map_multi(self.selected_map_type, self.selected_mode, self.selected_players, team, self.polygon)
 
     def set_map_size(self, X, Y):
         self.map = Map(X, Y)

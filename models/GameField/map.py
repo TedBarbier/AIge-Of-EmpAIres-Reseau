@@ -431,11 +431,9 @@ class Map:
 
         self.c_generate_clusters(num_players, gen_mode)
 
-    def generate_map_multi(self, gen_mode=MAP_NORMAL, mode=MARINES, selected_player=3, team=1, specific_seed=None):
+    def generate_map_multi(self, gen_mode=MAP_NORMAL, mode=MARINES, selected_player=3, team=1, polygon=None):
         # Set a specific seed if provided, otherwise generate one
-        if specific_seed is not None:
-            self.seed = specific_seed
-        elif self.seed is None:
+        if self.seed is None:
             self.seed = random.randint(0, 100000)
         
         # Use this seed for all random operations
@@ -444,7 +442,7 @@ class Map:
         # Rest of your map generation code
         if gen_mode == "Carte Centree":
             self.generate_gold_center(selected_player)
-        polygon = self._place_player_starting_areas_multi(mode, selected_player, team)
+        polygon = self._place_player_starting_areas_multi(mode, selected_player, team, polygon)
 
         self.c_generate_clusters(selected_player, gen_mode)
         return polygon
