@@ -1,5 +1,4 @@
 # gameloop.py
-import subprocess
 import pygame
 import tkinter as tk
 import socket
@@ -11,8 +10,6 @@ from ImageProcessingDisplay import UserInterface, EndMenu, StartMenu, PauseMenu,
 from GLOBAL_VAR import *
 from Game.game_state import *
 from Game.reseau import *
-
-executable_path = '../Reseau/boucle/serv'
 
 
 class GameLoop:
@@ -41,7 +38,6 @@ class GameLoop:
         self.num_players = 1
         self.udp_socket_to_receive = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.udp_socket_to_receive.bind(("127.0.0.1", 1234))
-        self.polygon = None
         self.reseau=Send()
     
     def string_to_dict(self, string_data):
@@ -69,26 +65,24 @@ class GameLoop:
 
 
     def handle_message(self):
-        buffersize = 1024
+        buffersize = 8192
         readable, _ , _ = select.select([self.udp_socket_to_receive], [], [], 0.1) 
         for s in readable:
             data, addr = s.recvfrom(buffersize)
             if data:
                 received_message = data.decode('utf-8')
-                
                 if "Map" in received_message:
-                    print("received map")
                     dict = self.string_to_dict(received_message)
                     print(dict)
                     self.state.selected_mode = dict["Map"]["mode"]
                     self.state.selected_map_type = dict["Map"]["map_type"]
+                    self.state.selected_players = dict["Map"]["nb_max_players"]
                     self.state.speed = dict["Map"]["speed"]
                     self.state.map = Map(dict["Map"]["nb_cellX"], dict["Map"]["nb_cellY"])
-                    print(self.state.map.seed)
                     self.state.map.seed = dict["Map"]["seed"]
-                    print(self.state.map.seed)
                     self.state.map.score_players = dict["Map"]["score_players"]
-                    self.num_players += 1
+                    self.state.polygon = dict["Map"]["polygon"]
+                    self.num_players = dict["Map"]["nb_player"]
                     self.state.start_game(self.num_players)
                 elif "representation" in received_message:
                     print("received players")
@@ -99,7 +93,6 @@ class GameLoop:
                 else:
                     return(received_message)
             
-
     def handle_start_events(self, event):
         if pygame.key.get_pressed()[pygame.K_F12]:
             loaded = self.state.load()
@@ -138,7 +131,6 @@ class GameLoop:
                 self.state.set_players(self.startmenu.selected_player_count)
                 self.state.start_game()
                 self.state.states = PLAY
-
                 map_send = {"Map" :{
                     "nb_cellX" : self.state.map.nb_CellX,
                     "nb_cellY" : self.state.map.nb_CellY,
@@ -146,6 +138,9 @@ class GameLoop:
                     "map_type" : self.state.selected_map_type,
                     "mode" : self.state.selected_mode,
                     "speed" : self.state.speed,
+                    "nb_max_players" : self.state.selected_players,
+                    "polygon" : self.state.polygon,
+                    "nb_player" : len(self.state.map.players_dict) + 1,
                     # "entity_matrix" : self.state.map.entity_matrix,
                     # "entity_id_dict" : self.state.map.entity_id_dict,
                     # "resource_id_dict" : self.state.map.resource_id_dict,
@@ -155,8 +150,6 @@ class GameLoop:
                 }}
 
                 self.reseau.send_action_via_udp(map_send)
-                print("envoie de la map")
-                print(map_send)
 
                 if self.state.display_mode == TERMINAL:
                     self.state.set_screen_size(20, 20)

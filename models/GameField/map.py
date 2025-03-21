@@ -431,11 +431,9 @@ class Map:
 
         self.c_generate_clusters(num_players, gen_mode)
 
-    def generate_map_multi(self, gen_mode=MAP_NORMAL, mode=MARINES, selected_player=3, team=1, specific_seed=None):
+    def generate_map_multi(self, gen_mode=MAP_NORMAL, mode=MARINES, selected_player=3, team=1, polygon=None):
         # Set a specific seed if provided, otherwise generate one
-        if specific_seed is not None:
-            self.seed = specific_seed
-        elif self.seed is None:
+        if self.seed is None:
             self.seed = random.randint(0, 100000)
         
         # Use this seed for all random operations
@@ -444,7 +442,7 @@ class Map:
         # Rest of your map generation code
         if gen_mode == "Carte Centree":
             self.generate_gold_center(selected_player)
-        polygon = self._place_player_starting_areas_multi(mode, selected_player, team)
+        polygon = self._place_player_starting_areas_multi(mode, selected_player, team, polygon)
 
         self.c_generate_clusters(selected_player, gen_mode)
         return polygon
@@ -579,6 +577,12 @@ class Map:
     def _place_player_starting_areas_multi(self, mode, selected_player, team=1, polygon=None):
         if polygon == None:
             polygon = angle_distribution(self.nb_CellY, self.nb_CellX, selected_player, scale=0.75, rand_rot=0x1)
+        if selected_player == 1:
+            angle = random.uniform(0, 2 * math.pi)
+            radius = min(self.nb_CellX, self.nb_CellY) * 0.3
+            center_X = int(self.nb_CellX // 2 + radius * math.cos(angle))
+            center_Y = int(self.nb_CellY // 2 + radius * math.sin(angle))
+            polygon = [(center_X, center_Y)]
         # Base position for this player's starting area
         center_Y, center_X = polygon[team-1][1], polygon[team-1][0]
 
@@ -586,7 +590,8 @@ class Map:
         current_player = Player(center_Y, center_X, team)
         current_player.linked_map = self
         self.players_dict[current_player.team] = current_player
-        print(self.players_dict.items())
+        print("map.py: _place_player_starting_areas_multi")
+        print(self.players_dict)
 
         if not(self.check_cell(center_Y, center_X)) :
             gen_option = MODE_GENERATION.get(mode)

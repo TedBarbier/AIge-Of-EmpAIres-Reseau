@@ -17,7 +17,7 @@
 
 #define PORT_12345 12345
 #define PORT_8000 8000
-#define BUFFER_SIZE 4096
+#define BUFFER_SIZE 8192
 
 void set_nonblocking(int socket) {
 #ifdef _WIN32

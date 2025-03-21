@@ -642,7 +642,6 @@ class Player:
     def player_turn(self,dt):
         decision = self.game_handler.process_ai_decisions(self.decision_tree)
         context_to_send = self.create_info_entity()
-        print("context_to_send",context_to_send)
         self.game_handler.send.send_action_via_udp(context_to_send)
         self.refl_acc=0
 

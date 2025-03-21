@@ -79,13 +79,13 @@ class Entity():
         """Convertit l'entité en dictionnaire pour transmission réseau"""
         entity_data = {
             "id": self.id,
-            "type": self.__class__.__name__,
+            # "type": self.__class__.__name__,
             "representation": self.representation,
             "team": self.team,
             "cell_X": self.cell_X,
             "cell_Y": self.cell_Y,
-            "sq_size": self.sq_size,
-            "walkable": self.walkable
+            "sq_size": self.sq_size
+            # "walkable": self.walkable
         }
         
         # Ajout de la position si elle existe
@@ -98,10 +98,16 @@ class Entity():
         # Ajout des propriétés spécifiques aux sous-classes
         if hasattr(self, "hp"):
             entity_data["hp"] = self.hp
-            entity_data["max_hp"] = self.max_hp if hasattr(self, "max_hp") else self.hp
+            # entity_data["max_hp"] = self.max_hp if hasattr(self, "max_hp") else self.hp
             
-        if hasattr(self, "state"):
-            entity_data["state"] = self.state
+        # if hasattr(self, "state"):
+        #     entity_data["state"] = self.state
+        
+        # if hasattr(self, "animation_frame"):
+        #     entity_data["animation_frame"] = self.animation_frame
+            
+        #  if hasattr(self, "animation_direction"):
+        #      entity_data["animation_direction"] = self.animation_direction
         
         
         return entity_data
