@@ -74,6 +74,7 @@ class GameLoop:
                 received_message = data.decode('utf-8')
                 if "Map" in received_message:
                     dict = self.string_to_dict(received_message)
+                    print(dict)
                     self.state.selected_mode = dict["Map"]["mode"]
                     self.state.selected_map_type = dict["Map"]["map_type"]
                     self.state.selected_players = dict["Map"]["nb_max_players"]
@@ -83,30 +84,60 @@ class GameLoop:
                     self.state.map.score_players = dict["Map"]["score_players"]
                     self.state.polygon = dict["Map"]["polygon"]
                     self.num_players = dict["Map"]["nb_player"]
-                    print("dictionnaire de joueur")
-                    print(self.state.map.players_dict)
                     self.state.start_game(self.num_players)
                 else:
                     return(received_message)
             
-    def lancer_programme_c(self):
-        # Chemin vers l'exécutable
-        chemin_executable = '../Reseau/boucle/proxy_v3'
-
+    def lancer_programme_en_arriere_plan(self):
         try:
-            # Lancer le programme C
-            resultat = subprocess.run([chemin_executable], check=True, capture_output=True, text=True)
-
-            # Afficher la sortie standard et l'erreur standard
-            print("Sortie standard :")
-            print(resultat.stdout)
-            print("Erreur standard :")
-            print(resultat.stderr)
-        except subprocess.CalledProcessError as e:
-            print(f"Erreur lors de l'exécution du programme : {e}")
+            chemin_executable = '../Reseau/boucle/proxy_v3'
+            
+            # Lancer le programme C en arrière-plan sans bloquer
+            self.processus_c = subprocess.Popen(
+                [chemin_executable],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                bufsize=1,
+                close_fds=True
+            )
+            
+            print(f"Le programme {chemin_executable} a été lancé en arrière-plan.")
+            
+            # Configuration pour lecture non-bloquante (différente selon le système d'exploitation)
+            import platform
+            if platform.system() != "Windows":  # Unix/Linux/Mac
+                try:
+                    import fcntl
+                    import os
+                    fcntl.fcntl(self.processus_c.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
+                    fcntl.fcntl(self.processus_c.stderr.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
+                except (ImportError, AttributeError) as e:
+                    print(f"Configuration non-bloquante non disponible : {e}")
+            else:
+                # Windows n'a pas de mécanisme direct pour configurer les pipes non-bloquants
+                # Nous utiliserons polling au lieu de ça
+                print("Mode Windows détecté - les sorties du processus seront vérifiées périodiquement")
+                
         except FileNotFoundError:
             print("L'exécutable n'a pas été trouvé. Assurez-vous que le programme est compilé.")
+            self.processus_c = None
+        except Exception as e:
+            print(f"Une erreur s'est produite : {e}")
+            self.processus_c = None
 
+    def cleanup(self):
+        # Arrêter proprement le processus C s'il est en cours d'exécution
+        if hasattr(self, 'processus_c') and self.processus_c:
+            print(f"Arrêt du processus réseau (PID: {self.processus_c.pid})...")
+            self.processus_c.terminate()
+            try:
+                # Attendre la fin du processus avec timeout
+                self.processus_c.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                print("Forçage de l'arrêt du processus réseau...")
+                self.processus_c.kill()
+    
     def handle_start_events(self, event):
         if pygame.key.get_pressed()[pygame.K_F12]:
             loaded = self.state.load()
@@ -145,7 +176,7 @@ class GameLoop:
                 self.state.set_players(self.startmenu.selected_player_count)
                 self.state.start_game()
                 self.state.states = PLAY
-                self.lancer_programme_c()
+                self.lancer_programme_en_arriere_plan()
                 map_send = {"Map" :{
                     "nb_cellX" : self.state.map.nb_CellX,
                     "nb_cellY" : self.state.map.nb_CellY,
