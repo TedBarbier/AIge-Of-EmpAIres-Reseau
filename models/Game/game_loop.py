@@ -77,19 +77,16 @@ class GameLoop:
                 received_message = data.decode('utf-8')
                 
                 if "Map" in received_message:
-                    print("received map")
                     dict = self.string_to_dict(received_message)
-                    print(dict)
                     self.state.selected_mode = dict["Map"]["mode"]
                     self.state.selected_map_type = dict["Map"]["map_type"]
                     self.state.selected_players = dict["Map"]["nb_players"]
                     self.state.speed = dict["Map"]["speed"]
                     self.state.map = Map(dict["Map"]["nb_cellX"], dict["Map"]["nb_cellY"])
-                    print(self.state.map.seed)
                     self.state.map.seed = dict["Map"]["seed"]
-                    print(self.state.map.seed)
                     self.state.map.score_players = dict["Map"]["score_players"]
                     self.num_players += 1
+                    print(self.num_players)
                     self.state.start_game(self.num_players)
                 elif received_message == "\"Rejoindre la partie\"" and self.num_players < self.state.selected_players:
                         self.add_new_player()
@@ -154,8 +151,6 @@ class GameLoop:
                 }}
 
                 self.reseau.send_action_via_udp(map_send)
-                print("envoie de la map")
-                print(map_send)
 
                 if self.state.display_mode == TERMINAL:
                     self.state.set_screen_size(20, 20)
@@ -349,6 +344,7 @@ class GameLoop:
     def render_display(self, dt, mouse_x, mouse_y):
         if self.state.states == START: # Utiliser START ici
             self.startmenu.draw()
+            self.num_players = 1
         # elif self.state.states == MULTIMENU: # Utiliser MULTIMENU ici
         #     self.multiplayer_menu.draw()
         # elif self.state.states == CONFIG:
