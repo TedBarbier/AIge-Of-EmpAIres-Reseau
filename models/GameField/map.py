@@ -583,7 +583,7 @@ class Map:
             polygon = [(center_X, center_Y)]
         # Base position for this player's starting area
         center_Y, center_X = polygon[team-1][1], polygon[team-1][0]
-
+        print("map: "+str(team))
 
         current_player = Player(center_Y, center_X, team)
         current_player.linked_map = self
@@ -728,6 +728,7 @@ class Map:
                 'K': Keep
                 }
         for id_data, entity_data in dict_info.items():
+            print("entity")
             if int(id_data) in self.entity_id_dict.keys():  
                 if isinstance(self.get_entity_by_id(int(id_data)), Unit):
                     self.get_entity_by_id(int(id_data)).move_position = PVector2(float(entity_data["position"]["x"]), float(entity_data["position"]["y"]))

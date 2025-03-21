@@ -83,7 +83,6 @@ class GameLoop:
                     self.state.map.score_players = dict["Map"]["score_players"]
                     self.state.polygon = dict["Map"]["polygon"]
                     self.num_players = dict["Map"]["nb_player"]
-                    print(self.num_players)
                     self.state.start_game(self.num_players)
                 elif "representation" in received_message:
                     #print("received players")
@@ -122,6 +121,7 @@ class GameLoop:
                         pygame.HWSURFACE | pygame.DOUBLEBUF,
                     )
             elif start_menu_action == "multiplayer": # If multiplayer is clicked
+                self.num_players = 1
                 self.state.is_multiplayer = True
                 self.state.set_map_size(self.startmenu.map_cell_count_x, self.startmenu.map_cell_count_y)
                 self.state.set_map_type(self.startmenu.map_options[self.startmenu.selected_map_index])
