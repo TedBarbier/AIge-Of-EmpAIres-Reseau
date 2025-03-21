@@ -1,6 +1,6 @@
 #include <errno.h>
 #include <fcntl.h>
-#include <netdb.h> // Include this header for getnameinfo and NI_NUMERICHOST
+#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,7 +22,7 @@
 #define PORT_12345 12345
 #define PORT_1234 1234
 #define MULTICAST_PORT 8000
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 8192
 #define MULTICAST_IP "239.255.255.250"
 
 void set_nonblocking(int socket) {
@@ -67,34 +67,7 @@ void set_multicast_interface(int socket, const char *interface_ip) {
   }
 }
 
-void get_local_ip(char *local_ip) {
-  int sock;
-  struct sockaddr_in serv_addr, local_addr;
-  socklen_t addrlen = sizeof(local_addr);
-
-  if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-    perror("socket");
-    exit(EXIT_FAILURE);
-  }
-
-  memset(&serv_addr, 0, sizeof(serv_addr));
-  serv_addr.sin_family = AF_INET;
-  serv_addr.sin_addr.s_addr = inet_addr("8.8.8.8"); // Google DNS
-  serv_addr.sin_port = htons(53);
-
-  if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
-    perror("connect");
-    close(sock);
-    exit(EXIT_FAILURE);
-  }
-
-  getsockname(sock, (struct sockaddr *)&local_addr, &addrlen);
-  inet_ntop(AF_INET, &(local_addr.sin_addr), local_ip, INET_ADDRSTRLEN);
-
-  close(sock);
-}
-
-void list_interfaces() {
+void list_interfaces(char *selected_interface_ip, int selected_interface) {
 #ifdef _WIN32
   PIP_ADAPTER_ADDRESSES pAddresses = NULL, pCurrentAddress = NULL;
   ULONG flags = GAA_FLAG_INCLUDE_PREFIX;
@@ -128,6 +101,9 @@ void list_interfaces() {
                   INET_ADDRSTRLEN);
         printf("%d: %s (%s)\n", index, pCurrentAddress->AdapterName,
                interface_ip_str);
+        if (index == selected_interface) {
+          strcpy(selected_interface_ip, interface_ip_str);
+        }
         index++;
       }
       pCurrentAddress = pCurrentAddress->Next;
@@ -155,6 +131,9 @@ void list_interfaces() {
       getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), interface_ip,
                   INET_ADDRSTRLEN, NULL, 0, NI_NUMERICHOST);
       printf("%d: %s (%s)\n", index, ifa->ifa_name, interface_ip);
+      if (index == selected_interface) {
+        strcpy(selected_interface_ip, interface_ip);
+      }
       index++;
     }
   }
@@ -252,7 +231,9 @@ int main(int argc, char *argv[]) {
 
   // List available interfaces
   printf("Available interfaces:\n");
-  list_interfaces();
+  char selected_interface_ip[INET_ADDRSTRLEN];
+  list_interfaces(selected_interface_ip,
+                  0); // List interfaces without selecting
 
   // Prompt user to select an interface
   int selected_interface;
@@ -260,75 +241,7 @@ int main(int argc, char *argv[]) {
   scanf("%d", &selected_interface);
 
   // Get the selected interface IP
-  char selected_interface_ip[INET_ADDRSTRLEN];
-#ifdef _WIN32
-  PIP_ADAPTER_ADDRESSES pAddresses = NULL, pCurrentAddress = NULL;
-  ULONG flags = GAA_FLAG_INCLUDE_PREFIX;
-  ULONG family = AF_INET;
-  ULONG outBufLen = 0;
-  DWORD dwRet = 0;
-
-  dwRet = GetAdaptersAddresses(family, flags, NULL, pAddresses, &outBufLen);
-  if (dwRet == ERROR_BUFFER_OVERFLOW) {
-    pAddresses = (PIP_ADAPTER_ADDRESSES)malloc(outBufLen);
-    if (pAddresses == NULL) {
-      perror("malloc for GetAdaptersAddresses failed");
-      exit(EXIT_FAILURE);
-    }
-    dwRet = GetAdaptersAddresses(family, flags, NULL, pAddresses, &outBufLen);
-  }
-
-  if (dwRet == NO_ERROR) {
-    pCurrentAddress = pAddresses;
-    int index = 1;
-    while (pCurrentAddress) {
-      if (pCurrentAddress->OperStatus == IfOperStatusUp &&
-          pCurrentAddress->FirstUnicastAddress != NULL &&
-          pCurrentAddress->FirstUnicastAddress->Address.lpSockaddr->sa_family ==
-              AF_INET) {
-        if (index == selected_interface) {
-          SOCKADDR_IN *pIPv4Addr =
-              (SOCKADDR_IN *)
-                  pCurrentAddress->FirstUnicastAddress->Address.lpSockaddr;
-          inet_ntop(AF_INET, &(pIPv4Addr->sin_addr), selected_interface_ip,
-                    INET_ADDRSTRLEN);
-          break;
-        }
-        index++;
-      }
-      pCurrentAddress = pCurrentAddress->Next;
-    }
-  } else {
-    fprintf(stderr, "GetAdaptersAddresses failed with error: %ld\n", dwRet);
-  }
-
-  if (pAddresses) {
-    free(pAddresses);
-  }
-#else
-  struct ifaddrs *ifaddr, *ifa;
-  if (getifaddrs(&ifaddr) == -1) {
-    perror("getifaddrs");
-    exit(EXIT_FAILURE);
-  }
-
-  int index = 1;
-  for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
-    if (ifa->ifa_addr == NULL)
-      continue;
-    if (ifa->ifa_addr->sa_family == AF_INET) {
-      if (index == selected_interface) {
-        getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in),
-                    selected_interface_ip, INET_ADDRSTRLEN, NULL, 0,
-                    NI_NUMERICHOST);
-        break;
-      }
-      index++;
-    }
-  }
-
-  freeifaddrs(ifaddr);
-#endif
+  list_interfaces(selected_interface_ip, selected_interface);
 
   // Join the multicast group on the selected interface
   join_multicast_group(socket_fd_multicast, MULTICAST_IP,
@@ -343,12 +256,8 @@ int main(int argc, char *argv[]) {
   timeout.tv_sec = 1;
   timeout.tv_usec = 0;
 
-  // Get the local machine's IP address
-  char local_ip[INET_ADDRSTRLEN];
-  get_local_ip(local_ip);
-
   // Print the local IP address
-  printf("Local IP address: %s\n", local_ip);
+  printf("Local IP address: %s\n", selected_interface_ip);
 
   while (1) {
     FD_ZERO(&readfds);
@@ -397,7 +306,7 @@ int main(int argc, char *argv[]) {
         char sender_ip[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &(client_address.sin_addr), sender_ip,
                   INET_ADDRSTRLEN);
-        if (strcmp(sender_ip, local_ip) != 0) {
+        if (strcmp(sender_ip, selected_interface_ip) != 0) {
           printf("Forward it to Python server on localhost\n");
 
           // Forward to Python server on localhost:1234
