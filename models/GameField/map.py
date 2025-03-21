@@ -714,8 +714,8 @@ class Map:
     def create_entity(self, dict_info):
         dict_repr = {
                 'v': Villager,
-                's': Swordsman,
-                'h': Horseman,
+                's': SwordMan,
+                'h': HorseMan,
                 'a': Archer,
                 'am': AxeMan,
                 'ca': CavalryArcher,
