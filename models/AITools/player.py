@@ -633,7 +633,7 @@ class Player:
         representation_list_letter=['v','h', 'a', 's', 'x', 'm', 'c', 'T', 'H', 'C', 'F', 'B', 'S', 'A', 'K', 'W', 'G']
         map_dict={}
         for representation in representation_list_letter:
-            map_send=self.linked_map.players_dict[1].entities_dict.get(representation, None)
+            map_send=self.linked_map.players_dict[self.team].entities_dict.get(representation, None)
             if map_send is not None:
                 for key in map_send.keys():
                     map_dict[key]=map_send[key].to_network_dict()
@@ -641,9 +641,8 @@ class Player:
 
     def player_turn(self,dt):
         decision = self.game_handler.process_ai_decisions(self.decision_tree)
-        #context_to_send = self.create_info_entity()
-        #print("context_to_send",context_to_send)
-        #self.game_handler.send.send_action_via_udp(context_to_send)
+        context_to_send = self.create_info_entity()
+        self.game_handler.send.send_action_via_udp(context_to_send)
         self.refl_acc=0
 
         # # decision = self.ai_profile.decide_action(self.decision_tree, context)
