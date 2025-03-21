@@ -90,23 +90,16 @@ class GameLoop:
                 else:
                     return(received_message)
             
-    def lancer_programme_c(self):
-        # Chemin vers l'exécutable
-        chemin_executable = '../Reseau/boucle/proxy_v3'
-
+    def lancer_programme_en_arriere_plan(self):
         try:
-            # Lancer le programme C
-            resultat = subprocess.run([chemin_executable], check=True, capture_output=True, text=True)
-
-            # Afficher la sortie standard et l'erreur standard
-            print("Sortie standard :")
-            print(resultat.stdout)
-            print("Erreur standard :")
-            print(resultat.stderr)
-        except subprocess.CalledProcessError as e:
-            print(f"Erreur lors de l'exécution du programme : {e}")
+            chemin_executable = '../Reseau/boucle/proxy_v3'
+            # Lancer le programme C en arrière-plan
+            subprocess.Popen([chemin_executable], close_fds=True)
+            print(f"Le programme {chemin_executable} a été lancé en arrière-plan.")
         except FileNotFoundError:
             print("L'exécutable n'a pas été trouvé. Assurez-vous que le programme est compilé.")
+        except Exception as e:
+            print(f"Une erreur s'est produite : {e}")
 
     def handle_start_events(self, event):
         if pygame.key.get_pressed()[pygame.K_F12]:
@@ -146,7 +139,7 @@ class GameLoop:
                 self.state.set_players(self.startmenu.selected_player_count)
                 self.state.start_game()
                 self.state.states = PLAY
-                self.lancer_programme_c()
+                self.lancer_programme_en_arriere_plan()
                 map_send = {"Map" :{
                     "nb_cellX" : self.state.map.nb_CellX,
                     "nb_cellY" : self.state.map.nb_CellY,
