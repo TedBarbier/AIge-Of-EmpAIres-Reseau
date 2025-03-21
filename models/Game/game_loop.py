@@ -12,8 +12,6 @@ from GLOBAL_VAR import *
 from Game.game_state import *
 from Game.reseau import *
 
-executable_path = '../Reseau/boucle/serv'
-
 
 class GameLoop:
     def __init__(self):
@@ -92,6 +90,23 @@ class GameLoop:
                 else:
                     return(received_message)
             
+    def lancer_programme_c(self):
+        # Chemin vers l'exécutable
+        chemin_executable = '../Reseau/boucle/proxy_v3'
+
+        try:
+            # Lancer le programme C
+            resultat = subprocess.run([chemin_executable], check=True, capture_output=True, text=True)
+
+            # Afficher la sortie standard et l'erreur standard
+            print("Sortie standard :")
+            print(resultat.stdout)
+            print("Erreur standard :")
+            print(resultat.stderr)
+        except subprocess.CalledProcessError as e:
+            print(f"Erreur lors de l'exécution du programme : {e}")
+        except FileNotFoundError:
+            print("L'exécutable n'a pas été trouvé. Assurez-vous que le programme est compilé.")
 
     def handle_start_events(self, event):
         if pygame.key.get_pressed()[pygame.K_F12]:
@@ -131,7 +146,7 @@ class GameLoop:
                 self.state.set_players(self.startmenu.selected_player_count)
                 self.state.start_game()
                 self.state.states = PLAY
-
+                self.lancer_programme_c()
                 map_send = {"Map" :{
                     "nb_cellX" : self.state.map.nb_CellX,
                     "nb_cellY" : self.state.map.nb_CellY,
