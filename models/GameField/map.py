@@ -148,18 +148,13 @@ class Map:
         offsetX = 1
         offsetY = 1
 
-        # S'assurer que self.seed est défini si ce n'est pas déjà le cas
-        if self.seed is None:
-            self.seed = random.randint(0, 100000)  # Générer une seed si elle n'existe pas
+        # Create a separate random generator with the map's seed
+        local_random = random.Random(self.seed)
 
-        # Gestion unique du seed aléatoire et des offsets si random_padding est activé
+        # Calculate offsets deterministically if random_padding is enabled
         if random_padding:
-            if self.seed is not None: # Toujours vérifier si self.seed n'est pas None par sécurité
-                random_state = random.getstate() # save current random state
-                random.seed(self.seed) # set the seed for this function's randomness
-
-            offsetY = random.randint(min_spacing, max_spacing)
-            offsetX = random.randint(min_spacing, max_spacing)
+            offsetY = local_random.randint(min_spacing, max_spacing)
+            offsetX = local_random.randint(min_spacing, max_spacing)
 
         while not added:
             startX -= 1
@@ -174,25 +169,22 @@ class Map:
                     ite_list.append((current_Y, current_X))
 
             if random_padding:
-                random.shuffle(ite_list) # Mélange la liste APRÈS avoir construit la liste complète
+                # Use the same deterministic random generator for shuffling
+                local_random.shuffle(ite_list)
 
             for current_Y, current_X in ite_list:
-                if not added: # Cette condition est un peu redondante, mais claire
+                if not added:
                     entity.cell_Y = current_Y
                     entity.cell_X = current_X
 
                     if (self.add_entity(entity)):
                         added = True
                 else:
-                    break # Utile pour sortir de la boucle ite_list si l'entité est ajoutée
-            if added: # Utile pour sortir de la boucle while not added si l'entité est ajoutée
+                    break
+            if added:
                 break
 
-        # Restauration de l'état aléatoire après utilisation (si seed initialement fourni)
-        if random_padding and self.seed is not None:
-            random.setstate(random_state)
-
-        return added # Retourne si l'entité a été ajoutée ou non (utile pour le debugging/logique)
+        return added
 
 
     def add_projectile(self, _projectile):
@@ -422,20 +414,34 @@ class Map:
             current_gold = Gold(self.id_generator,center_Y, center_X, None)
             self.add_entity_to_closest(current_gold, center_Y, center_X, random_padding=0x1)
 
-    def generate_map(self,gen_mode = MAP_NORMAL , mode = MARINES ,num_players=3):
-
-        # Ensure consistent random generation
-
-        #random.seed(0xba)
-
+    def generate_map(self, gen_mode=MAP_NORMAL, mode=MARINES, num_players=3, specific_seed=None):
+        # Set a specific seed if provided, otherwise generate one
+        if specific_seed is not None:
+            self.seed = specific_seed
+        elif self.seed is None:
+            self.seed = random.randint(0, 100000)
+        
+        # Use this seed for all random operations
+        random.seed(self.seed)
+        
+        # Rest of your map generation code...
         if gen_mode == "Carte Centree":
             self.generate_gold_center(num_players)
         self._place_player_starting_areas(mode, num_players)
 
         self.c_generate_clusters(num_players, gen_mode)
 
-    def generate_map_multi(self,gen_mode = MAP_NORMAL , mode = MARINES ,selected_player=3, team=1):
-
+    def generate_map_multi(self, gen_mode=MAP_NORMAL, mode=MARINES, selected_player=3, team=1, specific_seed=None):
+        # Set a specific seed if provided, otherwise generate one
+        if specific_seed is not None:
+            self.seed = specific_seed
+        elif self.seed is None:
+            self.seed = random.randint(0, 100000)
+        
+        # Use this seed for all random operations
+        random.seed(self.seed)
+        
+        # Rest of your map generation code
         if gen_mode == "Carte Centree":
             self.generate_gold_center(selected_player)
         polygon = self._place_player_starting_areas_multi(mode, selected_player, team)
