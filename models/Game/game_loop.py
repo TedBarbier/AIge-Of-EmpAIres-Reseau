@@ -79,13 +79,14 @@ class GameLoop:
                     dict = self.string_to_dict(received_message)
                     self.state.selected_mode = dict["Map"]["mode"]
                     self.state.selected_map_type = dict["Map"]["map_type"]
-                    self.state.selected_players = dict["Map"]["nb_players"]
+                    self.state.selected_players = dict["Map"]["nb_max_players"]
                     self.state.speed = dict["Map"]["speed"]
                     self.state.map = Map(dict["Map"]["nb_cellX"], dict["Map"]["nb_cellY"])
                     self.state.map.seed = dict["Map"]["seed"]
                     self.state.map.score_players = dict["Map"]["score_players"]
                     self.state.polygon = dict["Map"]["polygon"]
-                    self.num_players = len(self.state.map.players_dict) + 1
+                    self.num_players = dict["Map"]["nb_player"]
+                    print("dictionnaire de joueur")
                     print(self.state.map.players_dict)
                     self.state.start_game(self.num_players)
                 else:
@@ -138,8 +139,9 @@ class GameLoop:
                     "map_type" : self.state.selected_map_type,
                     "mode" : self.state.selected_mode,
                     "speed" : self.state.speed,
-                    "nb_players" : self.state.selected_players,
+                    "nb_max_players" : self.state.selected_players,
                     "polygon" : self.state.polygon,
+                    "nb_player" : len(self.state.map.players_dict) + 1,
                     # "entity_matrix" : self.state.map.entity_matrix,
                     # "entity_id_dict" : self.state.map.entity_id_dict,
                     # "resource_id_dict" : self.state.map.resource_id_dict,

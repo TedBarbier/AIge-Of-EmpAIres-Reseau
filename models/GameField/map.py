@@ -590,7 +590,8 @@ class Map:
         current_player = Player(center_Y, center_X, team)
         current_player.linked_map = self
         self.players_dict[current_player.team] = current_player
-        print(self.players_dict.items())
+        print("map.py: _place_player_starting_areas_multi")
+        print(self.players_dict)
 
         if not(self.check_cell(center_Y, center_X)) :
             gen_option = MODE_GENERATION.get(mode)
