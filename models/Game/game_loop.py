@@ -158,8 +158,8 @@ class GameLoop:
                     # "player_dict" : self.state.map.players_dict
                 }}
 
-                print("create",self.create_info_entity())
-                data_send=self.create_info_entity()
+                #print("create",self.create_info_entity())
+                #data_send=self.create_info_entity()
                 self.reseau.send_action_via_udp(map_send)
                 print("envoie de la map")
                 print(map_send)
