@@ -278,8 +278,8 @@ int main(int argc, char *argv[]) {
                    (struct sockaddr *)&client_address, &addrlen);
       if (bytes_received > 0) {
         buffer[bytes_received] = '\0'; // Null-terminate the received data
-        printf("Received message from Python: %s\n", buffer);
-        printf("Forward it to multicast group: %s\n", MULTICAST_IP);
+        // printf("Received message from Python: %s\n", buffer);
+        // printf("Forward it to multicast group: %s\n", MULTICAST_IP);
 
         // Send to multicast group on the selected interface
         set_multicast_interface(socket_fd_multicast, selected_interface_ip);
@@ -300,14 +300,15 @@ int main(int argc, char *argv[]) {
                    (struct sockaddr *)&client_address, &addrlen);
       if (bytes_received > 0) {
         buffer[bytes_received] = '\0'; // Null-terminate the received data
-        printf("Received message from multicast group: %s\n", buffer);
+        // printf("Received message from multicast group: %s\n", buffer);
 
         // Check if the message is from the local machine
         char sender_ip[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &(client_address.sin_addr), sender_ip,
                   INET_ADDRSTRLEN);
         if (strcmp(sender_ip, selected_interface_ip) != 0) {
-          printf("Forward it to Python server on localhost\n");
+          // printf("Forward it to Python server on localhost\n");
+          printf("Received message from multicast group: %s\n", buffer);
 
           // Forward to Python server on localhost:1234
           struct sockaddr_in local_address;
@@ -317,7 +318,7 @@ int main(int argc, char *argv[]) {
           sendto(socket_fd_multicast, buffer, bytes_received, 0,
                  (struct sockaddr *)&local_address, sizeof(local_address));
         } else {
-          printf("Message from self; ignoring.\n");
+          // printf("Message from self; ignoring.\n");
         }
       }
     }
