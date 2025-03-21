@@ -75,6 +75,7 @@ class GameLoop:
                 
                 if "Map" in received_message:
                     dict = self.string_to_dict(received_message)
+                    print(dict)
                     self.state.selected_mode = dict["Map"]["mode"]
                     self.state.selected_map_type = dict["Map"]["map_type"]
                     self.state.selected_players = dict["Map"]["nb_max_players"]
@@ -84,8 +85,6 @@ class GameLoop:
                     self.state.map.score_players = dict["Map"]["score_players"]
                     self.state.polygon = dict["Map"]["polygon"]
                     self.num_players = dict["Map"]["nb_player"]
-                    print("dictionnaire de joueur")
-                    print(self.state.map.players_dict)
                     self.state.start_game(self.num_players)
                 else:
                     return(received_message)
@@ -94,8 +93,13 @@ class GameLoop:
         try:
             chemin_executable = '../Reseau/boucle/proxy_v3'
             # Lancer le programme C en arrière-plan
-            subprocess.Popen([chemin_executable], close_fds=True)
+            processus_c = subprocess.Popen([chemin_executable], close_fds=True)
             print(f"Le programme {chemin_executable} a été lancé en arrière-plan.")
+            stdout, stderr = processus_c.communicate()
+            print("Sortie standard du programme C :")
+            print(stdout)
+            print("Erreur standard du programme C :")
+            print(stderr)
         except FileNotFoundError:
             print("L'exécutable n'a pas été trouvé. Assurez-vous que le programme est compilé.")
         except Exception as e:
