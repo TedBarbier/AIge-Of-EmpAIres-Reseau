@@ -44,10 +44,29 @@ class GameLoop:
         self.polygon = None
         self.reseau=Send()
     
-    def add_new_player(self):
-        self.num_players += 1
-        mode=self.state.selected_mode
-        self.state.map._place_player_starting_areas_multi(mode, self.state.selected_players,self.num_players, self.polygon)
+    def string_to_dict(self, string_data):
+        """
+        Transforme une chaîne de caractères en dictionnaire Python.
+
+        Cette fonction tente d'interpréter la chaîne de caractères comme du JSON.
+        Si la chaîne est au format JSON valide, elle sera convertie en dictionnaire.
+        Sinon, une erreur sera levée.
+
+        Args:
+            string_data: La chaîne de caractères à transformer.
+
+        Returns:
+            Un dictionnaire Python si la chaîne est au format JSON valide.
+            None si la chaîne n'est pas au format JSON valide (et une erreur est affichée).
+        """
+        try:
+            # Utilise json.loads() pour parser la chaîne JSON et la convertir en dictionnaire
+            dictionnaire = json.loads(string_data)
+            return dictionnaire
+        except json.JSONDecodeError as e:
+            print(f"Erreur de décodage JSON : La chaîne n'est pas un JSON valide.\nErreur : {e}")
+            return None # Ou vous pouvez choisir de lever l'exception à nouveau, ou retourner une valeur par défaut
+
 
     def handle_message(self):
         buffersize = 1024
@@ -56,15 +75,33 @@ class GameLoop:
             data, addr = s.recvfrom(buffersize)
             if data:
                 received_message = data.decode('utf-8')
-                if received_message[:3] == "\"Map":
-                    self.reseau.send_action_via_udp("Rejoindre la partie")
+                
+                if "Map" in received_message:
+                    print("on reçoit la map")
+                    dict = self.string_to_dict(received_message)
+                    self.state.selected_mode = dict["Map"]["mode"]
+                    self.state.selected_map_type = dict["Map"]["map_type"]
+                    self.state.speed = dict["Map"]["speed"]
+                    self.state.map = Map(dict["Map"]["nb_cellX"], dict["Map"]["nb_cellY"])
+                    self.state.map.seed = dict["Map"]["seed"]
+                    self.state.map.score_players = dict["Map"]["score_players"]
+                    self.num_players += 1
+                    self.state.start_game(self.num_players)
                 elif received_message == "\"Rejoindre la partie\"" and self.num_players < self.state.selected_players:
                         self.add_new_player()
                         self.reseau.send_action_via_udp("Vous avez rejoint la partie")
                 else:
                     return(received_message)
             
-
+    def create_info_entity(self):
+        representation_list_letter=['v','h', 'a', 's', 'x', 'm', 'c', 'T', 'H', 'C', 'F', 'B', 'S', 'A', 'K', 'W', 'G']
+        map_dict={}
+        for representation in representation_list_letter:
+            map_send=self.state.map.players_dict[1].entities_dict.get(representation, None)
+            if map_send is not None:
+                for key in map_send.keys():
+                    map_dict[key]=map_send[key].to_network_dict()
+        return map_dict
 
     def handle_start_events(self, event):
         if pygame.key.get_pressed()[pygame.K_F12]:
@@ -105,21 +142,27 @@ class GameLoop:
                 self.state.start_game()
                 self.state.states = PLAY
 
+                print(self.state.map.entity_id_dict.values())
                 map_send = {"Map" :{
                     "nb_cellX" : self.state.map.nb_CellX,
                     "nb_cellY" : self.state.map.nb_CellY,
-                    "tile_size_2d" : self.state.map.tile_size_2d,
-                    "region_division" : self.state.map.region_division,
-                    "entity_matrix" : self.state.map.entity_matrix,
-                    "entity_id_dict" : self.state.map.entity_id_dict,
-                    "resource_id_dict" : self.state.map.resource_id_dict,
-                    "dead_entities" : self.state.map.dead_entities,
+                    "seed" : self.state.map.seed,
+                    "map_type" : self.state.selected_map_type,
+                    "mode" : self.state.selected_mode,
+                    "speed" : self.state.speed,
+                    # "entity_matrix" : self.state.map.entity_matrix,
+                    # "entity_id_dict" : self.state.map.entity_id_dict,
+                    # "resource_id_dict" : self.state.map.resource_id_dict,
+                    # "dead_entities" : self.state.map.dead_entities,
                     "score_players" : self.state.map.score_players,
-                    "player_dict" : self.state.map.players_dict
+                    # "player_dict" : self.state.map.players_dict
                 }}
 
-                self.reseau.send_action_via_udp("Envoi de la map")
+                #print("create",self.create_info_entity())
+                #data_send=self.create_info_entity()
                 self.reseau.send_action_via_udp(map_send)
+                print("envoie de la map")
+                print(map_send)
 
                 if self.state.display_mode == TERMINAL:
                     self.state.set_screen_size(20, 20)
@@ -372,6 +415,7 @@ class GameLoop:
 
             if self.state.states == PLAY:
                 self.update_game_state(dt)
+                self.reseau.send_action_via_udp(self.create_info_entity())
                 if self.state.is_multiplayer:
                     self.handle_message()
             self.render_display(dt, mouse_x, mouse_y)

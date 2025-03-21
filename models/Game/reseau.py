@@ -11,12 +11,12 @@ class Send:
 
     def send_action_via_udp(self, context_to_send):
             try:
-                print("try \n")
+                #print("try \n")
                 # Encapsuler l'action dans un objet JSON
                 action_data = context_to_send
                 action_json = json.dumps(action_data)  # Convertir en JSON
-                print(f"Envoi de : {action_json} à {self.udp_host}:{self.udp_port} \n")
+                #print(f"Envoi de : {action_json} à {self.udp_host}:{self.udp_port} \n")
                 self.udp_socket.sendto(action_json.encode('utf-8'), (self.udp_host, self.udp_port))
-                print(f"Action envoyée via UDP : {action_json} \n")
+                #print(f"Action envoyée via UDP : {action_json} \n")
             except Exception as e:
                 print(f"Erreur lors de l'envoi de l'action UDP : {e}")

@@ -3,16 +3,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
+
+#ifdef _WIN32
 #pragma comment(lib, "Ws2_32.lib")
+#pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "iphlpapi.lib")
 #else
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/select.h>
 #include <unistd.h>
+#endif
+
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0600  // Windows Vista ou plus récent
+#endif
+
+#ifndef HAVE_INET_NTOP
+#define inet_ntop InetNtopA
 #endif
 
 #define PORT_12345 12345
@@ -35,11 +45,44 @@ void join_multicast_group(int socket, const char *multicast_ip) {
   struct ip_mreq mreq;
   mreq.imr_multiaddr.s_addr = inet_addr(multicast_ip);
   mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-  if (setsockopt(socket, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) <
+  if (setsockopt(socket, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const char *)&mreq, sizeof(mreq)) <
       0) {
     perror("setsockopt");
     exit(EXIT_FAILURE);
   }
+}
+
+void get_local_ip(char *local_ip) {
+  int sock;
+  struct sockaddr_in serv_addr, local_addr;
+  socklen_t addrlen = sizeof(local_addr);
+
+  if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+    perror("socket");
+    exit(EXIT_FAILURE);
+  }
+
+  memset(&serv_addr, 0, sizeof(serv_addr));
+  serv_addr.sin_family = AF_INET;
+  serv_addr.sin_addr.s_addr = inet_addr("8.8.8.8"); // Google DNS
+  serv_addr.sin_port = htons(53);
+
+  if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+    perror("connect");
+    closesocket(sock);
+    exit(EXIT_FAILURE);
+  }
+
+  getsockname(sock, (struct sockaddr *)&local_addr, &addrlen);
+
+#ifdef _WIN32
+  DWORD ip_size = INET_ADDRSTRLEN;
+  WSAAddressToStringA((struct sockaddr *)&local_addr, sizeof(local_addr), NULL, local_ip, &ip_size);
+#else
+  inet_ntop(AF_INET, &(local_addr.sin_addr), local_ip, INET_ADDRSTRLEN);
+#endif
+
+  closesocket(sock);
 }
 
 int main(int argc, char *argv[]) {
@@ -96,7 +139,7 @@ int main(int argc, char *argv[]) {
 
   // Allow the socket to be reused
   int reuse = 1;
-  if (setsockopt(socket_fd_multicast, SOL_SOCKET, SO_REUSEADDR, &reuse,
+  if (setsockopt(socket_fd_multicast, SOL_SOCKET, SO_REUSEADDR, (const char *)&reuse,
                  sizeof(reuse)) < 0) {
     perror("setsockopt");
     close(socket_fd_12345);
@@ -137,10 +180,10 @@ int main(int argc, char *argv[]) {
 
   // Get the local machine's IP address
   char local_ip[INET_ADDRSTRLEN];
-  struct sockaddr_in local_addr;
-  socklen_t local_addr_len = sizeof(local_addr);
-  getsockname(socket_fd_12345, (struct sockaddr *)&local_addr, &local_addr_len);
-  inet_ntop(AF_INET, &(local_addr.sin_addr), local_ip, INET_ADDRSTRLEN);
+  get_local_ip(local_ip);
+
+  // Print the local IP address
+  printf("Local IP address: %s\n", local_ip);
 
   while (1) {
     FD_ZERO(&readfds);
@@ -186,8 +229,7 @@ int main(int argc, char *argv[]) {
 
         // Check if the message is from the local machine
         char sender_ip[INET_ADDRSTRLEN];
-        inet_ntop(AF_INET, &(client_address.sin_addr), sender_ip,
-                  INET_ADDRSTRLEN);
+        strcpy(sender_ip, inet_ntoa(client_address.sin_addr));
         if (strcmp(sender_ip, local_ip) != 0) {
           printf("Forward it to Python server on localhost\n");
 

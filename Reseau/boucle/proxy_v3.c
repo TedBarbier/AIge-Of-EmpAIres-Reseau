@@ -42,6 +42,33 @@ void join_multicast_group(int socket, const char *multicast_ip) {
   }
 }
 
+void get_local_ip(char *local_ip) {
+  int sock;
+  struct sockaddr_in serv_addr, local_addr;
+  socklen_t addrlen = sizeof(local_addr);
+
+  if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+    perror("socket");
+    exit(EXIT_FAILURE);
+  }
+
+  memset(&serv_addr, 0, sizeof(serv_addr));
+  serv_addr.sin_family = AF_INET;
+  serv_addr.sin_addr.s_addr = inet_addr("8.8.8.8"); // Google DNS
+  serv_addr.sin_port = htons(53);
+
+  if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+    perror("connect");
+    close(sock);
+    exit(EXIT_FAILURE);
+  }
+
+  getsockname(sock, (struct sockaddr *)&local_addr, &addrlen);
+  inet_ntop(AF_INET, &(local_addr.sin_addr), local_ip, INET_ADDRSTRLEN);
+
+  close(sock);
+}
+
 int main(int argc, char *argv[]) {
 #ifdef _WIN32
   WSADATA wsaData;
@@ -137,10 +164,10 @@ int main(int argc, char *argv[]) {
 
   // Get the local machine's IP address
   char local_ip[INET_ADDRSTRLEN];
-  struct sockaddr_in local_addr;
-  socklen_t local_addr_len = sizeof(local_addr);
-  getsockname(socket_fd_12345, (struct sockaddr *)&local_addr, &local_addr_len);
-  inet_ntop(AF_INET, &(local_addr.sin_addr), local_ip, INET_ADDRSTRLEN);
+  get_local_ip(local_ip);
+
+  // Print the local IP address
+  printf("Local IP address: %s\n", local_ip);
 
   while (1) {
     FD_ZERO(&readfds);
