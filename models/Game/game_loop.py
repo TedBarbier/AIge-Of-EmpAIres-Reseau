@@ -73,7 +73,7 @@ class GameLoop:
                 received_message = data.decode('utf-8')
                 if "Map" in received_message:
                     dict = self.string_to_dict(received_message)
-                    print(dict)
+                    self.state.map.players_dict[self.num_players] = None
                     self.state.selected_mode = dict["Map"]["mode"]
                     self.state.selected_map_type = dict["Map"]["map_type"]
                     self.state.selected_players = dict["Map"]["nb_max_players"]

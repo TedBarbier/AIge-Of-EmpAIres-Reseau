@@ -588,8 +588,6 @@ class Map:
         current_player = Player(center_Y, center_X, team)
         current_player.linked_map = self
         self.players_dict[current_player.team] = current_player
-        print("map.py: _place_player_starting_areas_multi")
-        print(self.players_dict)
 
         if not(self.check_cell(center_Y, center_X)) :
             gen_option = MODE_GENERATION.get(mode)
@@ -730,13 +728,13 @@ class Map:
                 'K': Keep
                 }
         for id_data, entity_data in dict_info.items():
+            print(id_data, int(id_data) in self.entity_id_dict.keys())
             if int(id_data) in self.entity_id_dict.keys():  
-                print("in dict") 
-                print(self.get_entity_by_id(id_data))
-                if isinstance(self.get_entity_by_id(id_data), Unit):
-                    self.entity_id_dict[id_data].move_position = entity_data["position"]
-                #self.get_entity_by_id(id_data).update(dt, camera, screen) 
+                if isinstance(self.get_entity_by_id(int(id_data)), Unit):
+                    self.get_entity_by_id(int(id_data)).move_position = PVector2(float(entity_data["position"]["x"]), float(entity_data["position"]["y"]))
+                self.get_entity_by_id(int(id_data)).update(dt, camera, screen) 
             else:
+                
                 new_class = dict_repr.get(entity_data["representation"], Entity)
                 new_entity = new_class(
                 cell_Y=entity_data["cell_Y"],

@@ -26,7 +26,7 @@ class StartMenu:
         self.display_mode = ISO2D
 
         # Volume control
-        self.volume = 0.5  # Default volume (between 0.0 and 1.0)
+        self.volume = 0.0  # Default volume (between 0.0 and 1.0)
 
         # Buttons
         self.buttons = {
