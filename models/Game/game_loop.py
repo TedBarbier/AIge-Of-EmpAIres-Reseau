@@ -82,6 +82,7 @@ class GameLoop:
                     print(dict)
                     self.state.selected_mode = dict["Map"]["mode"]
                     self.state.selected_map_type = dict["Map"]["map_type"]
+                    self.state.selected_players = dict["Map"]["nb_players"]
                     self.state.speed = dict["Map"]["speed"]
                     self.state.map = Map(dict["Map"]["nb_cellX"], dict["Map"]["nb_cellY"])
                     print(self.state.map.seed)
@@ -143,6 +144,7 @@ class GameLoop:
                     "map_type" : self.state.selected_map_type,
                     "mode" : self.state.selected_mode,
                     "speed" : self.state.speed,
+                    "nb_players" : self.state.selected_players,
                     # "entity_matrix" : self.state.map.entity_matrix,
                     # "entity_id_dict" : self.state.map.entity_id_dict,
                     # "resource_id_dict" : self.state.map.resource_id_dict,
