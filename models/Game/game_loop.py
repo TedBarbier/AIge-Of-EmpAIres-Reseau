@@ -92,19 +92,45 @@ class GameLoop:
     def lancer_programme_en_arriere_plan(self):
         try:
             chemin_executable = '../Reseau/boucle/proxy_v3'
-            # Lancer le programme C en arrière-plan
-            processus_c = subprocess.Popen([chemin_executable], close_fds=True)
-            print(f"Le programme {chemin_executable} a été lancé en arrière-plan.")
-            stdout, stderr = processus_c.communicate()
-            print("Sortie standard du programme C :")
-            print(stdout)
-            print("Erreur standard du programme C :")
-            print(stderr)
+            
+            # Lancer le programme C en arrière-plan sans bloquer
+            self.processus_c = subprocess.Popen(
+                [chemin_executable],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                bufsize=1,
+                close_fds=True
+            )
+            
+            print(f"Le programme {chemin_executable} a été lancé en arrière-plan (PID: {self.processus_c.pid}).")
+            
+            # Configuration pour lecture non-bloquante (Windows)
+            if hasattr(self.processus_c.stdout, 'fileno'):
+                import fcntl
+                import os
+                fcntl.fcntl(self.processus_c.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
+                fcntl.fcntl(self.processus_c.stderr.fcntl(), fcntl.F_SETFL, os.O_NONBLOCK)
+                
         except FileNotFoundError:
             print("L'exécutable n'a pas été trouvé. Assurez-vous que le programme est compilé.")
+            self.processus_c = None
         except Exception as e:
             print(f"Une erreur s'est produite : {e}")
+            self.processus_c = None
 
+    def cleanup(self):
+        # Arrêter proprement le processus C s'il est en cours d'exécution
+        if hasattr(self, 'processus_c') and self.processus_c:
+            print(f"Arrêt du processus réseau (PID: {self.processus_c.pid})...")
+            self.processus_c.terminate()
+            try:
+                # Attendre la fin du processus avec timeout
+                self.processus_c.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                print("Forçage de l'arrêt du processus réseau...")
+                self.processus_c.kill()
+    
     def handle_start_events(self, event):
         if pygame.key.get_pressed()[pygame.K_F12]:
             loaded = self.state.load()
