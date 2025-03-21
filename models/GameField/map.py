@@ -148,9 +148,13 @@ class Map:
         offsetX = 1
         offsetY = 1
 
+        # S'assurer que self.seed est défini si ce n'est pas déjà le cas
+        if self.seed is None:
+            self.seed = random.randint(0, 100000)  # Générer une seed si elle n'existe pas
+
         # Gestion unique du seed aléatoire et des offsets si random_padding est activé
         if random_padding:
-            if self.seed is not None:
+            if self.seed is not None: # Toujours vérifier si self.seed n'est pas None par sécurité
                 random_state = random.getstate() # save current random state
                 random.seed(self.seed) # set the seed for this function's randomness
 
@@ -431,10 +435,6 @@ class Map:
         self.c_generate_clusters(num_players, gen_mode)
 
     def generate_map_multi(self,gen_mode = MAP_NORMAL , mode = MARINES ,selected_player=3, team=1):
-
-        # Generate and store the seed
-        self.seed = random.randint(0, 100000) # You can choose a different range if needed
-        random.seed(self.seed)
 
         if gen_mode == "Carte Centrée":
             self.generate_gold_center(selected_player)
