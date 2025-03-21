@@ -103,14 +103,22 @@ class GameLoop:
                 close_fds=True
             )
             
-            print(f"Le programme {chemin_executable} a été lancé en arrière-plan (PID: {self.processus_c.pid}).")
+            print(f"Le programme {chemin_executable} a été lancé en arrière-plan.")
             
-            # Configuration pour lecture non-bloquante (Windows)
-            if hasattr(self.processus_c.stdout, 'fileno'):
-                import fcntl
-                import os
-                fcntl.fcntl(self.processus_c.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
-                fcntl.fcntl(self.processus_c.stderr.fcntl(), fcntl.F_SETFL, os.O_NONBLOCK)
+            # Configuration pour lecture non-bloquante (différente selon le système d'exploitation)
+            import platform
+            if platform.system() != "Windows":  # Unix/Linux/Mac
+                try:
+                    import fcntl
+                    import os
+                    fcntl.fcntl(self.processus_c.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
+                    fcntl.fcntl(self.processus_c.stderr.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
+                except (ImportError, AttributeError) as e:
+                    print(f"Configuration non-bloquante non disponible : {e}")
+            else:
+                # Windows n'a pas de mécanisme direct pour configurer les pipes non-bloquants
+                # Nous utiliserons polling au lieu de ça
+                print("Mode Windows détecté - les sorties du processus seront vérifiées périodiquement")
                 
         except FileNotFoundError:
             print("L'exécutable n'a pas été trouvé. Assurez-vous que le programme est compilé.")
