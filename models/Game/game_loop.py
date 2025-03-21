@@ -77,6 +77,7 @@ class GameLoop:
                 received_message = data.decode('utf-8')
                 
                 if "Map" in received_message:
+                    print("on reçoit la map")
                     dict = self.string_to_dict(received_message)
                     self.state.selected_mode = dict["Map"]["mode"]
                     self.state.selected_map_type = dict["Map"]["map_type"]
@@ -166,7 +167,7 @@ class GameLoop:
                 map_send=self.create_info_entity()
                 self.reseau.send_action_via_udp("Envoi de la map")
                 self.reseau.send_action_via_udp(map_send)
-                print(map_send)
+                print("envoie de la map" + map_send)
 
                 if self.state.display_mode == TERMINAL:
                     self.state.set_screen_size(20, 20)
