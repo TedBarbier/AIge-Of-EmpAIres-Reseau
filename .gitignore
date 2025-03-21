@@ -1,3 +1,6 @@
+# Certificates
+*.pem
+
 # Mac only
 .DS_Store
 
