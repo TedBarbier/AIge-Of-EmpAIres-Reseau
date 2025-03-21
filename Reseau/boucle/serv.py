@@ -28,7 +28,7 @@ def main():
         try:
             # Vérifier si des messages sont reçus
             try:
-                data, addr = server_socket.recvfrom(1024)
+                data, addr = server_socket.recvfrom(8192)
                 print(f"\nReçu de {addr}: {data.decode('utf-8')}")
             except BlockingIOError:
                 pass  # Pas de données disponibles

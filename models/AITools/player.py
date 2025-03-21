@@ -139,40 +139,38 @@ def housing_crisis(context):
 
 # ---- Arbre de décision ----
 tree = DecisionNode(
-    # villagers_insufficient,
-    # yes_action=train_villagers,
     has_farm,
-    no_action=build_structure,
     yes_action=DecisionNode(
-    resources_critical,
-    yes_action=DecisionNode(
-        buildings_insufficient,
-        yes_action=drop_resources,
-        no_action=gather_resources,
-        priority=6
-        ),
-    no_action=DecisionNode(
-        check_housing,
-        yes_action=housing_crisis,    
-        no_action=DecisionNode(    
-            villagers_insufficient,
-            yes_action=train_villager,
-            no_action=DecisionNode(
-                has_enough_military,
-                no_action=train_military,
-                yes_action=DecisionNode(
-                    can_we_attack,
-                    yes_action=attack,
-                    no_action=build_structure,
-                    priority=8
-                ),
-                priority=7
-            ),
+        resources_critical,
+        yes_action=DecisionNode(
+            buildings_insufficient,
+            yes_action=drop_resources,
+            no_action=gather_resources,
             priority=6
         ),
-    priority=5
-    )
-)
+        no_action=DecisionNode(
+            check_housing,
+            yes_action=housing_crisis,    
+            no_action=DecisionNode(    
+                villagers_insufficient,
+                yes_action=train_villager,
+                no_action=DecisionNode(
+                    has_enough_military,
+                    no_action=train_military,
+                    yes_action=DecisionNode(
+                        can_we_attack,
+                        yes_action=attack,
+                        no_action=build_structure,
+                        priority=8
+                    ),
+                    priority=7
+                ),
+                priority=6
+            ),
+            priority=5
+        )
+    ),
+    no_action=build_structure
 )
 
 def choose_strategy(Player):
@@ -641,9 +639,9 @@ class Player:
 
     def player_turn(self,dt):
         decision = self.game_handler.process_ai_decisions(self.decision_tree)
-        #context_to_send = self.create_info_entity()
-        #print("context_to_send",context_to_send)
-        #self.game_handler.send.send_action_via_udp(context_to_send)
+        context_to_send = self.create_info_entity()
+        print("context_to_send",context_to_send)
+        self.game_handler.send.send_action_via_udp(context_to_send)
         self.refl_acc=0
 
         # # decision = self.ai_profile.decide_action(self.decision_tree, context)
