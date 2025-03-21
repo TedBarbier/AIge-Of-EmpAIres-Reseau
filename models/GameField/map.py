@@ -711,7 +711,7 @@ class Map:
             self.update_all_dead_entities(dt)
             self.update_all_players(dt)
 
-    def create_entity(self, dict_info):
+    def create_entity(self, dict_info, dt, camera, screen ):
         dict_repr = {
                 'v': Villager,
                 's': SwordMan,
@@ -729,23 +729,26 @@ class Map:
                 'A': ArcheryRange,
                 'K': Keep
                 }
-        for id2, entity_data in dict_info.items():
-            if id2 in self.entity_id_dict:  
-                return None
-            new_class = dict_repr.get(entity_data["representation"], Entity)
-            new_entity = new_class(
-            cell_Y=entity_data["cell_Y"],
-            cell_X=entity_data["cell_X"],
-            position=entity_data["position"],
-            team=entity_data["team"],
-            representation=entity_data["representation"],
-            id_gen=self.id_generator,
-            hp=entity_data.get("hp"))
-            success = self.add_entity(new_entity)
-            if success:
-                print("create entity with sucess")
+        for id_data, entity_data in dict_info.items():
+            if id_data in self.entity_id_dict:  
+                if isinstance(self.entity_id_dict(id_data), Unit):
+                    self.entity_id_dict(id_data).move_position = PVector2(entity_data["cell_X"], entity_data["cell_Y"]) 
+                self.entity_id_dict(id_data).update(dt, camera, screen)
             else:
-                break
+                new_class = dict_repr.get(entity_data["representation"], Entity)
+                new_entity = new_class(
+                cell_Y=entity_data["cell_Y"],
+                cell_X=entity_data["cell_X"],
+                position=entity_data["position"],
+                team=entity_data["team"],
+                representation=entity_data["representation"],
+                id_gen=self.id_generator,
+                hp=entity_data.get("hp"))
+                success = self.add_entity(new_entity)
+                if success:
+                    print("create entity with sucess")
+                else:
+                    break
 
 
 
