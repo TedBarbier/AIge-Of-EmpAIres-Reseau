@@ -633,7 +633,7 @@ class Player:
         representation_list_letter=['v','h', 'a', 's', 'x', 'm', 'c', 'T', 'H', 'C', 'F', 'B', 'S', 'A', 'K', 'W', 'G']
         map_dict={}
         for representation in representation_list_letter:
-            map_send=self.linked_map.players_dict[1].entities_dict.get(representation, None)
+            map_send=self.linked_map.players_dict[self.team].entities_dict.get(representation, None)
             if map_send is not None:
                 for key in map_send.keys():
                     map_dict[key]=map_send[key].to_network_dict()

@@ -708,7 +708,42 @@ class Map:
             self.update_all_dead_entities(dt)
             self.update_all_players(dt)
 
-
+    def create_entity(self, dict_info):
+        dict_repr = {
+                'v': Villager,
+                's': Swordsman,
+                'h': Horseman,
+                'a': Archer,
+                'am': AxeMan,
+                'ca': CavalryArcher,
+                'sm': SpearMan,
+                'T': TownCenter,
+                'H': House,
+                'C': Camp,
+                'F': Farm,
+                'B': Barracks,
+                'S': Stable,
+                'A': ArcheryRange,
+                'K': Keep
+                }
+        for id2, entity_data in dict_info.items():
+            if id2 in self.entity_id_dict:  
+                return None
+            new_class = dict_repr.get(entity_data["representation"], Entity)
+            new_entity = new_class(
+            cell_Y=entity_data["cell_Y"],
+            cell_X=entity_data["cell_X"],
+            position=entity_data["position"],
+            team=entity_data["team"],
+            representation=entity_data["representation"],
+            sq_size=entity_data["sq_size"],
+            id=id2,
+            hp=entity_data.get("hp"))
+            success = self.add_entity(new_entity)
+            if success:
+                print("create entity with sucess")
+            else:
+                break
 
 
 

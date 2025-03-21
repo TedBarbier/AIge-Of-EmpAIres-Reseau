@@ -90,6 +90,9 @@ class GameLoop:
                     self.state.map.score_players = dict["Map"]["score_players"]
                     self.num_players += 1
                     self.state.start_game(self.num_players)
+                elif "representation" in received_message:
+                    print("received players")
+                    self.state.map.create_entity(received_message)
                 elif received_message == "\"Rejoindre la partie\"" and self.num_players < self.state.selected_players:
                         self.add_new_player()
                         self.reseau.send_action_via_udp("Vous avez rejoint la partie")
