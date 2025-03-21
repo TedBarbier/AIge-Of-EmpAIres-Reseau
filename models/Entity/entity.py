@@ -83,8 +83,8 @@ class Entity():
             "representation": self.representation,
             "team": self.team,
             "cell_X": self.cell_X,
-            "cell_Y": self.cell_Y,
-            "sq_size": self.sq_size
+            "cell_Y": self.cell_Y
+            # "sq_size": self.sq_size
             # "walkable": self.walkable
         }
         
