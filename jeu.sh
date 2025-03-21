@@ -1,7 +1,10 @@
 #!/bin/bash
 
+# Chemin vers le répertoire contenant le script Python
+PYTHON_SCRIPT_DIR="models"
+
 # Chemin vers le script Python
-PYTHON_SCRIPT="models/main.py"
+PYTHON_SCRIPT="$PYTHON_SCRIPT_DIR/main.py"
 
 # Chemin vers l'exécutable
 EXECUTABLE="Reseau/boucle/proxy_v3.exe"
@@ -13,17 +16,16 @@ then
     exit 1
 fi
 
+# Changer de répertoire vers le dossier contenant le script Python
+cd "$PYTHON_SCRIPT_DIR" || { echo "Impossible de changer de répertoire vers $PYTHON_SCRIPT_DIR"; exit 1; }
+
 # Lancer le script Python
 echo "Lancement du script Python..."
 python3 "$PYTHON_SCRIPT"
 
-# Vérifiez si Wine est installé (nécessaire pour exécuter des .exe sous Linux)
-if ! command -v wine &> /dev/null
-then
-    echo "Wine n'est pas installé. Veuillez installer Wine pour exécuter des fichiers .exe sous Linux."
-    exit 1
-fi
+# Revenir au répertoire d'origine
+cd - || { echo "Impossible de revenir au répertoire d'origine"; exit 1; }
 
-# Lancer l'exécutable avec Wine
+# Lancer l'exécutable
 echo "Lancement de l'exécutable..."
 wine "$EXECUTABLE"
