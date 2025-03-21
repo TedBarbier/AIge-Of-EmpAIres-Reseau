@@ -22,8 +22,6 @@ def main():
     print("Tapez votre message et appuyez sur Enter pour l'envoyer")
     print("Tapez 'quit' pour quitter")
 
-    message_buffer = ""
-
     while True:
         try:
             # Vérifier si des messages sont reçus
@@ -35,17 +33,12 @@ def main():
 
             # Vérifier si une entrée clavier est disponible
             if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
-                char = sys.stdin.read(1)
-                if char == '\n':  # Enter
-                    if message_buffer:
-                        client_socket.sendto(message_buffer.encode('utf-8'), target_address)
-                        print(f"\nMessage envoyé: {message_buffer}")
-                        message_buffer = ""
-                        print()  # Nouvelle ligne
-                else:
-                    # Afficher le caractère et l'ajouter au buffer
-                    print(char, end='', flush=True)
-                    message_buffer += char
+                message_buffer = sys.stdin.readline().rstrip('\n')  # Lire la ligne complète
+                if message_buffer.lower() == 'quit':
+                    print("Arrêt du programme...")
+                    break
+                client_socket.sendto(message_buffer.encode('utf-8'), target_address)
+                print(f"\nMessage envoyé: {message_buffer}")
 
             # Petit délai pour éviter de surcharger le CPU
             time.sleep(0.01)
