@@ -268,7 +268,7 @@ class Player:
         self.linked_map = None
 
         self.decision_tree= tree
-        strat = choose_strategy(self)
+        strat = ["balanced",1,1] #choose_strategy(self)
         self.ai_profile = AIProfile(strategy = strat[0], aggressiveness= strat[1], defense = strat[2])
         udp_host = "127.0.0.1"
         udp_port = 12345
