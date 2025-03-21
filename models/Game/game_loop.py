@@ -64,7 +64,7 @@ class GameLoop:
             return None # Ou vous pouvez choisir de lever l'exception à nouveau, ou retourner une valeur par défaut
 
 
-    def handle_message(self):
+    def handle_message(self, dt, camera, screen):
         buffersize = 8192
         readable, _ , _ = select.select([self.udp_socket_to_receive], [], [], 0.1) 
         for s in readable:
