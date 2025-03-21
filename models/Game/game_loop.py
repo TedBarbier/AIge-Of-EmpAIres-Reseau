@@ -82,10 +82,7 @@ class GameLoop:
                     self.state.selected_mode = dict["Map"]["mode"]
                     self.state.selected_map_type = dict["Map"]["map_type"]
                     self.state.speed = dict["Map"]["speed"]
-                    self.state.map.nb_CellX = dict["Map"]["nb_cellX"]
-                    self.state.map.nb_CellY = dict["Map"]["nb_cellY"]
-                    self.state.map.tile_size_2d = dict["Map"]["tile_size_2d"]
-                    self.state.map.region_division = dict["Map"]["region_division"]
+                    self.state.map = Map(dict["Map"]["nb_cellX"], dict["Map"]["nb_cellY"])
                     self.state.map.seed = dict["Map"]["seed"]
                     self.state.map.score_players = dict["Map"]["score_players"]
                     self.num_players += 1
@@ -139,8 +136,6 @@ class GameLoop:
                 map_send = {"Map" :{
                     "nb_cellX" : self.state.map.nb_CellX,
                     "nb_cellY" : self.state.map.nb_CellY,
-                    "tile_size_2d" : self.state.map.tile_size_2d,
-                    "region_division" : self.state.map.region_division,
                     "seed" : self.state.map.seed,
                     "map_type" : self.state.selected_map_type,
                     "mode" : self.state.selected_mode,
