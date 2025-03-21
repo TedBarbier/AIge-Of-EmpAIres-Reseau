@@ -165,7 +165,6 @@ class GameLoop:
 
                 print("create",self.create_info_entity())
                 map_send=self.create_info_entity()
-                self.reseau.send_action_via_udp("Envoi de la map")
                 self.reseau.send_action_via_udp(map_send)
                 print("envoie de la map" + map_send)
 
