@@ -416,9 +416,7 @@ class Map:
 
     def generate_map(self, gen_mode=MAP_NORMAL, mode=MARINES, num_players=3, specific_seed=None):
         # Set a specific seed if provided, otherwise generate one
-        if specific_seed is not None:
-            self.seed = specific_seed
-        elif self.seed is None:
+        if self.seed is None:
             self.seed = random.randint(0, 100000)
         
         # Use this seed for all random operations
