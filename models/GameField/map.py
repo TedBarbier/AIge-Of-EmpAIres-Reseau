@@ -739,8 +739,7 @@ class Map:
             position=entity_data["position"],
             team=entity_data["team"],
             representation=entity_data["representation"],
-            sq_size=entity_data["sq_size"],
-            id=id2,
+            idgen=self.id_generator,
             hp=entity_data.get("hp"))
             success = self.add_entity(new_entity)
             if success:
