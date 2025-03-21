@@ -156,6 +156,7 @@ class GameLoop:
 
                 self.reseau.send_action_via_udp("Envoi de la map")
                 self.reseau.send_action_via_udp(map_send)
+                print(map_send)
 
                 if self.state.display_mode == TERMINAL:
                     self.state.set_screen_size(20, 20)

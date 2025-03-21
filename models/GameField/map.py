@@ -428,7 +428,7 @@ class Map:
 
         #random.seed(0xba)
 
-        if gen_mode == "Carte Centrée":
+        if gen_mode == "Carte Centree":
             self.generate_gold_center(num_players)
         self._place_player_starting_areas(mode, num_players)
 
@@ -436,7 +436,7 @@ class Map:
 
     def generate_map_multi(self,gen_mode = MAP_NORMAL , mode = MARINES ,selected_player=3, team=1):
 
-        if gen_mode == "Carte Centrée":
+        if gen_mode == "Carte Centree":
             self.generate_gold_center(selected_player)
         polygon = self._place_player_starting_areas_multi(mode, selected_player, team)
 

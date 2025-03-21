@@ -12,7 +12,7 @@ class StartMenu:
         self.editing_map_cell_count_y = False
 
         # Map type options
-        self.map_options = ["Carte Normal", "Carte Centrée"]
+        self.map_options = ["Carte Normal", "Carte Centree"]
         self.selected_map_index = MAP_NORMAL
 
         # Game mode options
