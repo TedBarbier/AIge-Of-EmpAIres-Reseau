@@ -730,11 +730,13 @@ class Map:
                 'K': Keep
                 }
         for id_data, entity_data in dict_info.items():
-            print(id_data, entity_data)
-            if id_data in self.entity_id_dict:  
+            print(id_data in self.entity_id_dict.keys())
+            if id_data in self.entity_id_dict.keys():  
+                print("in dict") 
                 if isinstance(self.entity_id_dict(id_data), Unit):
-                    self.entity_id_dict(id_data).move_position = PVector2(entity_data["cell_X"], entity_data["cell_Y"]) 
+                    self.entity_id_dict(id_data).move_position = entity_data["position"]
                 self.entity_id_dict(id_data).update(dt, camera, screen)
+                
             else:
                 new_class = dict_repr.get(entity_data["representation"], Entity)
                 new_entity = new_class(
