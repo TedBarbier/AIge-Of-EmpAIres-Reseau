@@ -96,15 +96,6 @@ class GameLoop:
                 else:
                     return(received_message)
             
-    def create_info_entity(self):
-        representation_list_letter=['v','h', 'a', 's', 'x', 'm', 'c', 'T', 'H', 'C', 'F', 'B', 'S', 'A', 'K', 'W', 'G']
-        map_dict={}
-        for representation in representation_list_letter:
-            map_send=self.state.map.players_dict[1].entities_dict.get(representation, None)
-            if map_send is not None:
-                for key in map_send.keys():
-                    map_dict[key]=map_send[key].to_network_dict()
-        return map_dict
 
     def handle_start_events(self, event):
         if pygame.key.get_pressed()[pygame.K_F12]:
@@ -145,7 +136,6 @@ class GameLoop:
                 self.state.start_game()
                 self.state.states = PLAY
 
-                print(self.state.map.entity_id_dict.values())
                 map_send = {"Map" :{
                     "nb_cellX" : self.state.map.nb_CellX,
                     "nb_cellY" : self.state.map.nb_CellY,
@@ -163,8 +153,6 @@ class GameLoop:
                     # "player_dict" : self.state.map.players_dict
                 }}
 
-                print("create",self.create_info_entity())
-                data_send=self.create_info_entity()
                 self.reseau.send_action_via_udp(map_send)
                 print("envoie de la map")
                 print(map_send)
@@ -420,7 +408,6 @@ class GameLoop:
 
             if self.state.states == PLAY:
                 self.update_game_state(dt)
-                self.reseau.send_action_via_udp(self.create_info_entity())
                 if self.state.is_multiplayer:
                     self.handle_message()
             self.render_display(dt, mouse_x, mouse_y)

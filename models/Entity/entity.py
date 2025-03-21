@@ -102,12 +102,7 @@ class Entity():
             
         if hasattr(self, "state"):
             entity_data["state"] = self.state
-            
-        if hasattr(self, "animation_frame"):
-            entity_data["animation_frame"] = self.animation_frame
-            
-        if hasattr(self, "animation_direction"):
-            entity_data["animation_direction"] = self.animation_direction
+        
         
         return entity_data
     
