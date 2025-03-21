@@ -87,7 +87,7 @@ class GameLoop:
                 elif "representation" in received_message:
                     #print("received players")
                     dict = self.string_to_dict(received_message)
-                    self.state.map.create_entity(dict)
+                    self.state.map.create_entity(dict, dt, camera, screen)
                 else:
                     return(received_message)
             
@@ -401,7 +401,7 @@ class GameLoop:
             if self.state.states == PLAY:
                 self.update_game_state(dt)
                 if self.state.is_multiplayer:
-                    self.handle_message()
+                    self.handle_message(dt, self.state.camera, self.screen)
             self.render_display(dt, mouse_x, mouse_y)
 
 
