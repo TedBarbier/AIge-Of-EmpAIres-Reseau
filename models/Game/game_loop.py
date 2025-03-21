@@ -83,6 +83,8 @@ class GameLoop:
                     self.state.map.score_players = dict["Map"]["score_players"]
                     self.state.polygon = dict["Map"]["polygon"]
                     self.num_players = dict["Map"]["nb_player"]
+                    for i in range(1, self.num_players):
+                        self.state.map._place_player_starting_areas_multi(self.state.selected_mode, self.state.selected_players, i, self.state.polygon)
                     self.state.start_game(self.num_players)
                 elif "representation" in received_message:
                     #print("received players")
