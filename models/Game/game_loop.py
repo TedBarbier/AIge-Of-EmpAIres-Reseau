@@ -65,13 +65,12 @@ class GameLoop:
 
 
     def handle_message(self):
-        buffersize = 1024
+        buffersize = 8192
         readable, _ , _ = select.select([self.udp_socket_to_receive], [], [], 0.1) 
         for s in readable:
             data, addr = s.recvfrom(buffersize)
             if data:
                 received_message = data.decode('utf-8')
-                
                 if "Map" in received_message:
                     dict = self.string_to_dict(received_message)
                     print(dict)
