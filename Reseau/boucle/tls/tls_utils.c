@@ -10,36 +10,6 @@
 #define IV_LENGTH 16
 #define BLOCK_SIZE 16
 
-SSL_CTX *create_tls_context() {
-  const SSL_METHOD *method;
-  SSL_CTX *ctx;
-
-  method = TLS_server_method();
-
-  ctx = SSL_CTX_new(method);
-  if (!ctx) {
-    perror("Unable to create TLS context");
-    ERR_print_errors_fp(stderr);
-    exit(EXIT_FAILURE);
-  }
-
-  return ctx;
-}
-
-void configure_tls_context(SSL_CTX *ctx) {
-  SSL_CTX_set_ecdh_auto(ctx, 1);
-
-  /* Set the key and cert */
-  if (SSL_CTX_use_certificate_file(ctx, "cert.pem", SSL_FILETYPE_PEM) <= 0) {
-    ERR_print_errors_fp(stderr);
-    exit(EXIT_FAILURE);
-  }
-  if (SSL_CTX_use_PrivateKey_file(ctx, "key.pem", SSL_FILETYPE_PEM) <= 0) {
-    ERR_print_errors_fp(stderr);
-    exit(EXIT_FAILURE);
-  }
-}
-
 void pkcs7_pad(unsigned char *data, int *data_len, int block_size) {
   int padding_len = block_size - (*data_len % block_size);
   for (int i = 0; i < padding_len; i++) {

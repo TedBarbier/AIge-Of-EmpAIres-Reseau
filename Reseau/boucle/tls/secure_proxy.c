@@ -4,8 +4,6 @@
 #include <fcntl.h>
 #include <ifaddrs.h>
 #include <netdb.h>
-#include <openssl/err.h>
-#include <openssl/ssl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -74,16 +72,6 @@ int main(int argc, char *argv[]) {
   int socket_fd_12345, socket_fd_multicast;
   struct sockaddr_in address_12345, multicast_addr, client_address;
   socklen_t addrlen = sizeof(address_12345);
-
-  SSL_CTX *ctx;
-
-  /* TLS Initialization */
-  SSL_load_error_strings();
-  OpenSSL_add_ssl_algorithms();
-
-  /* Create TLS context */
-  ctx = create_tls_context();
-  configure_tls_context(ctx);
 
   /* Create socket for port 12345 */
   if ((socket_fd_12345 = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
@@ -168,10 +156,10 @@ int main(int argc, char *argv[]) {
   /* Print the local IP address */
   printf("Local IP address: %s\n", selected_interface_ip);
 
-  unsigned char key[EVP_MAX_KEY_LENGTH];
-  unsigned char iv[EVP_MAX_IV_LENGTH];
-  memset(key, 'A', EVP_MAX_KEY_LENGTH);
-  memset(iv, 'B', EVP_MAX_IV_LENGTH);
+  unsigned char key[KEY_LENGTH];
+  unsigned char iv[IV_LENGTH];
+  memset(key, 'A', KEY_LENGTH);
+  memset(iv, 'B', IV_LENGTH);
 
   while (1) {
     FD_ZERO(&readfds);
@@ -246,7 +234,6 @@ int main(int argc, char *argv[]) {
 
   close(socket_fd_12345);
   close(socket_fd_multicast);
-  SSL_CTX_free(ctx);
 
   return 0;
 }
