@@ -77,13 +77,16 @@ class GameLoop:
                 received_message = data.decode('utf-8')
                 
                 if "Map" in received_message:
-                    print("on reçoit la map")
+                    print("received map")
                     dict = self.string_to_dict(received_message)
+                    print(dict)
                     self.state.selected_mode = dict["Map"]["mode"]
                     self.state.selected_map_type = dict["Map"]["map_type"]
                     self.state.speed = dict["Map"]["speed"]
                     self.state.map = Map(dict["Map"]["nb_cellX"], dict["Map"]["nb_cellY"])
+                    print(self.state.map.seed)
                     self.state.map.seed = dict["Map"]["seed"]
+                    print(self.state.map.seed)
                     self.state.map.score_players = dict["Map"]["score_players"]
                     self.num_players += 1
                     self.state.start_game(self.num_players)
