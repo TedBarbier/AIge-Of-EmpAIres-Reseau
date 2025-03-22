@@ -13,7 +13,7 @@ class GameEventHandler:
         all_action = []
         context = self.get_context_for_player()
         actions = self.ai_profiles.decide_action(tree, context)
-        dict_actions={"update":actions}
+        dict_actions={"update":actions, "get_context_to_send" : self.get_context_to_send()}
         self.send.send_action_via_udp(dict_actions)
         all_action.append(actions)
         # self.send.send_action_via_udp(context)

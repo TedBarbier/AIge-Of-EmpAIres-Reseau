@@ -87,10 +87,10 @@ class GameLoop:
                     print(self.num_players)
                     self.state.start_game(self.num_players)
                     self.reseau.send_action_via_udp({"players": self.num_players})
-                elif "representation" in received_message:
-                    #print("received players")
-                    dict = self.string_to_dict(received_message)
-                    self.state.map.create_entity(dict)
+                # elif "representation" in received_message:
+                #     #print("received players")
+                #     dict = self.string_to_dict(received_message)
+                #     self.state.map.create_entity(dict)
                 elif "players" in received_message:
                     # print("players", received_message)
                     dict = self.string_to_dict(received_message)
@@ -100,7 +100,11 @@ class GameLoop:
                     self.state.set_speed(int(dict["speed"]))
                 elif "update" in received_message:
                     dict = self.string_to_dict(received_message)
-                    self.state.map.update_entity(dict, dt, camera, screen)
+                    if dict["get_context_to_send"]["player"] != self.num_players :
+                        self.state.map.update_entity(dict, dt, camera, screen)
+                        player=self.state.map.players_dict[dict["get_context_to_send"]["player"]]
+                        self.state.map.players_dict[self.num_players].ai_profile.strategy(dict["update"], dict["get_context_to_send"],player)
+
                 else:
                     return(received_message)
             
