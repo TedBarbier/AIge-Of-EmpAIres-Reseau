@@ -3,9 +3,9 @@ from storage import *
 
 class Camp(Building):
 
-    def __init__(self,id_gen, cell_Y, cell_X, position, team,representation = 'C', sq_size = 2, hp = 200, cost = {"gold":0,"wood":100,"food":0}, build_time = 25):
+    def __init__(self,id_gen, cell_Y, cell_X, position, team,representation = 'C', sq_size = 2, hp = 200, cost = {"gold":0,"wood":100,"food":0}, build_time = 25, id=None):
         global CAMP_ARRAY_3D
-        super().__init__(id_gen,cell_Y, cell_X, position, team,representation, sq_size, hp, cost, build_time)
+        super().__init__(id_gen,cell_Y, cell_X, position, team,representation, sq_size, hp, cost, build_time, id)
         self.storage = Storage()
 
     def display(self, dt, screen, camera, g_width, g_height):

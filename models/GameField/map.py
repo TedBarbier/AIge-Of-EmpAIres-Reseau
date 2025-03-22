@@ -585,8 +585,6 @@ class Map:
             polygon = [(center_X, center_Y)]
         # Base position for this player's starting area
         center_Y, center_X = polygon[team-1][1], polygon[team-1][0]
-        print("map: "+str(team))
-
         current_player = Player(center_Y, center_X, team)
         current_player.linked_map = self
         self.players_dict[current_player.team] = current_player
@@ -743,6 +741,7 @@ class Map:
                 team=entity_data["team"],
                 representation=entity_data["representation"],
                 id_gen=self.id_generator,
+                id = id_data,
                 hp=entity_data.get("hp"))
                 success = self.add_entity(new_entity)
                 if success:

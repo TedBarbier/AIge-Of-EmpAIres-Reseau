@@ -12,8 +12,8 @@ PROJECTILE_TYPE_MAPPING = {
 
 class RangedUnit(Unit):
 
-    def __init__(self,id_gen, cell_Y, cell_X, position, team, representation, hp, cost, training_time, speed, attack, attack_speed , _range, _projetctile_type):
-        super().__init__(id_gen,cell_Y, cell_X, position, team, representation, hp, cost, training_time, speed, attack, attack_speed, _range)
+    def __init__(self,id_gen, cell_Y, cell_X, position, team, representation, hp, cost, training_time, speed, attack, attack_speed , _range, _projetctile_type, id=None):
+        super().__init__(id_gen,cell_Y, cell_X, position, team, representation, hp, cost, training_time, speed, attack, attack_speed, _range, id)
         self.projetctile_type = _projetctile_type
         self.projetctile_padding = None 
         self.last = pygame.time.get_ticks()

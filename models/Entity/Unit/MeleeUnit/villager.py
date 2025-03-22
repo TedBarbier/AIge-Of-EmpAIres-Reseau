@@ -5,8 +5,8 @@ from Entity.Resources.resources import Resources
 
 class Villager(MeleeUnit):
 
-    def __init__(self,id_gen, cell_Y, cell_X, position, team, representation = 'v', hp = 25, cost = {"gold":0,"wood":0,"food":50}, training_time = 5, speed = 0.8, attack = 2, attack_speed= 1.4, collect_ratio_per_min = 25):
-        super().__init__(id_gen,cell_Y, cell_X, position, team, representation, hp, cost, training_time, speed, attack, attack_speed)
+    def __init__(self,id_gen, cell_Y, cell_X, position, team, representation = 'v', hp = 25, cost = {"gold":0,"wood":0,"food":50}, training_time = 5, speed = 0.8, attack = 2, attack_speed= 1.4, collect_ratio_per_min = 25, id=None):
+        super().__init__(id_gen,cell_Y, cell_X, position, team, representation, hp, cost, training_time, speed, attack, attack_speed, id)
         
         self.resources = {"gold":0, "wood":0, "food":0}
 

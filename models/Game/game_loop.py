@@ -92,7 +92,7 @@ class GameLoop:
                     self.state.map.create_entity(dict, dt, camera, screen)
                 elif "players" in received_message:
                     dict = self.string_to_dict(received_message)
-                    print(dict)
+                    print(dict, self.num_players)
                     self.state.map._place_player_starting_areas_multi(self.state.selected_mode, self.state.selected_players, dict["players"], self.state.polygon)
                 else:
                     return(received_message)

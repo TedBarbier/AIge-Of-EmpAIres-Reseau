@@ -4,8 +4,8 @@ from idgen import *
 from Entity.entity import * 
 class Building(Entity):
 
-    def __init__(self, id_gen,cell_Y, cell_X, position, team,representation, sq_size, hp, cost, build_time, walkable = False):
-        super().__init__(id_gen,cell_Y, cell_X, position, team, representation, sq_size)
+    def __init__(self, id_gen,cell_Y, cell_X, position, team,representation, sq_size, hp, cost, build_time, walkable = False, id=None):
+        super().__init__(id_gen,cell_Y, cell_X, position, team, representation, sq_size, id=None)
         self.hp = hp
         self.max_hp = hp
         self.cost = cost

@@ -21,8 +21,8 @@ TRAINABLE_UNITS = {
 
 class TrainingBuilding(Building):
 
-    def __init__(self, id_gen,cell_Y, cell_X, position, team,representation, sq_size, hp, cost, build_time, trainable_units):
-        super().__init__(id_gen,cell_Y, cell_X, position, team,representation, sq_size, hp, cost, build_time)
+    def __init__(self, id_gen,cell_Y, cell_X, position, team,representation, sq_size, hp, cost, build_time, trainable_units, id=None):
+        super().__init__(id_gen,cell_Y, cell_X, position, team,representation, sq_size, hp, cost, build_time, id)
         self.trainable_units = trainable_units
 
         self.time_left = None

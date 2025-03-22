@@ -3,9 +3,9 @@ from storage import *
 from habitat import *
 class TownCenter(TrainingBuilding):
 
-    def __init__(self, id_gen,cell_Y, cell_X, position, team, representation = 'T', sq_size = 4, hp = 1000, cost = {"gold":0,"wood":350,"food":0}, build_time = 150, trainable_units = ['v']):
+    def __init__(self, id_gen,cell_Y, cell_X, position, team, representation = 'T', sq_size = 4, hp = 1000, cost = {"gold":0,"wood":350,"food":0}, build_time = 150, trainable_units = ['v'], id=None):
         
-        super().__init__(id_gen,cell_Y, cell_X, position, team, representation, sq_size, hp, cost, build_time, trainable_units)
+        super().__init__(id_gen,cell_Y, cell_X, position, team, representation, sq_size, hp, cost, build_time, trainable_units, id)
         self.storage = Storage()
         self.habitat = Habitat(5)
 

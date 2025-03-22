@@ -2,9 +2,9 @@ from Entity.Building.building import *
 from habitat import *
 class House(Building):
 
-    def __init__(self,id_gen, cell_Y, cell_X, position, team,representation = 'H', sq_size = 2, hp = 200, cost = {"gold":0,"wood":25,"food":0}, build_time = 25):
+    def __init__(self,id_gen, cell_Y, cell_X, position, team,representation = 'H', sq_size = 2, hp = 200, cost = {"gold":0,"wood":25,"food":0}, build_time = 25, id=None):
         global HOUSES_ARRAY_3D
-        super().__init__(id_gen,cell_Y, cell_X, position, team,representation, sq_size, hp, cost, build_time)
+        super().__init__(id_gen,cell_Y, cell_X, position, team,representation, sq_size, hp, cost, build_time, id)
         self.habitat = Habitat(5)
         self.display_choice = random.randint(0, len(HOUSES_ARRAY_3D) - 1)
     

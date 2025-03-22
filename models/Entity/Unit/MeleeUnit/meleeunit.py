@@ -1,8 +1,8 @@
 from Entity.Unit.unit import *
 
 class MeleeUnit(Unit):
-    def __init__(self,id_gen, cell_Y, cell_X, position, team, representation, hp, cost, training_time, speed, attack, attack_speed):
-        super().__init__(id_gen,cell_Y, cell_X, position, team, representation, hp, cost, training_time, speed, attack, attack_speed)
+    def __init__(self,id_gen, cell_Y, cell_X, position, team, representation, hp, cost, training_time, speed, attack, attack_speed, id=None):
+        super().__init__(id_gen,cell_Y, cell_X, position, team, representation, hp, cost, training_time, speed, attack, attack_speed, id)
         self.start = pygame.time.get_ticks()
     def try_to_damage(self, dt, entity):
 
