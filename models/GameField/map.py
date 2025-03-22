@@ -441,8 +441,7 @@ class Map:
         if gen_mode == "Carte Centree":
             self.generate_gold_center(selected_player)
         for i in range(1, team+1):
-            print(i)
-            polygon = self._place_player_starting_areas_multi(mode, selected_player, i, polygon)
+            polygon = self._place_player_starting_areas_multi(mode, selected_player, team, i, polygon)
 
         self.c_generate_clusters(selected_player, gen_mode)
         return polygon
@@ -574,7 +573,7 @@ class Map:
             current_player.add_resources(current_player_resources)
 
 
-    def _place_player_starting_areas_multi(self, mode, selected_player, team=1, polygon=None):
+    def _place_player_starting_areas_multi(self, mode, selected_player, num_players ,team=1, polygon=None):
         if polygon == None:
             polygon = angle_distribution(self.nb_CellY, self.nb_CellX, selected_player, scale=0.75, rand_rot=0x1)
         if selected_player == 1:
@@ -585,7 +584,7 @@ class Map:
             polygon = [(center_X, center_Y)]
         # Base position for this player's starting area
         center_Y, center_X = polygon[team-1][1], polygon[team-1][0]
-        current_player = Player(center_Y, center_X, team)
+        current_player = Player(center_Y, center_X, team, num_players, True)
         current_player.linked_map = self
         self.players_dict[current_player.team] = current_player
 
@@ -605,7 +604,7 @@ class Map:
                         current_player.current_population += 1
 
                     self.add_entity_to_closest(entity_instance, current_player.cell_Y, current_player.cell_X, random_padding=0x01)
-
+        print("gen_option", gen_option)
         current_player_resources = gen_option.get("resources").copy() # we dont want togive it as a pointer else all players will share the same resources haha
         current_player.add_resources(current_player_resources)
         return polygon
@@ -709,7 +708,7 @@ class Map:
             self.update_all_dead_entities(dt)
             self.update_all_players(dt)
 
-    def create_entity(self, dict_info, dt, camera, screen ):
+    def create_entity(self, dict_info):
         dict_repr = {
                 'v': Villager,
                 's': SwordMan,
@@ -729,11 +728,7 @@ class Map:
                 }
         for id_data, entity_data in dict_info.items():
             id_data = int(id_data)
-            if id_data in self.entity_id_dict.keys():  
-                if isinstance(self.get_entity_by_id(id_data), Unit):
-                    self.get_entity_by_id(id_data).move_position = PVector2(float(entity_data["position"]["x"]), float(entity_data["position"]["y"]))
-                self.get_entity_by_id(id_data).update(dt, camera, screen) 
-            else:
+            if id_data not in self.entity_id_dict.keys():  
                 new_class = dict_repr.get(entity_data["representation"], Entity)
                 new_entity = new_class(
                 cell_Y=entity_data["cell_Y"],
@@ -750,6 +745,8 @@ class Map:
                 else:
                     break
 
+    def update_entity(self, dict, dt, camera, screen):
+        print(dict)
 
 
 
