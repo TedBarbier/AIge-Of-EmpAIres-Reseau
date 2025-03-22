@@ -254,7 +254,7 @@ def choose_strategy(Player):
 
 class Player:
     
-    def __init__(self, cell_Y, cell_X, team, is_multiplayer= False):
+    def __init__(self, cell_Y, cell_X, team, num_players, is_multiplayer= False):
         self.team = team
         self.cell_Y = cell_Y
         self.cell_X = cell_X
@@ -268,7 +268,12 @@ class Player:
         self.linked_map = None
 
         self.decision_tree= tree
-        strat = ["balanced",1,1] #choose_strategy(self)
+        if self.team == num_players and is_multiplayer:
+            strat = choose_strategy(self)
+        elif not is_multiplayer:
+            strat = choose_strategy(self)
+        else:
+            strat = ["balanced",1,1] 
         if is_multiplayer:
             self.ai_profile = None
         else:

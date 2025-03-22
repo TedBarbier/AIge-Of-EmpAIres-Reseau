@@ -441,8 +441,7 @@ class Map:
         if gen_mode == "Carte Centree":
             self.generate_gold_center(selected_player)
         for i in range(1, team+1):
-            print(i)
-            polygon = self._place_player_starting_areas_multi(mode, selected_player, i, polygon)
+            polygon = self._place_player_starting_areas_multi(mode, selected_player, team, i, polygon)
 
         self.c_generate_clusters(selected_player, gen_mode)
         return polygon
@@ -574,7 +573,7 @@ class Map:
             current_player.add_resources(current_player_resources)
 
 
-    def _place_player_starting_areas_multi(self, mode, selected_player, team=1, polygon=None):
+    def _place_player_starting_areas_multi(self, mode, selected_player, num_players ,team=1, polygon=None):
         if polygon == None:
             polygon = angle_distribution(self.nb_CellY, self.nb_CellX, selected_player, scale=0.75, rand_rot=0x1)
         if selected_player == 1:
@@ -585,7 +584,7 @@ class Map:
             polygon = [(center_X, center_Y)]
         # Base position for this player's starting area
         center_Y, center_X = polygon[team-1][1], polygon[team-1][0]
-        current_player = Player(center_Y, center_X, team, True)
+        current_player = Player(center_Y, center_X, team, num_players, True)
         current_player.linked_map = self
         self.players_dict[current_player.team] = current_player
 
