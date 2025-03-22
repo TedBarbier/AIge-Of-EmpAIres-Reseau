@@ -76,7 +76,17 @@ class GameEventHandler:
             'resources': self.players.get_current_resources(),
             'buildings': {
                 'storage': self.players.get_entities_by_class(['T','C']),
-                'training': self.players.get_entities_by_class(['B','S','A'])
+                'training': self.players.get_entities_by_class(['B','S','A']),
+                'ratio': {
+                    'T': len(self.players.entities_dict['T']) / sum(len(self.players.entities_dict[k]) for k in self.players.entities_dict.keys()) if 'T' in self.players.entities_dict.keys() else 0,
+                    'H': len(self.players.entities_dict['H']) / sum(len(self.players.entities_dict[k]) for k in self.players.entities_dict.keys()) if 'H' in self.players.entities_dict.keys() else 0,
+                    'C': len(self.players.entities_dict['C']) / sum(len(self.players.entities_dict[k]) for k in self.players.entities_dict.keys()) if 'C' in self.players.entities_dict.keys() else 0,
+                    'F': len(self.players.entities_dict['F']) / sum(len(self.players.entities_dict[k]) for k in self.players.entities_dict.keys()) if 'F' in self.players.entities_dict.keys() else 0,
+                    'B': len(self.players.entities_dict['B']) / sum(len(self.players.entities_dict[k]) for k in self.players.entities_dict.keys()) if 'B' in self.players.entities_dict.keys() else 0,
+                    'S': len(self.players.entities_dict['S']) / sum(len(self.players.entities_dict[k]) for k in self.players.entities_dict.keys()) if 'S' in self.players.entities_dict.keys() else 0,
+                    'A': len(self.players.entities_dict['A']) / sum(len(self.players.entities_dict[k]) for k in self.players.entities_dict.keys()) if 'A' in self.players.entities_dict.keys() else 0,
+                    'K': len(self.players.entities_dict['K']) / sum(len(self.players.entities_dict[k]) for k in self.players.entities_dict.keys()) if 'K' in self.players.entities_dict.keys() else 0,
+                }
             },
             'units': {
                 'military_free': [self.players.get_entities_by_class(['h', 'a', 's', 'm', 'c', 'x'], is_free=True)],
