@@ -74,6 +74,7 @@ class GameLoop:
                 if "Map" in received_message:
                     dict = self.string_to_dict(received_message)
                     self.state.map.players_dict[self.num_players].reset(dict["Map"]["nb_cellX"],dict["Map"]["nb_cellY"], self.num_players)
+                    print(self.state.map.players_dict[self.num_players])
                     self.state.selected_mode = dict["Map"]["mode"]
                     self.state.selected_map_type = dict["Map"]["map_type"]
                     self.state.selected_players = dict["Map"]["nb_max_players"]
@@ -83,8 +84,8 @@ class GameLoop:
                     self.state.map.score_players = dict["Map"]["score_players"]
                     self.state.polygon = dict["Map"]["polygon"]
                     self.num_players = int(dict["Map"]["nb_player"])
+                    print(self.num_players)
                     self.state.start_game(self.num_players)
-                    print("send num_players")
                     self.reseau.send_action_via_udp({"players": self.num_players})
                 elif "representation" in received_message:
                     #print("received players")
@@ -92,7 +93,7 @@ class GameLoop:
                     self.state.map.create_entity(dict, dt, camera, screen)
                 elif "players" in received_message:
                     dict = self.string_to_dict(received_message)
-                    self.state.map._place_player_starting_areas_multi(self.state.selected_mode, self.state.selected_players, dict["players"], self.state.polygon)
+                    self.state.map._place_player_starting_areas_multi(self.state.selected_mode, self.state.selected_players, self.num_players, dict["players"], self.state.polygon)
                 elif "speed" in received_message:
                     dict = self.string_to_dict(received_message)
                     self.state.set_speed(int(dict["speed"]))

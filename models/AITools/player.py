@@ -639,7 +639,6 @@ class Player:
 
         self.refl_acc +=dt
         if self.refl_acc>ONE_SEC/3:
-            print(self.team, self.num_players)
             if self.is_multiplayer and self.team == self.num_players:
                 self.player_turn(dt)
             elif not self.is_multiplayer:

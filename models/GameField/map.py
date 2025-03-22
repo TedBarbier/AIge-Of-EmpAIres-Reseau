@@ -583,6 +583,7 @@ class Map:
             center_Y = int(self.nb_CellY // 2 + radius * math.sin(angle))
             polygon = [(center_X, center_Y)]
         # Base position for this player's starting area
+        print("type", str(type(team)), str(team))
         center_Y, center_X = polygon[team-1][1], polygon[team-1][0]
         current_player = Player(center_Y, center_X, team, num_players, True)
         current_player.linked_map = self
