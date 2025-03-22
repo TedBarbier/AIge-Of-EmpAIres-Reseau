@@ -84,10 +84,14 @@ class GameLoop:
                     self.state.polygon = dict["Map"]["polygon"]
                     self.num_players = dict["Map"]["nb_player"]
                     self.state.start_game(self.num_players)
+                    self.reseau.send_action_via_udp({"players": self.num_players})
                 elif "representation" in received_message:
                     #print("received players")
                     dict = self.string_to_dict(received_message)
                     self.state.map.create_entity(dict, dt, camera, screen)
+                elif "players" in received_message:
+                    dict = self.string_to_dict(received_message)
+                    self.state.map._place_player_starting_areas(self.state.selected_mode, int(dict["players"]))
                 else:
                     return(received_message)
             
