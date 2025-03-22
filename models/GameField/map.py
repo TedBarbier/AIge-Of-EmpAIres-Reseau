@@ -708,7 +708,7 @@ class Map:
             self.update_all_dead_entities(dt)
             self.update_all_players(dt)
 
-    def create_entity(self, dict_info, dt, camera, screen ):
+    def create_entity(self, dict_info):
         dict_repr = {
                 'v': Villager,
                 's': SwordMan,
@@ -728,13 +728,7 @@ class Map:
                 }
         for id_data, entity_data in dict_info.items():
             id_data = int(id_data)
-            print(entity_data)
-            if id_data in self.entity_id_dict.keys():  
-                print("update entity with sucess", str(self.entity_id_dict[id_data].team))
-                #if isinstance(self.get_entity_by_id(id_data), Unit):
-                    #self.get_entity_by_id(id_data).
-                self.update_all_events(dt, camera, screen)
-            else:
+            if id_data not in self.entity_id_dict.keys():  
                 new_class = dict_repr.get(entity_data["representation"], Entity)
                 new_entity = new_class(
                 cell_Y=entity_data["cell_Y"],
@@ -751,6 +745,8 @@ class Map:
                 else:
                     break
 
+    def update_entity(self, dict, dt, camera, screen):
+        print(dict)
 
 
 
