@@ -254,7 +254,7 @@ def choose_strategy(Player):
 
 class Player:
     
-    def __init__(self, cell_Y, cell_X, team):
+    def __init__(self, cell_Y, cell_X, team, is_multiplayer= False):
         self.team = team
         self.cell_Y = cell_Y
         self.cell_X = cell_X
@@ -269,7 +269,10 @@ class Player:
 
         self.decision_tree= tree
         strat = ["balanced",1,1] #choose_strategy(self)
-        self.ai_profile = None
+        if is_multiplayer:
+            self.ai_profile = None
+        else:
+            self.ai_profile = AIProfile(strat[0],strat[1],strat[2])
         udp_host = "127.0.0.1"
         udp_port = 12345
         self.game_handler = GameEventHandler(self.linked_map,self,self.ai_profile)

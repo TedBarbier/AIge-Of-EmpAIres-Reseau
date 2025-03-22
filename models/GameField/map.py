@@ -585,7 +585,7 @@ class Map:
             polygon = [(center_X, center_Y)]
         # Base position for this player's starting area
         center_Y, center_X = polygon[team-1][1], polygon[team-1][0]
-        current_player = Player(center_Y, center_X, team)
+        current_player = Player(center_Y, center_X, team, True)
         current_player.linked_map = self
         self.players_dict[current_player.team] = current_player
 
