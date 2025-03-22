@@ -85,7 +85,8 @@ class GameEventHandler:
             },
             'enemy_id': None,
             'drop_off_id': self.players.ect(['T', 'C'], self.players.cell_Y, self.players.cell_X)[0] if self.players.ect(['T', 'C'], self.players.cell_Y, self.players.cell_X) else None,
-            'player': self.players.team
+            'player': self.players.team,
+            'strategy': self.players.ai_profile.strategy
         }
         return context
     
