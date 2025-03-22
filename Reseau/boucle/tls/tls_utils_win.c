@@ -1,6 +1,7 @@
 #include "tls_utils.h"
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/hmac.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,6 +25,51 @@ void pkcs7_unpad(unsigned char *data, int *data_len, int block_size) {
   int padding_len = data[*data_len - 1];
   printf("Padding length: %d\n", padding_len);
   *data_len -= padding_len;
+}
+
+void generate_hmac(const unsigned char *hmac_key, const unsigned char *message,
+                   int message_len, unsigned char *hmac) {
+    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
+    EVP_PKEY *pkey = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL, hmac_key, HMAC_KEY_LENGTH);
+    
+    if (!ctx || !pkey) {
+        fprintf(stderr, "Error creating HMAC context or key\n");
+        if (ctx) EVP_MD_CTX_free(ctx);
+        if (pkey) EVP_PKEY_free(pkey);
+        exit(EXIT_FAILURE);
+    }
+
+    if (EVP_DigestSignInit(ctx, NULL, EVP_sha256(), NULL, pkey) <= 0) {
+        fprintf(stderr, "Error initializing HMAC\n");
+        EVP_MD_CTX_free(ctx);
+        EVP_PKEY_free(pkey);
+        exit(EXIT_FAILURE);
+    }
+
+    if (EVP_DigestSignUpdate(ctx, message, message_len) <= 0) {
+        fprintf(stderr, "Error updating HMAC\n");
+        EVP_MD_CTX_free(ctx);
+        EVP_PKEY_free(pkey);
+        exit(EXIT_FAILURE);
+    }
+
+    size_t hmac_len;
+    if (EVP_DigestSignFinal(ctx, hmac, &hmac_len) <= 0) {
+        fprintf(stderr, "Error finalizing HMAC\n");
+        EVP_MD_CTX_free(ctx);
+        EVP_PKEY_free(pkey);
+        exit(EXIT_FAILURE);
+    }
+
+    EVP_MD_CTX_free(ctx);
+    EVP_PKEY_free(pkey);
+}
+
+int verify_hmac(const unsigned char *hmac_key, const unsigned char *message,
+                 int message_len, const unsigned char *received_hmac) {
+    unsigned char calculated_hmac[HMAC_LENGTH];
+    generate_hmac(hmac_key, message, message_len, calculated_hmac);
+    return memcmp(calculated_hmac, received_hmac, HMAC_LENGTH) == 0;
 }
 
 void encrypt_message(const unsigned char *key, const unsigned char *iv,
