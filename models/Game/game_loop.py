@@ -92,11 +92,15 @@ class GameLoop:
                     dict = self.string_to_dict(received_message)
                     self.state.map.create_entity(dict, dt, camera, screen)
                 elif "players" in received_message:
+                    # print("players", received_message)
                     dict = self.string_to_dict(received_message)
                     self.state.map._place_player_starting_areas_multi(self.state.selected_mode, self.state.selected_players, self.num_players, dict["players"], self.state.polygon)
                 elif "speed" in received_message:
                     dict = self.string_to_dict(received_message)
                     self.state.set_speed(int(dict["speed"]))
+                elif "update" in received_message:
+                    # print("update", received_message)
+                    dict = self.string_to_dict(received_message)
                 else:
                     return(received_message)
             
