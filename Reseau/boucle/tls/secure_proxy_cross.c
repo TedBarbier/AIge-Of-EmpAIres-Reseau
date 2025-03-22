@@ -1,3 +1,13 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <errno.h>
+#include <time.h>
+#include <sys/time.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/hmac.h>
 #include "tls_utils.h"
 
 #ifdef _WIN32
@@ -7,11 +17,10 @@
     #include <windows.h>
     #pragma comment(lib, "ws2_32.lib")
     #pragma comment(lib, "iphlpapi.lib")
-    #define SOCKET_ERROR_VAL SOCKET_ERROR
-    #define INVALID_SOCK INVALID_SOCKET
-    #define CLOSE_SOCKET closesocket
-    typedef SOCKET sock_t;
-    typedef int socklen_t;
+    typedef SOCKET socket_t;
+    #define SOCKET_ERROR_VAL INVALID_SOCKET
+    #define CLOSE_SOCKET(s) closesocket(s)
+    #define SOCKET_ERRNO WSAGetLastError()
 #else
     #include <arpa/inet.h>
     #include <sys/socket.h>
@@ -19,12 +28,10 @@
     #include <netinet/in.h>
     #include <netdb.h>
     #include <ifaddrs.h>
-    #include <unistd.h>
-    #include <fcntl.h>
+    typedef int socket_t;
     #define SOCKET_ERROR_VAL -1
-    #define INVALID_SOCK -1
-    #define CLOSE_SOCKET close
-    typedef int sock_t;
+    #define CLOSE_SOCKET(s) close(s)
+    #define SOCKET_ERRNO errno
 #endif
 
 #include <stdio.h>
@@ -36,9 +43,13 @@
 #define MULTICAST_PORT 8000
 #define BUFFER_SIZE 1024
 #define MULTICAST_IP "239.255.255.250"
+#define MAX_MSG_SIZE 1024
+#define MULTICAST_GROUP "239.0.0.1"
+#define PORT 5000
+#define MAX_INTERFACES 10
 
 #ifdef _WIN32
-void set_nonblocking(sock_t socket) {
+void set_nonblocking(socket_t socket) {
     u_long mode = 1;
     if (ioctlsocket(socket, FIONBIO, &mode) == SOCKET_ERROR) {
         perror("ioctlsocket");
@@ -46,7 +57,7 @@ void set_nonblocking(sock_t socket) {
     }
 }
 #else
-void set_nonblocking(sock_t socket) {
+void set_nonblocking(socket_t socket) {
     int flags = fcntl(socket, F_GETFL, 0);
     fcntl(socket, F_SETFL, flags | O_NONBLOCK);
 }
@@ -109,7 +120,7 @@ void list_interfaces(char *selected_interface_ip, int selected_interface) {
 }
 #endif
 
-void join_multicast_group(sock_t socket, const char *multicast_ip, const char *interface_ip) {
+void join_multicast_group(socket_t socket, const char *multicast_ip, const char *interface_ip) {
     struct ip_mreq mreq;
     mreq.imr_multiaddr.s_addr = inet_addr(multicast_ip);
     mreq.imr_interface.s_addr = inet_addr(interface_ip);
@@ -123,7 +134,7 @@ void join_multicast_group(sock_t socket, const char *multicast_ip, const char *i
     }
 }
 
-void set_multicast_interface(sock_t socket, const char *interface_ip) {
+void set_multicast_interface(socket_t socket, const char *interface_ip) {
     struct in_addr interface_addr;
     interface_addr.s_addr = inet_addr(interface_ip);
     #ifdef _WIN32
@@ -136,6 +147,51 @@ void set_multicast_interface(sock_t socket, const char *interface_ip) {
     }
 }
 
+// Fonction pour convertir une chaîne hexadécimale en tableau d'octets
+int hex_to_bytes(const char *hex, unsigned char *bytes, size_t len) {
+    for (size_t i = 0; i < len; i++) {
+        if (sscanf(hex + 2*i, "%2hhx", &bytes[i]) != 1) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+// Fonction pour lire une clé depuis le fichier de configuration
+int read_key_from_file(const char *filename, const char *key_name, unsigned char *key, size_t key_len) {
+    FILE *file = fopen(filename, "r");
+    if (!file) {
+        fprintf(stderr, "Erreur lors de l'ouverture du fichier %s\n", filename);
+        return 0;
+    }
+
+    char line[256];
+    char *value = NULL;
+    while (fgets(line, sizeof(line), file)) {
+        if (line[0] == '#' || line[0] == '\n') continue; // Ignorer les commentaires et lignes vides
+        if (strncmp(line, key_name, strlen(key_name)) == 0 && line[strlen(key_name)] == '=') {
+            value = line + strlen(key_name) + 1;
+            // Supprimer le retour à la ligne si présent
+            char *newline = strchr(value, '\n');
+            if (newline) *newline = '\0';
+            break;
+        }
+    }
+    fclose(file);
+
+    if (!value) {
+        fprintf(stderr, "Clé %s non trouvée dans le fichier\n", key_name);
+        return 0;
+    }
+
+    if (!hex_to_bytes(value, key, key_len)) {
+        fprintf(stderr, "Format de clé invalide pour %s\n", key_name);
+        return 0;
+    }
+
+    return 1;
+}
+
 int main(int argc, char *argv[]) {
     #ifdef _WIN32
     WSADATA wsaData;
@@ -145,11 +201,11 @@ int main(int argc, char *argv[]) {
     }
     #endif
 
-    sock_t socket_fd_12345, socket_fd_multicast;
+    socket_t socket_fd_12345, socket_fd_multicast;
     struct sockaddr_in address_12345, multicast_addr, client_address;
     socklen_t addrlen = sizeof(address_12345);
 
-    if ((socket_fd_12345 = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCK) {
+    if ((socket_fd_12345 = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET) {
         perror("socket failed");
         #ifdef _WIN32
         WSACleanup();
@@ -163,7 +219,7 @@ int main(int argc, char *argv[]) {
     address_12345.sin_addr.s_addr = INADDR_ANY;
     address_12345.sin_port = htons(PORT_12345);
 
-    if (bind(socket_fd_12345, (struct sockaddr *)&address_12345, sizeof(address_12345)) == SOCKET_ERROR_VAL) {
+    if (bind(socket_fd_12345, (struct sockaddr *)&address_12345, sizeof(address_12345)) == SOCKET_ERROR) {
         perror("bind failed");
         CLOSE_SOCKET(socket_fd_12345);
         #ifdef _WIN32
@@ -174,7 +230,7 @@ int main(int argc, char *argv[]) {
 
     printf("Proxy listening on port 12345\n");
 
-    if ((socket_fd_multicast = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCK) {
+    if ((socket_fd_multicast = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET) {
         perror("socket failed");
         CLOSE_SOCKET(socket_fd_12345);
         #ifdef _WIN32
@@ -205,7 +261,7 @@ int main(int argc, char *argv[]) {
     multicast_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     multicast_addr.sin_port = htons(MULTICAST_PORT);
 
-    if (bind(socket_fd_multicast, (struct sockaddr *)&multicast_addr, sizeof(multicast_addr)) == SOCKET_ERROR_VAL) {
+    if (bind(socket_fd_multicast, (struct sockaddr *)&multicast_addr, sizeof(multicast_addr)) == SOCKET_ERROR) {
         perror("bind failed");
         CLOSE_SOCKET(socket_fd_12345);
         CLOSE_SOCKET(socket_fd_multicast);
@@ -237,12 +293,17 @@ int main(int argc, char *argv[]) {
 
     printf("Local IP address: %s\n", selected_interface_ip);
 
-    unsigned char key[KEY_LENGTH];
+    // Lire les clés depuis le fichier
+    unsigned char encryption_key[KEY_LENGTH];
     unsigned char iv[IV_LENGTH];
     unsigned char hmac_key[HMAC_KEY_LENGTH];
-    memset(key, 'A', KEY_LENGTH);
-    memset(iv, 'B', IV_LENGTH);
-    memset(hmac_key, 'C', HMAC_KEY_LENGTH);
+
+    if (!read_key_from_file("clef.txt", "encryption_key", encryption_key, KEY_LENGTH) ||
+        !read_key_from_file("clef.txt", "iv", iv, IV_LENGTH) ||
+        !read_key_from_file("clef.txt", "hmac_key", hmac_key, HMAC_KEY_LENGTH)) {
+        fprintf(stderr, "Erreur lors de la lecture des clés\n");
+        return 1;
+    }
 
     while (1) {
         FD_ZERO(&readfds);
@@ -255,7 +316,7 @@ int main(int argc, char *argv[]) {
         int activity = select(FD_SETSIZE, &readfds, NULL, NULL, &timeout);
         #endif
 
-        if (activity == SOCKET_ERROR_VAL) {
+        if (activity == SOCKET_ERROR) {
             perror("select error");
             break;
         }
@@ -271,7 +332,7 @@ int main(int argc, char *argv[]) {
 
                 unsigned char encrypted_message[BUFFER_SIZE];
                 int encrypted_length;
-                encrypt_message(key, iv, buffer, encrypted_message, &encrypted_length);
+                encrypt_message(encryption_key, iv, buffer, encrypted_message, &encrypted_length);
 
                 unsigned char hmac[HMAC_LENGTH];
                 generate_hmac(hmac_key, encrypted_message, encrypted_length, hmac);
@@ -318,7 +379,7 @@ int main(int argc, char *argv[]) {
 
                 unsigned char decrypted_message[BUFFER_SIZE];
                 int decrypted_length = encrypted_length;
-                decrypt_message(key, iv, encrypted_message, decrypted_message, &decrypted_length);
+                decrypt_message(encryption_key, iv, encrypted_message, decrypted_message, &decrypted_length);
 
                 struct sockaddr_in local_address;
                 local_address.sin_family = AF_INET;
