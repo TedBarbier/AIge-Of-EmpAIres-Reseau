@@ -269,7 +269,7 @@ class Player:
 
         self.decision_tree= tree
         strat = ["balanced",1,1] #choose_strategy(self)
-        self.ai_profile = AIProfile(strategy = strat[0], aggressiveness= strat[1], defense = strat[2])
+        self.ai_profile = None
         udp_host = "127.0.0.1"
         udp_port = 12345
         self.game_handler = GameEventHandler(self.linked_map,self,self.ai_profile)
@@ -644,6 +644,32 @@ class Player:
         context_to_send = self.create_info_entity()
         self.game_handler.send.send_action_via_udp(context_to_send)
         self.refl_acc=0
+
+    def reset(self, cell_Y, cell_X, team):
+        self.team = team
+        self.cell_Y = cell_Y
+        self.cell_X = cell_X
+        self.storages_id = set() # resource storages
+        self.houses_id = set() # towncenters and habitats
+
+        self.current_population = 0
+        self.homeless_units = 0
+
+        self.entities_dict = {}
+        self.linked_map = None
+
+        self.decision_tree= tree
+        strat = ["balanced",1,1] #choose_strategy(self)
+        self.ai_profile = None
+        udp_host = "127.0.0.1"
+        udp_port = 12345
+        self.game_handler = GameEventHandler(self.linked_map,self,self.ai_profile)
+
+        self.refl_acc = 0
+        self.is_busy = False
+
+        self.life_time = 0
+        self.all_context = GameEventHandler.get_context_for_player(self.game_handler)
 
         # # decision = self.ai_profile.decide_action(self.decision_tree, context)
         # return decision
