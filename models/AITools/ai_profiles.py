@@ -172,9 +172,10 @@ class AIProfile:
         }
         if player is not None:
             actions=[actions]
-        print("player",player)
+        
         if player is None:
             player = context['player']
+        print("player",player)
 
         try:
             print("try")
@@ -187,12 +188,21 @@ class AIProfile:
                         if context['resources'][temp_resources[0]]<context['resources'][resources_to_collect[0]]:
                             resources_to_collect=temp_resources
                     v_ids = player.get_entities_by_class(['v'],is_free=True)
+                    print("c",resources_to_collect[1])
                     c_ids = player.ect(resources_to_collect[1], player.cell_Y, player.cell_X)
                     counter = 0
                     c_pointer = 0
+                    print("v_ids",v_ids)
                     for id in v_ids:
                         v = player.linked_map.get_entity_by_id(id)
-                        if not v.is_full() and c_ids != []:
+                        print("c_ids",c_ids)
+                        print("v",v)
+                        print("v_ids",v_ids)
+                        if c_ids == []:
+                            print("build")
+                            self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context)
+                            return "Structure are built!"
+                        if not v.is_full() :
                             if counter == 3:
                                 counter = 0
                                 if c_pointer<len(c_ids)-1:
