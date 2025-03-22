@@ -282,19 +282,19 @@ class GameLoop:
 
         if keys[pygame.K_3]:
             self.state.set_speed(0.3)
-            if self.state.ismultiplayer:
+            if self.state.is_multiplayer:
                 self.reseau.send_action_via_udp({"speed": 0.3})
         if keys[pygame.K_4]:
             self.state.set_speed(1)
-            if self.state.ismultiplayer:
+            if self.state.is_multiplayer:
                 self.reseau.send_action_via_udp({"speed": 1})
         if keys[pygame.K_5]:
             self.state.set_speed(2)
-            if self.state.ismultiplayer:
+            if self.state.is_multiplayer:
                 self.reseau.send_action_via_udp({"speed": 2})
         if keys[pygame.K_6]:
             self.state.set_speed(8)
-            if self.state.ismultiplayer:
+            if self.state.is_multiplayer:
                 self.reseau.send_action_via_udp({"speed": 8})
 
         # Basculer le mode d'affichage
