@@ -583,7 +583,6 @@ class Map:
             center_Y = int(self.nb_CellY // 2 + radius * math.sin(angle))
             polygon = [(center_X, center_Y)]
         # Base position for this player's starting area
-        print("type", str(type(team)), str(team))
         center_Y, center_X = polygon[team-1][1], polygon[team-1][0]
         current_player = Player(center_Y, center_X, team, num_players, True)
         current_player.linked_map = self
@@ -729,10 +728,12 @@ class Map:
                 }
         for id_data, entity_data in dict_info.items():
             id_data = int(id_data)
+            print(entity_data)
             if id_data in self.entity_id_dict.keys():  
-                if isinstance(self.get_entity_by_id(id_data), Unit):
-                    self.get_entity_by_id(id_data).move_position = PVector2(float(entity_data["position"]["x"]), float(entity_data["position"]["y"]))
-                self.get_entity_by_id(id_data).update(dt, camera, screen) 
+                print("update entity with sucess", str(self.entity_id_dict[id_data].team))
+                #if isinstance(self.get_entity_by_id(id_data), Unit):
+                    #self.get_entity_by_id(id_data).
+                self.update_all_events(dt, camera, screen)
             else:
                 new_class = dict_repr.get(entity_data["representation"], Entity)
                 new_entity = new_class(

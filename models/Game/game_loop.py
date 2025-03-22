@@ -74,7 +74,7 @@ class GameLoop:
                 if "Map" in received_message:
                     dict = self.string_to_dict(received_message)
                     self.state.map.players_dict[self.num_players].reset(dict["Map"]["nb_cellX"],dict["Map"]["nb_cellY"], self.num_players)
-                    print(self.state.map.players_dict[self.num_players])
+                    print(self.state.map.players_dict[self.num_players].entities_dict)
                     self.state.selected_mode = dict["Map"]["mode"]
                     self.state.selected_map_type = dict["Map"]["map_type"]
                     self.state.selected_players = dict["Map"]["nb_max_players"]
