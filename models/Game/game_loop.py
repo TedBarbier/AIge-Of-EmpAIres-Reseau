@@ -92,8 +92,10 @@ class GameLoop:
                     self.state.map.create_entity(dict, dt, camera, screen)
                 elif "players" in received_message:
                     dict = self.string_to_dict(received_message)
-                    print(dict, self.num_players)
                     self.state.map._place_player_starting_areas_multi(self.state.selected_mode, self.state.selected_players, dict["players"], self.state.polygon)
+                elif "speed" in received_message:
+                    dict = self.string_to_dict(received_message)
+                    self.state.set_speed(int(dict["speed"]))
                 else:
                     return(received_message)
             
@@ -280,12 +282,20 @@ class GameLoop:
 
         if keys[pygame.K_3]:
             self.state.set_speed(0.3)
+            if self.state.ismultiplayer:
+                self.reseau.send_action_via_udp({"speed": 0.3})
         if keys[pygame.K_4]:
             self.state.set_speed(1)
+            if self.state.ismultiplayer:
+                self.reseau.send_action_via_udp({"speed": 1})
         if keys[pygame.K_5]:
             self.state.set_speed(2)
+            if self.state.ismultiplayer:
+                self.reseau.send_action_via_udp({"speed": 2})
         if keys[pygame.K_6]:
             self.state.set_speed(8)
+            if self.state.ismultiplayer:
+                self.reseau.send_action_via_udp({"speed": 8})
 
         # Basculer le mode d'affichage
         if keys[pygame.K_F10]:
