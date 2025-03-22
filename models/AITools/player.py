@@ -261,6 +261,7 @@ class Player:
         self.storages_id = set() # resource storages
         self.houses_id = set() # towncenters and habitats
         self.num_players = num_players
+        self.is_multiplayer = is_multiplayer
 
         self.current_population = 0
         self.homeless_units = 0
@@ -269,13 +270,15 @@ class Player:
         self.linked_map = None
 
         self.decision_tree= tree
-        if self.team == num_players and is_multiplayer:
+        if self.team == self.num_players and self.is_multiplayer:
             strat = choose_strategy(self)
         elif not is_multiplayer:
             strat = choose_strategy(self)
         else:
             strat = ["balanced",1,1] 
-        if is_multiplayer:
+        if is_multiplayer and self.team == self.num_players:
+            self.ai_profile = AIProfile(strat[0],strat[1],strat[2])
+        elif is_multiplayer:
             self.ai_profile = None
         else:
             self.ai_profile = AIProfile(strat[0],strat[1],strat[2])
@@ -636,7 +639,11 @@ class Player:
 
         self.refl_acc +=dt
         if self.refl_acc>ONE_SEC/3:
-            self.player_turn(dt)
+            print(self.team, self.num_players)
+            if self.is_multiplayer and self.team == self.num_players:
+                self.player_turn(dt)
+            elif not self.is_multiplayer:
+                self.player_turn(dt)
 
     def create_info_entity(self):
         representation_list_letter=['v','h', 'a', 's', 'x', 'm', 'c', 'T', 'H', 'C', 'F', 'B', 'S', 'A', 'K', 'W', 'G']

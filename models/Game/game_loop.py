@@ -84,7 +84,6 @@ class GameLoop:
                     self.state.polygon = dict["Map"]["polygon"]
                     self.num_players = dict["Map"]["nb_player"]
                     self.state.start_game(self.num_players)
-                    self.state.map.players_dict[self.num_players].ai_profile = AIProfile(strategy = self.state.map.players_dict[self.num_players].strat[0], aggressiveness= self.state.map.players_dict[self.num_players].strat[1], defense = self.state.map.players_dict[self.num_players].strat[2])
                     print("send num_players")
                     self.reseau.send_action_via_udp({"players": self.num_players})
                 elif "representation" in received_message:
