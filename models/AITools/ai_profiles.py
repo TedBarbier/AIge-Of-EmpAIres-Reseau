@@ -192,7 +192,7 @@ class AIProfile:
                     c_pointer = 0
                     for id in v_ids:
                         v = player.linked_map.get_entity_by_id(id)
-                        if not v.is_full():
+                        if not v.is_full() and c_ids != []:
                             if counter == 3:
                                 counter = 0
                                 if c_pointer<len(c_ids)-1:
@@ -346,18 +346,19 @@ class AIProfile:
                     counter = 0
                     c_pointer = 0
                     for id in v_ids:
-                        v = unit.linked_map.get_entity_by_id(id)
-                        if not v.is_full():
+                        v = player.linked_map.get_entity_by_id(id)
+                        if not v.is_full() and c_ids != []:
                             if counter == 3:
                                 counter = 0
                                 if c_pointer<len(c_ids)-1:
                                     c_pointer += 1
+                            print(c_ids)
                             v.collect_entity(c_ids[c_pointer])
                             counter += 1
                         else:
                             if context['drop_off_id'] is None:
                                 return "Gathering resources"
-                            villager.drop_to_entity(player.entity_closest_to(["T","C"], villager.cell_Y, villager.cell_X, is_dead = True))
+                            v.drop_to_entity(player.entity_closest_to(["T","C"], v.cell_Y, v.cell_X, is_dead = True))
                     return "Gathering resources!"
 
                 elif action == "Dropping off resources!":
