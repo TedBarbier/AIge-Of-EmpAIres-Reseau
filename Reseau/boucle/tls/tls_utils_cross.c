@@ -28,48 +28,49 @@ void pkcs7_unpad(unsigned char *data, int *data_len, int block_size) {
     *data_len -= padding_len;
 }
 
-void generate_hmac(const unsigned char *hmac_key, const unsigned char *message,
+int generate_hmac(const unsigned char *hmac_key, const unsigned char *message,
                    int message_len, unsigned char *hmac) {
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
     EVP_PKEY *pkey = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL, hmac_key, HMAC_KEY_LENGTH);
+    int result = 1; // 1 = success, 0 = failure
     
     if (!ctx || !pkey) {
         fprintf(stderr, "Error creating HMAC context or key\n");
-        if (ctx) EVP_MD_CTX_free(ctx);
-        if (pkey) EVP_PKEY_free(pkey);
-        exit(EXIT_FAILURE);
+        result = 0;
+        goto cleanup;
     }
 
     if (EVP_DigestSignInit(ctx, NULL, EVP_sha256(), NULL, pkey) <= 0) {
         fprintf(stderr, "Error initializing HMAC\n");
-        EVP_MD_CTX_free(ctx);
-        EVP_PKEY_free(pkey);
-        exit(EXIT_FAILURE);
+        result = 0;
+        goto cleanup;
     }
 
     if (EVP_DigestSignUpdate(ctx, message, message_len) <= 0) {
         fprintf(stderr, "Error updating HMAC\n");
-        EVP_MD_CTX_free(ctx);
-        EVP_PKEY_free(pkey);
-        exit(EXIT_FAILURE);
+        result = 0;
+        goto cleanup;
     }
 
     size_t hmac_len;
     if (EVP_DigestSignFinal(ctx, hmac, &hmac_len) <= 0) {
         fprintf(stderr, "Error finalizing HMAC\n");
-        EVP_MD_CTX_free(ctx);
-        EVP_PKEY_free(pkey);
-        exit(EXIT_FAILURE);
+        result = 0;
+        goto cleanup;
     }
 
-    EVP_MD_CTX_free(ctx);
-    EVP_PKEY_free(pkey);
+cleanup:
+    if (ctx) EVP_MD_CTX_free(ctx);
+    if (pkey) EVP_PKEY_free(pkey);
+    return result;
 }
 
 int verify_hmac(const unsigned char *hmac_key, const unsigned char *message,
                  int message_len, const unsigned char *received_hmac) {
     unsigned char calculated_hmac[HMAC_LENGTH];
-    generate_hmac(hmac_key, message, message_len, calculated_hmac);
+    if (!generate_hmac(hmac_key, message, message_len, calculated_hmac)) {
+        return 0; // HMAC generation failed
+    }
     return memcmp(calculated_hmac, received_hmac, HMAC_LENGTH) == 0;
 }
 
