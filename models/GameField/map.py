@@ -728,10 +728,11 @@ class Map:
                 'K': Keep
                 }
         for id_data, entity_data in dict_info.items():
-            if int(id_data) in self.entity_id_dict.keys():  
-                if isinstance(self.get_entity_by_id(int(id_data)), Unit):
-                    self.get_entity_by_id(int(id_data)).move_position = PVector2(float(entity_data["position"]["x"]), float(entity_data["position"]["y"]))
-                self.get_entity_by_id(int(id_data)).update(dt, camera, screen) 
+            id_data = int(id_data)
+            if id_data in self.entity_id_dict.keys():  
+                if isinstance(self.get_entity_by_id(id_data), Unit):
+                    self.get_entity_by_id(id_data).move_position = PVector2(float(entity_data["position"]["x"]), float(entity_data["position"]["y"]))
+                self.get_entity_by_id(id_data).update(dt, camera, screen) 
             else:
                 new_class = dict_repr.get(entity_data["representation"], Entity)
                 new_entity = new_class(
@@ -740,8 +741,8 @@ class Map:
                 position=entity_data["position"],
                 team=entity_data["team"],
                 representation=entity_data["representation"],
-                id_gen=self.id_generator,
                 id = id_data,
+                id_gen=self.id_generator,
                 hp=entity_data.get("hp"))
                 success = self.add_entity(new_entity)
                 if success:
