@@ -28,10 +28,13 @@
     #include <netinet/in.h>
     #include <netdb.h>
     #include <ifaddrs.h>
+    #include <fcntl.h>
     typedef int socket_t;
     #define SOCKET_ERROR_VAL -1
     #define CLOSE_SOCKET(s) close(s)
     #define SOCKET_ERRNO errno
+    #define INVALID_SOCKET -1
+    #define SOCKET_ERROR -1
 #endif
 
 #include <stdio.h>
@@ -59,7 +62,14 @@ void set_nonblocking(socket_t socket) {
 #else
 void set_nonblocking(socket_t socket) {
     int flags = fcntl(socket, F_GETFL, 0);
-    fcntl(socket, F_SETFL, flags | O_NONBLOCK);
+    if (flags == -1) {
+        perror("fcntl F_GETFL");
+        exit(EXIT_FAILURE);
+    }
+    if (fcntl(socket, F_SETFL, flags | O_NONBLOCK) == -1) {
+        perror("fcntl F_SETFL");
+        exit(EXIT_FAILURE);
+    }
 }
 #endif
 
@@ -205,7 +215,7 @@ int main(int argc, char *argv[]) {
     struct sockaddr_in address_12345, multicast_addr, client_address;
     socklen_t addrlen = sizeof(address_12345);
 
-    if ((socket_fd_12345 = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET) {
+    if ((socket_fd_12345 = socket(AF_INET, SOCK_DGRAM, 0)) == SOCKET_ERROR_VAL) {
         perror("socket failed");
         #ifdef _WIN32
         WSACleanup();
@@ -219,7 +229,7 @@ int main(int argc, char *argv[]) {
     address_12345.sin_addr.s_addr = INADDR_ANY;
     address_12345.sin_port = htons(PORT_12345);
 
-    if (bind(socket_fd_12345, (struct sockaddr *)&address_12345, sizeof(address_12345)) == SOCKET_ERROR) {
+    if (bind(socket_fd_12345, (struct sockaddr *)&address_12345, sizeof(address_12345)) == SOCKET_ERROR_VAL) {
         perror("bind failed");
         CLOSE_SOCKET(socket_fd_12345);
         #ifdef _WIN32
@@ -230,7 +240,7 @@ int main(int argc, char *argv[]) {
 
     printf("Proxy listening on port 12345\n");
 
-    if ((socket_fd_multicast = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET) {
+    if ((socket_fd_multicast = socket(AF_INET, SOCK_DGRAM, 0)) == SOCKET_ERROR_VAL) {
         perror("socket failed");
         CLOSE_SOCKET(socket_fd_12345);
         #ifdef _WIN32
@@ -261,7 +271,7 @@ int main(int argc, char *argv[]) {
     multicast_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     multicast_addr.sin_port = htons(MULTICAST_PORT);
 
-    if (bind(socket_fd_multicast, (struct sockaddr *)&multicast_addr, sizeof(multicast_addr)) == SOCKET_ERROR) {
+    if (bind(socket_fd_multicast, (struct sockaddr *)&multicast_addr, sizeof(multicast_addr)) == SOCKET_ERROR_VAL) {
         perror("bind failed");
         CLOSE_SOCKET(socket_fd_12345);
         CLOSE_SOCKET(socket_fd_multicast);
@@ -316,7 +326,7 @@ int main(int argc, char *argv[]) {
         int activity = select(FD_SETSIZE, &readfds, NULL, NULL, &timeout);
         #endif
 
-        if (activity == SOCKET_ERROR) {
+        if (activity == SOCKET_ERROR_VAL) {
             perror("select error");
             break;
         }
