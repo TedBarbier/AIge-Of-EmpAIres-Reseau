@@ -15,7 +15,9 @@
 #else
     #include <arpa/inet.h>
     #include <sys/socket.h>
+    #include <sys/types.h>
     #include <netinet/in.h>
+    #include <netdb.h>
     #include <ifaddrs.h>
     #include <unistd.h>
     #include <fcntl.h>
