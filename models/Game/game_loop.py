@@ -82,7 +82,7 @@ class GameLoop:
                     self.state.map.seed = dict["Map"]["seed"]
                     self.state.map.score_players = dict["Map"]["score_players"]
                     self.state.polygon = dict["Map"]["polygon"]
-                    self.num_players = dict["Map"]["nb_player"]
+                    self.num_players = int(dict["Map"]["nb_player"])
                     self.state.start_game(self.num_players)
                     print("send num_players")
                     self.reseau.send_action_via_udp({"players": self.num_players})
