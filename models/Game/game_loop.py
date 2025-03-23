@@ -92,16 +92,18 @@ class GameLoop:
                     self.state.set_speed(int(dict["speed"]))
                 elif "update" in received_message:
                     dict = self.string_to_dict(received_message)
-                    print(dict)
+                    print("update")
+                    print(self.num_players == dict["get_context_to_send"]["player"])
                     if dict["get_context_to_send"]["player"] != self.num_players and dict["update"] is not None:
                         self.state.map.update_entity(dict, dt, camera, screen)
-                        player=self.state.map.players_dict[dict["get_context_to_send"]["player"]]
-                        if dict["get_context_to_send"]["strategy"] == "aggressive":
-                            self.state.map.players_dict[self.num_players].ai_profile._aggressive_strategy(dict["update"], dict["get_context_to_send"],player)
-                        elif dict["get_context_to_send"]["strategy"] == "defensive":
-                            self.state.map.players_dict[self.num_players].ai_profile._defensive_strategy(dict["update"], dict["get_context_to_send"],player)
-                        elif dict["get_context_to_send"]["strategy"] == "balanced":
-                            self.state.map.players_dict[self.num_players].ai_profile._balanced_strategy(dict["update"], dict["get_context_to_send"],player)
+                        #print(self.state.map.players_dict[dict["get_context_to_send"]["player"]])
+                        # player=self.state.map.players_dict[dict["get_context_to_send"]["player"]]
+                        # if dict["get_context_to_send"]["strategy"] == "aggressive":
+                        #     self.state.map.players_dict[self.num_players].ai_profile._aggressive_strategy(dict["update"], dict["get_context_to_send"],player)
+                        # elif dict["get_context_to_send"]["strategy"] == "defensive":
+                        #     self.state.map.players_dict[self.num_players].ai_profile._defensive_strategy(dict["update"], dict["get_context_to_send"],player)
+                        # elif dict["get_context_to_send"]["strategy"] == "balanced":
+                        #     self.state.map.players_dict[self.num_players].ai_profile._balanced_strategy(dict["update"], dict["get_context_to_send"],player)
 
                 else:
                     return(received_message)
