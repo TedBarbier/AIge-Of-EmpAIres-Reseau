@@ -356,12 +356,12 @@ int main(int argc, char *argv[]) {
                 memcpy(final_msg.iv, iv, IV_LENGTH);
 
                 // Chiffrer le message
-                int encrypted_length;
+                size_t encrypted_length;
                 encrypt_message(encryption_key, iv, buffer, final_msg.encrypted_data, &encrypted_length);
-                printf("Original message length: %d\n", strlen(buffer));
-                printf("Encrypted length: %d\n", encrypted_length);
+                printf("Original message length: %zu\n", strlen(buffer));
+                printf("Encrypted length: %zu\n", encrypted_length);
                 printf("Original message (hex): ");
-                for(int i = 0; i < strlen(buffer); i++) {
+                for(size_t i = 0; i < strlen(buffer); i++) {
                     printf("%02x", (unsigned char)buffer[i]);
                 }
                 printf("\n");
@@ -379,7 +379,7 @@ int main(int argc, char *argv[]) {
                 // Envoyer d'abord la taille du message
                 uint32_t msg_size = htonl(IV_LENGTH + encrypted_length + HMAC_LENGTH);
                 printf("Sending message size: %d bytes\n", ntohl(msg_size));
-                printf("IV length: %d, Encrypted length: %d, HMAC length: %d\n", 
+                printf("IV length: %d, Encrypted length: %zu, HMAC length: %d\n", 
                        IV_LENGTH, encrypted_length, HMAC_LENGTH);
                 
                 // Créer un buffer temporaire pour le message
@@ -460,8 +460,8 @@ int main(int argc, char *argv[]) {
                     memcpy(received_msg.hmac, temp_buffer + msg_size - HMAC_LENGTH, HMAC_LENGTH);
 
                     // Calculer la taille réelle des données chiffrées
-                    int actual_encrypted_length = msg_size - IV_LENGTH - HMAC_LENGTH;
-                    printf("Actual encrypted data length: %d\n", actual_encrypted_length);
+                    size_t actual_encrypted_length = msg_size - IV_LENGTH - HMAC_LENGTH;
+                    printf("Actual encrypted data length: %zu\n", actual_encrypted_length);
                     printf("IV length: %d, HMAC length: %d\n", IV_LENGTH, HMAC_LENGTH);
 
                     // Vérifier le HMAC sur les données chiffrées
@@ -469,7 +469,7 @@ int main(int argc, char *argv[]) {
                     printf("HMAC key length: %d\n", HMAC_KEY_LENGTH);
                     printf("HMAC length: %d\n", HMAC_LENGTH);
                     printf("Data being verified: ");
-                    for(int i = 0; i < actual_encrypted_length; i++) {
+                    for(size_t i = 0; i < actual_encrypted_length; i++) {
                         printf("%02x", received_msg.encrypted_data[i]);
                     }
                     printf("\n");
@@ -478,7 +478,7 @@ int main(int argc, char *argv[]) {
                                    actual_encrypted_length, received_msg.hmac)) {
                         printf("HMAC verification failed - message may be tampered\n");
                         printf("Expected HMAC: ");
-                        for(int i = 0; i < HMAC_LENGTH; i++) {
+                        for(size_t i = 0; i < HMAC_LENGTH; i++) {
                             printf("%02x", received_msg.hmac[i]);
                         }
                         printf("\n");
@@ -489,19 +489,19 @@ int main(int argc, char *argv[]) {
 
                     // Déchiffrer le message avec l'IV reçu
                     unsigned char decrypted_message[BUFFER_SIZE];
-                    int decrypted_length = actual_encrypted_length;
+                    size_t decrypted_length = actual_encrypted_length;
                     printf("Decrypting with IV: ");
-                    for(int i = 0; i < IV_LENGTH; i++) {
+                    for(size_t i = 0; i < IV_LENGTH; i++) {
                         printf("%02x", received_msg.iv[i]);
                     }
                     printf("\n");
                     decrypt_message(encryption_key, received_msg.iv, received_msg.encrypted_data, 
                                   decrypted_message, &decrypted_length);
-                    printf("Decrypted length: %d\n", decrypted_length);
+                    printf("Decrypted length: %zu\n", decrypted_length);
                     decrypted_message[decrypted_length] = '\0';  // Assurer la null-termination
                     printf("Decrypted message: %s\n", decrypted_message);
                     printf("Decrypted message (hex): ");
-                    for(int i = 0; i < decrypted_length; i++) {
+                    for(size_t i = 0; i < decrypted_length; i++) {
                         printf("%02x", decrypted_message[i]);
                     }
                     printf("\n");
