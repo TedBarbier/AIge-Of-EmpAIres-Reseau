@@ -110,15 +110,15 @@ class GameLoop:
                         gold = {"gold":dict["get_context_to_send"]["resources"]["gold"] - player.get_current_resources()["gold"]}
                         wood = {"wood": dict["get_context_to_send"]["resources"]["wood"] - player.get_current_resources()["wood"]}
                         food = {"food": dict["get_context_to_send"]["resources"]["food"] - player.get_current_resources()["food"]}
-                        if gold > 0:
+                        if gold["gold"] > 0:
                             player.add_resources(gold)
                         else:
                             player.remove_resources(gold)
-                        if wood > 0:
+                        if wood["wood"] > 0:
                             player.add_resources(wood)
                         else:
                             player.remove_resources(wood)
-                        if food > 0:
+                        if food["food"] > 0:
                             player.add_resource(food)
                         else:
                             player.remove_resources(food)
