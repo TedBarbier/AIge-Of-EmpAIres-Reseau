@@ -369,11 +369,18 @@ int main(int argc, char *argv[]) {
                 multicast_send_addr.sin_family = AF_INET;
                 multicast_send_addr.sin_addr.s_addr = inet_addr(MULTICAST_IP);
                 multicast_send_addr.sin_port = htons(MULTICAST_PORT);
+
+                // Envoyer d'abord la taille du message
+                uint32_t msg_size = htonl(IV_LENGTH + encrypted_length + HMAC_LENGTH);
                 #ifdef _WIN32
+                sendto(socket_fd_multicast, (char*)&msg_size, sizeof(uint32_t), 0,
+                       (struct sockaddr *)&multicast_send_addr, sizeof(multicast_send_addr));
                 sendto(socket_fd_multicast, (char*)&final_msg, 
                        IV_LENGTH + encrypted_length + HMAC_LENGTH, 0,
                        (struct sockaddr *)&multicast_send_addr, sizeof(multicast_send_addr));
                 #else
+                sendto(socket_fd_multicast, &msg_size, sizeof(uint32_t), 0,
+                       (struct sockaddr *)&multicast_send_addr, sizeof(multicast_send_addr));
                 sendto(socket_fd_multicast, &final_msg, 
                        IV_LENGTH + encrypted_length + HMAC_LENGTH, 0,
                        (struct sockaddr *)&multicast_send_addr, sizeof(multicast_send_addr));
@@ -382,52 +389,64 @@ int main(int argc, char *argv[]) {
         }
 
         if (FD_ISSET(socket_fd_multicast, &readfds)) {
-            struct final_message received_msg;
+            // D'abord recevoir la taille du message
+            uint32_t msg_size;
             #ifdef _WIN32
-            int bytes_received = recvfrom(socket_fd_multicast, (char*)&received_msg, 
-                                        sizeof(struct final_message), 0,
-                                        (struct sockaddr *)&client_address, &addrlen);
+            int size_received = recvfrom(socket_fd_multicast, (char*)&msg_size, sizeof(uint32_t), 0,
+                                       (struct sockaddr *)&client_address, &addrlen);
             #else
-            int bytes_received = recvfrom(socket_fd_multicast, &received_msg, 
-                                        sizeof(struct final_message), 0,
-                                        (struct sockaddr *)&client_address, &addrlen);
+            int size_received = recvfrom(socket_fd_multicast, &msg_size, sizeof(uint32_t), 0,
+                                       (struct sockaddr *)&client_address, &addrlen);
             #endif
-            if (bytes_received > 0) {
-                printf("Received message from multicast group\n");
-                printf("Message size: %d bytes\n", bytes_received);
-
-                // Calculer la taille réelle des données chiffrées
-                int actual_encrypted_length = bytes_received - IV_LENGTH - HMAC_LENGTH;
-                printf("Actual encrypted data length: %d\n", actual_encrypted_length);
-
-                // Vérifier le HMAC sur les données chiffrées
-                if (!verify_hmac(hmac_key, received_msg.encrypted_data, 
-                               actual_encrypted_length, received_msg.hmac)) {
-                    printf("HMAC verification failed - message may be tampered\n");
-                    continue;
-                }
-                printf("HMAC verification successful\n");
-
-                // Déchiffrer le message avec l'IV reçu
-                unsigned char decrypted_message[BUFFER_SIZE];
-                int decrypted_length = actual_encrypted_length;
-                decrypt_message(encryption_key, received_msg.iv, received_msg.encrypted_data, 
-                              decrypted_message, &decrypted_length);
-                printf("Decrypted length: %d\n", decrypted_length);
-                decrypted_message[decrypted_length] = '\0';  // Assurer la null-termination
-                printf("Decrypted message: %s\n", decrypted_message);
-
-                struct sockaddr_in local_address;
-                local_address.sin_family = AF_INET;
-                local_address.sin_addr.s_addr = inet_addr("127.0.0.1");
-                local_address.sin_port = htons(PORT_1234);
+            if (size_received > 0) {
+                msg_size = ntohl(msg_size);  // Convertir de network à host byte order
+                
+                // Recevoir le message avec la taille exacte
+                struct final_message received_msg;
                 #ifdef _WIN32
-                sendto(socket_fd_multicast, (char*)decrypted_message, decrypted_length, 0,
-                       (struct sockaddr *)&local_address, sizeof(local_address));
+                int bytes_received = recvfrom(socket_fd_multicast, (char*)&received_msg, msg_size, 0,
+                                            (struct sockaddr *)&client_address, &addrlen);
                 #else
-                sendto(socket_fd_multicast, decrypted_message, decrypted_length, 0,
-                       (struct sockaddr *)&local_address, sizeof(local_address));
+                int bytes_received = recvfrom(socket_fd_multicast, &received_msg, msg_size, 0,
+                                            (struct sockaddr *)&client_address, &addrlen);
                 #endif
+                if (bytes_received > 0) {
+                    printf("Received message from multicast group\n");
+                    printf("Message size: %d bytes\n", bytes_received);
+
+                    // Calculer la taille réelle des données chiffrées
+                    int actual_encrypted_length = msg_size - IV_LENGTH - HMAC_LENGTH;
+                    printf("Actual encrypted data length: %d\n", actual_encrypted_length);
+
+                    // Vérifier le HMAC sur les données chiffrées
+                    if (!verify_hmac(hmac_key, received_msg.encrypted_data, 
+                                   actual_encrypted_length, received_msg.hmac)) {
+                        printf("HMAC verification failed - message may be tampered\n");
+                        continue;
+                    }
+                    printf("HMAC verification successful\n");
+
+                    // Déchiffrer le message avec l'IV reçu
+                    unsigned char decrypted_message[BUFFER_SIZE];
+                    int decrypted_length = actual_encrypted_length;
+                    decrypt_message(encryption_key, received_msg.iv, received_msg.encrypted_data, 
+                                  decrypted_message, &decrypted_length);
+                    printf("Decrypted length: %d\n", decrypted_length);
+                    decrypted_message[decrypted_length] = '\0';  // Assurer la null-termination
+                    printf("Decrypted message: %s\n", decrypted_message);
+
+                    struct sockaddr_in local_address;
+                    local_address.sin_family = AF_INET;
+                    local_address.sin_addr.s_addr = inet_addr("127.0.0.1");
+                    local_address.sin_port = htons(PORT_1234);
+                    #ifdef _WIN32
+                    sendto(socket_fd_multicast, (char*)decrypted_message, decrypted_length, 0,
+                           (struct sockaddr *)&local_address, sizeof(local_address));
+                    #else
+                    sendto(socket_fd_multicast, decrypted_message, decrypted_length, 0,
+                           (struct sockaddr *)&local_address, sizeof(local_address));
+                    #endif
+                }
             }
         }
     }
