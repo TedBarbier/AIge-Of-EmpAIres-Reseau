@@ -358,6 +358,7 @@ int main(int argc, char *argv[]) {
                 // Chiffrer le message
                 int encrypted_length;
                 encrypt_message(encryption_key, iv, buffer, final_msg.encrypted_data, &encrypted_length);
+                printf("Original message length: %d\n", strlen(buffer));
                 printf("Encrypted length: %d\n", encrypted_length);
 
                 // Générer le HMAC sur les données chiffrées
@@ -372,6 +373,9 @@ int main(int argc, char *argv[]) {
 
                 // Envoyer d'abord la taille du message
                 uint32_t msg_size = htonl(IV_LENGTH + encrypted_length + HMAC_LENGTH);
+                printf("Sending message size: %d bytes\n", ntohl(msg_size));
+                printf("IV length: %d, Encrypted length: %d, HMAC length: %d\n", 
+                       IV_LENGTH, encrypted_length, HMAC_LENGTH);
                 #ifdef _WIN32
                 sendto(socket_fd_multicast, (char*)&msg_size, sizeof(uint32_t), 0,
                        (struct sockaddr *)&multicast_send_addr, sizeof(multicast_send_addr));
@@ -400,6 +404,7 @@ int main(int argc, char *argv[]) {
             #endif
             if (size_received > 0) {
                 msg_size = ntohl(msg_size);  // Convertir de network à host byte order
+                printf("Received message size: %d bytes\n", msg_size);
                 
                 // Recevoir le message avec la taille exacte
                 struct final_message received_msg;
@@ -417,11 +422,20 @@ int main(int argc, char *argv[]) {
                     // Calculer la taille réelle des données chiffrées
                     int actual_encrypted_length = msg_size - IV_LENGTH - HMAC_LENGTH;
                     printf("Actual encrypted data length: %d\n", actual_encrypted_length);
+                    printf("IV length: %d, HMAC length: %d\n", IV_LENGTH, HMAC_LENGTH);
 
                     // Vérifier le HMAC sur les données chiffrées
+                    printf("Verifying HMAC...\n");
+                    printf("HMAC key length: %d\n", HMAC_KEY_LENGTH);
+                    printf("HMAC length: %d\n", HMAC_LENGTH);
                     if (!verify_hmac(hmac_key, received_msg.encrypted_data, 
                                    actual_encrypted_length, received_msg.hmac)) {
                         printf("HMAC verification failed - message may be tampered\n");
+                        printf("Expected HMAC: ");
+                        for(int i = 0; i < HMAC_LENGTH; i++) {
+                            printf("%02x", received_msg.hmac[i]);
+                        }
+                        printf("\n");
                         continue;
                     }
                     printf("HMAC verification successful\n");
@@ -429,6 +443,11 @@ int main(int argc, char *argv[]) {
                     // Déchiffrer le message avec l'IV reçu
                     unsigned char decrypted_message[BUFFER_SIZE];
                     int decrypted_length = actual_encrypted_length;
+                    printf("Decrypting with IV: ");
+                    for(int i = 0; i < IV_LENGTH; i++) {
+                        printf("%02x", received_msg.iv[i]);
+                    }
+                    printf("\n");
                     decrypt_message(encryption_key, received_msg.iv, received_msg.encrypted_data, 
                                   decrypted_message, &decrypted_length);
                     printf("Decrypted length: %d\n", decrypted_length);
