@@ -209,10 +209,10 @@ class AIProfile:
                     return "Gathering resources!"
                 elif action == "Training villagers!":
                     print("here the training villagers")
-                    for towncenter_id in context['player'].get_entities_by_class(['T']):
-                        towncenter=context['player'].linked_map.get_entity_by_id(towncenter_id)
-                        towncenter.train_unit(context['player'],'v')
-                        if context['player'].get_current_resources()['food']<50:
+                    for towncenter_id in player.get_entities_by_class(['T']):
+                        towncenter=player.linked_map.get_entity_by_id(towncenter_id)
+                        towncenter.train_unit(player,'v')
+                        if player.get_current_resources()['food']<50:
                             actions.insert(0, "Gathering resources!")
                             continue
                 elif action == "Attacking the enemy!":
