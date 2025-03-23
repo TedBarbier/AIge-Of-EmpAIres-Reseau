@@ -210,11 +210,15 @@ class AIProfile:
                 elif action == "Training villagers!":
                     print("here the training villagers")
                     for towncenter_id in player.get_entities_by_class(['T']):
+                        print("a")
                         towncenter=player.linked_map.get_entity_by_id(towncenter_id)
+                        print("b")
                         towncenter.train_unit(player,'v')
+                        print("d")
                         if player.get_current_resources()['food']<50:
+                            print("c")
                             actions.insert(0, "Gathering resources!")
-                            continue
+                            return "Gathering resources!"
                 elif action == "Attacking the enemy!":
                     villager_free=[player.linked_map.get_entity_by_id(v_id) for v_id in player.get_entities_by_class(['v'],is_free=True)]
                     unit_list = context['units']['military_free']+villager_free[:len(villager_free)//2]
