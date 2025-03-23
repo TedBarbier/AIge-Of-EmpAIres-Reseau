@@ -80,7 +80,7 @@ TEAM_COLORS = {
 
 MUSIC = {
     "start":"Sounds/Menu2.mp3",
-    "normal":"Sounds/Normal.mp3",
+    "normal":"Sounds/Normal2.mp3",
     "battle":"Sounds/Battle.mp3",
     "end":"Sounds/Menu.mp3"
 }
