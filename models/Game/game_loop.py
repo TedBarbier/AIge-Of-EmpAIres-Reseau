@@ -57,19 +57,14 @@ class GameLoop:
 
     def handle_message(self, dt, camera, screen):
         buffersize = 8192
-        readable, _ , _ = select.select([self.udp_socket_to_receive], [], [], 0.001)
+        readable, _, _ = select.select([self.udp_socket_to_receive], [], [], 0.001)
         for s in readable:
             data, addr = s.recvfrom(buffersize)
             if data:
                 received_message = data.decode('utf-8')
                 if "Map" in received_message:
                     dict = self.string_to_dict(received_message)
-                    print("----------------------------------------------------") # Séparateur pour la console
-                    print("CLIENT: Message 'Map' BROADCAST REÇU:") # <<-- Indiquer que c'est BROADCAST
-                    print(json.dumps(dict, indent=4))
-
-                    # ADOPTER LA CARTE REÇUE (écrase la carte locale)
-                    self.state.map.players_dict[self.num_players].reset(dict["Map"]["nb_cellX"],dict["Map"]["nb_cellY"], self.num_players) # <<-- self.num_players actuel pour reset, mais va être changé après
+                    self.state.map.players_dict[self.num_players].reset(dict["Map"]["nb_cellX"], dict["Map"]["nb_cellY"], self.num_players)
                     self.state.selected_mode = dict["Map"]["mode"]
                     self.state.selected_map_type = dict["Map"]["map_type"]
                     self.state.selected_players = dict["Map"]["nb_max_players"]
@@ -78,46 +73,22 @@ class GameLoop:
                     self.state.map.seed = dict["Map"]["seed"]
                     self.state.map.score_players = dict["Map"]["score_players"]
                     self.state.polygon = dict["Map"]["polygon"]
-
-                    # RE-NUMÉROTATION SIMPLIFIÉE DES ÉQUIPES (basée sur l'ordre de "démarrage" multijoueur)
-                    # Le "dernier" (celui qui a envoyé sa carte) est équipe 1.
-                    # Les autres sont re-numérotés en équipes 2, 3, ... en fonction de l'ordre de "démarrage" (pas facile à déterminer précisément sans serveur)
-                    # VERSION TRÈS SIMPLIFIÉE : On va dire que si on reçoit un "Map", c'est que quelqu'un d'autre est devenu équipe 1,
-                    # et donc NOUS, on devient automatiquement équipe 2 (si on était équipe 1 avant), ou on reste à notre équipe actuelle si on était déjà 2 ou plus.
                     self.num_players += 1
-                    print(f"CLIENT: Re-numérotation de self.num_players à : {self.num_players} (car Map BROADCAST reçu)") # DEBUG
-                    # Si on était déjà équipe 2, 3, etc., on GARDE notre numéro d'équipe (dans cette version simplifiée)
-
-                    print(f"CLIENT: Appel de start_game AVEC l'équipe: {self.num_players}") # DEBUG
-                    self.state.start_game(self.num_players) # Utiliser le NOUVEAU self.num_players
-                    print(f"CLIENT: Retour de start_game.") # DEBUG
-
+                    self.state.start_game(self.num_players)
                     self.state.states = PLAY
-                    # PLUS BESOIN D'ENVOYER "players" ICI, car la carte BROADCAST est censée suffire à synchroniser tout le monde
-                    # self.reseau.send_action_via_udp({"players": self.num_players})
-                    print("----------------------------------------------------") # Séparateur pour la console
                 elif "players" in received_message:
                     dict = self.string_to_dict(received_message)
                     team_joueur_rejoignant = int(dict["players"])
-                    print("----------------------------------------------------") # Séparateur pour la console
-                    print("CLIENT: Message 'players' REÇU:")
-                    print(json.dumps(dict, indent=4)) # Afficher le message "players" complet et indenté
-                    print(f"CLIENT: Joueur rejoignant, équipe : {team_joueur_rejoignant}") # DEBUG
                     self.state.map._place_player_starting_areas_multi(self.state.selected_mode, self.state.selected_players, self.num_players, team_joueur_rejoignant, self.state.polygon)
-                    print("----------------------------------------------------") # Séparateur pour la console
-
                 elif "speed" in received_message:
                     dict = self.string_to_dict(received_message)
                     self.state.set_speed(int(dict["speed"]))
                 elif "update" in received_message:
                     dict = self.string_to_dict(received_message)
-                    print("CLIENT: Message 'update' REÇU (non pertinent pour ce problème, mais affiché):") # DEBUG
-                    print(json.dumps(dict, indent=4)) # Afficher le message "update" complet et indenté (pour info)
                     if dict["get_context_to_send"]["player"] != self.num_players and dict["update"] is not None:
                         self.state.map.update_entity(dict, dt, camera, screen)
-
                 else:
-                    return(received_message)
+                    return received_message
 
     def handle_start_events(self, event):
         if pygame.key.get_pressed()[pygame.K_F12]:

@@ -573,46 +573,39 @@ class Map:
             current_player.add_resources(current_player_resources)
 
 
-    def _place_player_starting_areas_multi(self, mode, selected_player, num_players ,team=1, polygon=None):
-
-        print("MAP: _place_player_starting_areas_multi() - Arguments:") # DEBUG
-        print(f"  mode: {mode}, selected_player: {selected_player}, num_players: {num_players}, team: {team}, polygon: {polygon}") # DEBUG
+    def _place_player_starting_areas_multi(self, mode, selected_player, num_players, team=1, polygon=None):
         if team not in self.players_dict:
-            if polygon == None:
+            if polygon is None:
                 polygon = angle_distribution(self.nb_CellY, self.nb_CellX, selected_player, scale=0.75, rand_rot=0x1)
+
             if selected_player == 1:
                 angle = random.uniform(0, 2 * math.pi)
                 radius = min(self.nb_CellX, self.nb_CellY) * 0.3
                 center_X = int(self.nb_CellX // 2 + radius * math.cos(angle))
                 center_Y = int(self.nb_CellY // 2 + radius * math.sin(angle))
                 polygon = [(center_X, center_Y)]
-            # Base position for this player's starting area
+
             center_Y, center_X = polygon[team-1][1], polygon[team-1][0]
             current_player = Player(center_Y, center_X, team, num_players, True)
             current_player.linked_map = self
             self.players_dict[current_player.team] = current_player
-            gen_option = MODE_GENERATION.get(mode)
-            if not(self.check_cell(center_Y, center_X)) :
-                
 
+            gen_option = MODE_GENERATION.get(mode)
+            if not self.check_cell(center_Y, center_X):
                 entities_gen = gen_option.get("entities")
                 for entity_type, number in entities_gen.items():
-
                     EntityClass = CLASS_MAPPING.get(entity_type, None)
-
-
                     for i in range(number):
-                        entity_instance = EntityClass(self.id_generator,None, None, None, current_player.team)
+                        entity_instance = EntityClass(self.id_generator, None, None, None, current_player.team)
                         if isinstance(entity_instance, Unit):
                             current_player.add_population()
                             current_player.current_population += 1
-
                         self.add_entity_to_closest(entity_instance, current_player.cell_Y, current_player.cell_X, random_padding=0x01)
-            current_player_resources = gen_option.get("resources").copy() # we dont want togive it as a pointer else all players will share the same resources haha
+
+            current_player_resources = gen_option.get("resources").copy()
             current_player.add_resources(current_player_resources)
             return polygon
         else:
-            print("double appel du place_player_starting_areas_multi pour le joueur", team)
             return None
 
 
