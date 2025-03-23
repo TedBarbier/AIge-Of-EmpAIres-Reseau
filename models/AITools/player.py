@@ -275,7 +275,7 @@ class Player:
         # elif not is_multiplayer:
         #     strat = choose_strategy(self)
         # else:
-        strat = ["balanced",1,1] 
+        strat = ["agressive",1,1] 
         if is_multiplayer and self.team == self.num_players:
             self.ai_profile = AIProfile(strat[0],strat[1],strat[2])
         elif is_multiplayer:
