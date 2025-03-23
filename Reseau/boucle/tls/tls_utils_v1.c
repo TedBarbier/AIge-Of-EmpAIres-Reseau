@@ -33,7 +33,7 @@ int generate_hmac(const unsigned char *hmac_key, const unsigned char *message,
     EVP_MAC *mac = EVP_MAC_fetch(NULL, "HMAC", NULL);
     EVP_MAC_CTX *ctx = EVP_MAC_CTX_new(mac);
     OSSL_PARAM params[2];
-    unsigned int hmac_len;
+    size_t hmac_len;
     int result = 1;
 
     if (!mac || !ctx) {
@@ -64,7 +64,7 @@ int generate_hmac(const unsigned char *hmac_key, const unsigned char *message,
     }
 
     if (hmac_len != HMAC_LENGTH) {
-        fprintf(stderr, "Invalid HMAC length: %u (expected %d)\n", hmac_len, HMAC_LENGTH);
+        fprintf(stderr, "Invalid HMAC length: %zu (expected %d)\n", hmac_len, HMAC_LENGTH);
         result = 0;
         goto cleanup;
     }
@@ -96,44 +96,68 @@ int verify_hmac(const unsigned char *hmac_key, const unsigned char *message,
 
 void encrypt_message(const unsigned char *key, const unsigned char *iv,
                      const char *message, unsigned char *encrypted, int *len) {
-  EVP_CIPHER_CTX *ctx;
+  EVP_CIPHER_CTX *ctx = NULL;
   int ciphertext_len = 0;
   int plaintext_len = strlen(message);
-  unsigned char *padded_message = malloc(plaintext_len + BLOCK_SIZE);
+  unsigned char *padded_message = NULL;
+  int max_padded_len = plaintext_len + BLOCK_SIZE;
+  int result = 0;
 
+  // Allouer de l'espace pour le message avec padding
+  padded_message = malloc(max_padded_len);
+  if (!padded_message) {
+    fprintf(stderr, "Failed to allocate memory for padded message\n");
+    return;
+  }
+
+  // Copier le message original
   memcpy(padded_message, message, plaintext_len);
+  
+  // Ajouter le padding
   pkcs7_pad(padded_message, &plaintext_len, BLOCK_SIZE);
 
-  if (!(ctx = EVP_CIPHER_CTX_new())) {
+  // Créer le contexte de chiffrement
+  ctx = EVP_CIPHER_CTX_new();
+  if (!ctx) {
+    fprintf(stderr, "Failed to create cipher context\n");
     ERR_print_errors_fp(stderr);
     free(padded_message);
-    exit(EXIT_FAILURE);
+    return;
   }
 
+  // Initialiser le chiffrement
   if (1 != EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv)) {
+    fprintf(stderr, "Failed to initialize encryption\n");
     ERR_print_errors_fp(stderr);
     EVP_CIPHER_CTX_free(ctx);
     free(padded_message);
-    exit(EXIT_FAILURE);
+    return;
   }
 
+  // Chiffrer le message
   if (1 != EVP_EncryptUpdate(ctx, encrypted, &ciphertext_len, padded_message,
                              plaintext_len)) {
+    fprintf(stderr, "Failed to encrypt message\n");
     ERR_print_errors_fp(stderr);
     EVP_CIPHER_CTX_free(ctx);
     free(padded_message);
-    exit(EXIT_FAILURE);
+    return;
   }
 
+  // Finaliser le chiffrement
   int final_len = 0;
   if (1 != EVP_EncryptFinal_ex(ctx, encrypted + ciphertext_len, &final_len)) {
+    fprintf(stderr, "Failed to finalize encryption\n");
     ERR_print_errors_fp(stderr);
     EVP_CIPHER_CTX_free(ctx);
     free(padded_message);
-    exit(EXIT_FAILURE);
+    return;
   }
+
+  // Mettre à jour la longueur totale
   *len = ciphertext_len + final_len;
 
+  // Nettoyer
   EVP_CIPHER_CTX_free(ctx);
   free(padded_message);
 }
@@ -141,35 +165,49 @@ void encrypt_message(const unsigned char *key, const unsigned char *iv,
 void decrypt_message(const unsigned char *key, const unsigned char *iv,
                      const unsigned char *encrypted, unsigned char *decrypted,
                      int *len) {
-  EVP_CIPHER_CTX *ctx;
+  EVP_CIPHER_CTX *ctx = NULL;
   int plaintext_len = 0;
+  int result = 0;
 
-  if (!(ctx = EVP_CIPHER_CTX_new())) {
+  // Créer le contexte de déchiffrement
+  ctx = EVP_CIPHER_CTX_new();
+  if (!ctx) {
+    fprintf(stderr, "Failed to create cipher context\n");
     ERR_print_errors_fp(stderr);
-    exit(EXIT_FAILURE);
+    return;
   }
 
+  // Initialiser le déchiffrement
   if (1 != EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv)) {
+    fprintf(stderr, "Failed to initialize decryption\n");
     ERR_print_errors_fp(stderr);
     EVP_CIPHER_CTX_free(ctx);
-    exit(EXIT_FAILURE);
+    return;
   }
 
+  // Déchiffrer le message
   if (1 != EVP_DecryptUpdate(ctx, decrypted, &plaintext_len, encrypted, *len)) {
+    fprintf(stderr, "Failed to decrypt message\n");
     ERR_print_errors_fp(stderr);
     EVP_CIPHER_CTX_free(ctx);
-    exit(EXIT_FAILURE);
+    return;
   }
 
+  // Finaliser le déchiffrement
   int final_len = 0;
   if (1 != EVP_DecryptFinal_ex(ctx, decrypted + plaintext_len, &final_len)) {
+    fprintf(stderr, "Failed to finalize decryption\n");
     ERR_print_errors_fp(stderr);
     EVP_CIPHER_CTX_free(ctx);
-    exit(EXIT_FAILURE);
+    return;
   }
+
+  // Mettre à jour la longueur totale
   *len = plaintext_len + final_len;
 
+  // Retirer le padding
   pkcs7_unpad(decrypted, len, BLOCK_SIZE);
 
+  // Nettoyer
   EVP_CIPHER_CTX_free(ctx);
 }
