@@ -376,19 +376,35 @@ int main(int argc, char *argv[]) {
                 printf("Sending message size: %d bytes\n", ntohl(msg_size));
                 printf("IV length: %d, Encrypted length: %d, HMAC length: %d\n", 
                        IV_LENGTH, encrypted_length, HMAC_LENGTH);
+                
+                // Créer un buffer temporaire pour le message
+                unsigned char *temp_buffer = malloc(IV_LENGTH + encrypted_length + HMAC_LENGTH);
+                if (!temp_buffer) {
+                    fprintf(stderr, "Failed to allocate memory for message\n");
+                    continue;
+                }
+
+                // Copier les données dans le buffer temporaire
+                memcpy(temp_buffer, final_msg.iv, IV_LENGTH);
+                memcpy(temp_buffer + IV_LENGTH, final_msg.encrypted_data, encrypted_length);
+                memcpy(temp_buffer + IV_LENGTH + encrypted_length, final_msg.hmac, HMAC_LENGTH);
+
+                // Envoyer la taille et le message
                 #ifdef _WIN32
                 sendto(socket_fd_multicast, (char*)&msg_size, sizeof(uint32_t), 0,
                        (struct sockaddr *)&multicast_send_addr, sizeof(multicast_send_addr));
-                sendto(socket_fd_multicast, (char*)&final_msg, 
+                sendto(socket_fd_multicast, (char*)temp_buffer, 
                        IV_LENGTH + encrypted_length + HMAC_LENGTH, 0,
                        (struct sockaddr *)&multicast_send_addr, sizeof(multicast_send_addr));
                 #else
                 sendto(socket_fd_multicast, &msg_size, sizeof(uint32_t), 0,
                        (struct sockaddr *)&multicast_send_addr, sizeof(multicast_send_addr));
-                sendto(socket_fd_multicast, &final_msg, 
+                sendto(socket_fd_multicast, temp_buffer, 
                        IV_LENGTH + encrypted_length + HMAC_LENGTH, 0,
                        (struct sockaddr *)&multicast_send_addr, sizeof(multicast_send_addr));
                 #endif
+
+                free(temp_buffer);
             }
         }
 
@@ -407,17 +423,29 @@ int main(int argc, char *argv[]) {
                 printf("Received message size: %d bytes\n", msg_size);
                 
                 // Recevoir le message avec la taille exacte
-                struct final_message received_msg;
+                unsigned char *temp_buffer = malloc(msg_size);
+                if (!temp_buffer) {
+                    fprintf(stderr, "Failed to allocate memory for received message\n");
+                    continue;
+                }
+
                 #ifdef _WIN32
-                int bytes_received = recvfrom(socket_fd_multicast, (char*)&received_msg, msg_size, 0,
+                int bytes_received = recvfrom(socket_fd_multicast, (char*)temp_buffer, msg_size, 0,
                                             (struct sockaddr *)&client_address, &addrlen);
                 #else
-                int bytes_received = recvfrom(socket_fd_multicast, &received_msg, msg_size, 0,
+                int bytes_received = recvfrom(socket_fd_multicast, temp_buffer, msg_size, 0,
                                             (struct sockaddr *)&client_address, &addrlen);
                 #endif
+
                 if (bytes_received > 0) {
                     printf("Received message from multicast group\n");
                     printf("Message size: %d bytes\n", bytes_received);
+
+                    // Copier les données dans la structure
+                    struct final_message received_msg;
+                    memcpy(received_msg.iv, temp_buffer, IV_LENGTH);
+                    memcpy(received_msg.encrypted_data, temp_buffer + IV_LENGTH, msg_size - IV_LENGTH - HMAC_LENGTH);
+                    memcpy(received_msg.hmac, temp_buffer + msg_size - HMAC_LENGTH, HMAC_LENGTH);
 
                     // Calculer la taille réelle des données chiffrées
                     int actual_encrypted_length = msg_size - IV_LENGTH - HMAC_LENGTH;
@@ -428,6 +456,12 @@ int main(int argc, char *argv[]) {
                     printf("Verifying HMAC...\n");
                     printf("HMAC key length: %d\n", HMAC_KEY_LENGTH);
                     printf("HMAC length: %d\n", HMAC_LENGTH);
+                    printf("Data being verified: ");
+                    for(int i = 0; i < actual_encrypted_length; i++) {
+                        printf("%02x", received_msg.encrypted_data[i]);
+                    }
+                    printf("\n");
+
                     if (!verify_hmac(hmac_key, received_msg.encrypted_data, 
                                    actual_encrypted_length, received_msg.hmac)) {
                         printf("HMAC verification failed - message may be tampered\n");
@@ -436,6 +470,7 @@ int main(int argc, char *argv[]) {
                             printf("%02x", received_msg.hmac[i]);
                         }
                         printf("\n");
+                        free(temp_buffer);
                         continue;
                     }
                     printf("HMAC verification successful\n");
@@ -466,6 +501,7 @@ int main(int argc, char *argv[]) {
                            (struct sockaddr *)&local_address, sizeof(local_address));
                     #endif
                 }
+                free(temp_buffer);
             }
         }
     }
