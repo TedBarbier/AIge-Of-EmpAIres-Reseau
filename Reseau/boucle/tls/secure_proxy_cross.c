@@ -385,11 +385,11 @@ int main(int argc, char *argv[]) {
             struct final_message received_msg;
             #ifdef _WIN32
             int bytes_received = recvfrom(socket_fd_multicast, (char*)&received_msg, 
-                                        IV_LENGTH + encrypted_length + HMAC_LENGTH, 0,
+                                        sizeof(struct final_message), 0,
                                         (struct sockaddr *)&client_address, &addrlen);
             #else
             int bytes_received = recvfrom(socket_fd_multicast, &received_msg, 
-                                        IV_LENGTH + encrypted_length + HMAC_LENGTH, 0,
+                                        sizeof(struct final_message), 0,
                                         (struct sockaddr *)&client_address, &addrlen);
             #endif
             if (bytes_received > 0) {
