@@ -45,6 +45,7 @@
 #define PORT_1234 1234
 #define MULTICAST_PORT 8000
 #define BUFFER_SIZE 1024
+#define MAX_MESSAGE_SIZE (BUFFER_SIZE + IV_LENGTH + HMAC_LENGTH)  // Taille maximale totale d'un message
 #define MULTICAST_IP "239.255.255.250"
 #define MAX_MSG_SIZE 1024
 #define MULTICAST_GROUP "239.0.0.1"
@@ -423,16 +424,33 @@ int main(int argc, char *argv[]) {
             int size_received = recvfrom(socket_fd_multicast, &msg_size, sizeof(uint32_t), 0,
                                        (struct sockaddr *)&client_address, &addrlen);
             #endif
+
+            if (size_received == SOCKET_ERROR_VAL) {
+                #ifdef _WIN32
+                int error = WSAGetLastError();
+                if (error == WSAEWOULDBLOCK) {
+                    continue;  // Pas de données disponibles, continuer la boucle
+                }
+                #else
+                if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                    continue;  // Pas de données disponibles, continuer la boucle
+                }
+                #endif
+                perror("Error receiving message size");
+                continue;
+            }
+
             if (size_received > 0) {
                 msg_size = ntohl(msg_size);  // Convertir de network à host byte order
                 
                 // Vérifier que la taille est raisonnable
-                if (msg_size > BUFFER_SIZE + IV_LENGTH + HMAC_LENGTH || msg_size < IV_LENGTH + HMAC_LENGTH) {
-                    printf("Received invalid message size: %d bytes\n", msg_size);
+                if (msg_size > MAX_MESSAGE_SIZE || msg_size < IV_LENGTH + HMAC_LENGTH) {
+                    printf("Received invalid message size: %u bytes (max allowed: %d)\n", 
+                           msg_size, MAX_MESSAGE_SIZE);
                     continue;
                 }
                 
-                printf("Received message size: %d bytes\n", msg_size);
+                printf("Received message size: %u bytes\n", msg_size);
                 
                 // Recevoir le message avec la taille exacte
                 unsigned char *temp_buffer = malloc(msg_size);
@@ -441,26 +459,59 @@ int main(int argc, char *argv[]) {
                     continue;
                 }
 
-                #ifdef _WIN32
-                int bytes_received = recvfrom(socket_fd_multicast, (char*)temp_buffer, msg_size, 0,
-                                            (struct sockaddr *)&client_address, &addrlen);
-                #else
-                int bytes_received = recvfrom(socket_fd_multicast, temp_buffer, msg_size, 0,
-                                            (struct sockaddr *)&client_address, &addrlen);
-                #endif
+                // Recevoir le message en plusieurs parties si nécessaire
+                size_t total_received = 0;
+                while (total_received < msg_size) {
+                    #ifdef _WIN32
+                    int bytes_received = recvfrom(socket_fd_multicast, 
+                                                (char*)(temp_buffer + total_received),
+                                                msg_size - total_received, 0,
+                                                (struct sockaddr *)&client_address, &addrlen);
+                    #else
+                    int bytes_received = recvfrom(socket_fd_multicast,
+                                                temp_buffer + total_received,
+                                                msg_size - total_received, 0,
+                                                (struct sockaddr *)&client_address, &addrlen);
+                    #endif
 
-                if (bytes_received > 0 && bytes_received == msg_size) {
+                    if (bytes_received == SOCKET_ERROR_VAL) {
+                        #ifdef _WIN32
+                        int error = WSAGetLastError();
+                        if (error == WSAEWOULDBLOCK) {
+                            continue;  // Réessayer la réception
+                        }
+                        #else
+                        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                            continue;  // Réessayer la réception
+                        }
+                        #endif
+                        perror("Error receiving message data");
+                        free(temp_buffer);
+                        break;
+                    }
+
+                    if (bytes_received <= 0) {
+                        printf("Connection closed or error while receiving message\n");
+                        free(temp_buffer);
+                        break;
+                    }
+
+                    total_received += bytes_received;
+                }
+
+                if (total_received == msg_size) {
+                    printf("Successfully received complete message (%zu bytes)\n", total_received);
                     printf("Received message from multicast group\n");
-                    printf("Message size: %d bytes\n", bytes_received);
+                    printf("Message size: %d bytes\n", total_received);
 
                     // Copier les données dans la structure
                     struct final_message received_msg;
                     memcpy(received_msg.iv, temp_buffer, IV_LENGTH);
-                    memcpy(received_msg.encrypted_data, temp_buffer + IV_LENGTH, msg_size - IV_LENGTH - HMAC_LENGTH);
-                    memcpy(received_msg.hmac, temp_buffer + msg_size - HMAC_LENGTH, HMAC_LENGTH);
+                    memcpy(received_msg.encrypted_data, temp_buffer + IV_LENGTH, total_received - IV_LENGTH - HMAC_LENGTH);
+                    memcpy(received_msg.hmac, temp_buffer + total_received - HMAC_LENGTH, HMAC_LENGTH);
 
                     // Calculer la taille réelle des données chiffrées
-                    size_t actual_encrypted_length = msg_size - IV_LENGTH - HMAC_LENGTH;
+                    size_t actual_encrypted_length = total_received - IV_LENGTH - HMAC_LENGTH;
                     printf("Actual encrypted data length: %zu\n", actual_encrypted_length);
                     printf("IV length: %d, HMAC length: %d\n", IV_LENGTH, HMAC_LENGTH);
 
@@ -519,7 +570,7 @@ int main(int argc, char *argv[]) {
                     #endif
                 } else {
                     printf("Failed to receive complete message. Expected %d bytes, got %d\n", 
-                           msg_size, bytes_received);
+                           msg_size, total_received);
                 }
                 free(temp_buffer);
             }
