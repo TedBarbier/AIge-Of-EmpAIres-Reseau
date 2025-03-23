@@ -57,7 +57,7 @@ class GameLoop:
 
     def handle_message(self, dt, camera, screen):
         buffersize = 8192
-        readable, _ , _ = select.select([self.udp_socket_to_receive], [], [], 0.001) 
+        readable, _ , _ = select.select([self.udp_socket_to_receive], [], [], 0.001)
         for s in readable:
             data, addr = s.recvfrom(buffersize)
             if data:
@@ -65,7 +65,6 @@ class GameLoop:
                 if "Map" in received_message:
                     dict = self.string_to_dict(received_message)
                     self.state.map.players_dict[self.num_players].reset(dict["Map"]["nb_cellX"],dict["Map"]["nb_cellY"], self.num_players)
-                    print(self.state.map.players_dict[self.num_players].entities_dict)
                     self.state.selected_mode = dict["Map"]["mode"]
                     self.state.selected_map_type = dict["Map"]["map_type"]
                     self.state.selected_players = dict["Map"]["nb_max_players"]
@@ -77,6 +76,9 @@ class GameLoop:
                     self.num_players = int(dict["Map"]["nb_player"])
                     print(self.num_players)
                     self.state.start_game(self.num_players) # Pass ai_config_values , ai_config_values=self.ai_config_values
+                    # SUPPRIMER CETTE BOUCLE ENTIÈRE - Elle est probablement incorrecte et cause le problème
+                    # for i in range(self.num_players-1):
+                    #     self.state.map._place_player_starting_areas_multi(self.state.selected_mode, self.state.selected_players, self.num_players, i+2, self.state.polygon) # i+2 pour commencer les équipes à partir de 2 pour les joueurs rejoignant
                     self.state.states = PLAY # Transition to PLAY only after game starts
                     self.reseau.send_action_via_udp({"players": self.num_players})
                 # elif "representation" in received_message:
@@ -86,22 +88,28 @@ class GameLoop:
                 elif "players" in received_message:
                     # print("players", received_message)
                     dict = self.string_to_dict(received_message)
-                    self.state.map._place_player_starting_areas_multi(self.state.selected_mode, self.state.selected_players, self.num_players, dict["players"], self.state.polygon)
+                    # IMPORTANT : Utiliser dict["players"] comme numéro d'équipe pour le joueur qui rejoint.
+                    # Assurez-vous que dict["players"] contient le NUMÉRO D'ÉQUIPE CORRECT (2, 3, etc.)
+                    team_joueur_rejoignant = int(dict["players"]) # Convertir en int pour s'assurer
+                    print(f"Joueur rejoignant, équipe : {team_joueur_rejoignant}") # DEBUG
+                    self.state.map._place_player_starting_areas_multi(self.state.selected_mode, self.state.selected_players, self.num_players, team_joueur_rejoignant, self.state.polygon)
                 elif "speed" in received_message:
                     dict = self.string_to_dict(received_message)
                     self.state.set_speed(int(dict["speed"]))
                 elif "update" in received_message:
                     dict = self.string_to_dict(received_message)
-                    print(dict)
+                    print("update")
+                    print(self.num_players == dict["get_context_to_send"]["player"], dict["get_context_to_send"]["player"], self.num_players)
                     if dict["get_context_to_send"]["player"] != self.num_players and dict["update"] is not None:
                         self.state.map.update_entity(dict, dt, camera, screen)
-                        player=self.state.map.players_dict[dict["get_context_to_send"]["player"]]
-                        if dict["get_context_to_send"]["strategy"] == "aggressive":
-                            self.state.map.players_dict[self.num_players].ai_profile._aggressive_strategy(dict["update"], dict["get_context_to_send"],player)
-                        elif dict["get_context_to_send"]["strategy"] == "defensive":
-                            self.state.map.players_dict[self.num_players].ai_profile._defensive_strategy(dict["update"], dict["get_context_to_send"],player)
-                        elif dict["get_context_to_send"]["strategy"] == "balanced":
-                            self.state.map.players_dict[self.num_players].ai_profile._balanced_strategy(dict["update"], dict["get_context_to_send"],player)
+                        #print(self.state.map.players_dict[dict["get_context_to_send"]["player"]])
+                        # player=self.state.map.players_dict[dict["get_context_to_send"]["player"]]
+                        # if dict["get_context_to_send"]["strategy"] == "aggressive":
+                        #     self.state.map.players_dict[self.num_players].ai_profile._aggressive_strategy(dict["update"], dict["get_context_to_send"],player)
+                        # elif dict["get_context_to_send"]["strategy"] == "defensive":
+                        #     self.state.map.players_dict[self.num_players].ai_profile._defensive_strategy(dict["update"], dict["get_context_to_send"],player)
+                        # elif dict["get_context_to_send"]["strategy"] == "balanced":
+                        #     self.state.map.players_dict[self.num_players].ai_profile._balanced_strategy(dict["update"], dict["get_context_to_send"],player)
 
                 else:
                     return(received_message)
@@ -147,7 +155,7 @@ class GameLoop:
                 self.state.set_players(self.startmenu.selected_player_count)
 
                 # Instantiate IAMenu for multiplayer mode - configure for player 1 initially
-                self.iamenu = IAMenu(self.screen, self.state.selected_players, num_player=1, is_multiplayer=True) # is_multiplayer=True, num_player=1
+                self.iamenu = IAMenu(self.screen, self.state.selected_players, num_player=self.num_players, is_multiplayer=True) # is_multiplayer=True, num_player=1
                 self.state.states = CONFIG_IA # Go to CONFIG_IA state
 
                 if self.state.display_mode == TERMINAL:
@@ -181,6 +189,7 @@ class GameLoop:
             if ai_values:
                 self.ai_config_values = ai_values # Store AI values
                 if self.state.is_multiplayer:
+                    self.state.start_game() #ai_config_values=self.ai_config_values
                     map_send = {"Map" :{
                         "nb_cellX" : self.state.map.nb_CellX,
                         "nb_cellY" : self.state.map.nb_CellY,
@@ -194,7 +203,6 @@ class GameLoop:
                         "score_players" : self.state.map.score_players,
                     }}
                     self.reseau.send_action_via_udp(map_send)
-                    self.state.start_game() #ai_config_values=self.ai_config_values
                     # In multiplayer, game starts when map data is received.
                     # self.state.start_game(ai_config_values=self.ai_config_values) # Start game after AI config (multiplayer start handled in message receive)
                     self.state.states = PLAY # Transition to PLAY state
