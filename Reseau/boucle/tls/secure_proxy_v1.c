@@ -44,9 +44,9 @@ typedef int socket_t;
 #define PORT_12345 12345
 #define PORT_1234 1234
 #define MULTICAST_PORT 8000
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 8192
 #define MULTICAST_IP "239.255.255.250"
-#define MAX_MSG_SIZE 1024
+#define MAX_MSG_SIZE 8192
 #define MULTICAST_GROUP "239.0.0.1"
 #define PORT 5000
 #define MAX_INTERFACES 10
@@ -360,12 +360,19 @@ int main(int argc, char *argv[]) {
     if (FD_ISSET(socket_fd_12345, &readfds)) {
       char buffer[BUFFER_SIZE];
       int bytes_received =
-          recvfrom(socket_fd_12345, buffer, BUFFER_SIZE, 0,
+          recvfrom(socket_fd_12345, buffer, BUFFER_SIZE - 1, 0,
                    (struct sockaddr *)&client_address, &addrlen);
       if (bytes_received > 0) {
         buffer[bytes_received] = '\0';
         printf("Received message from Python: %s\n", buffer);
         printf("Forward it to multicast group: %s\n", MULTICAST_IP);
+
+        // S'assurer que le message ne dépasse pas MAX_MSG_SIZE
+        if (bytes_received > MAX_MSG_SIZE) {
+          printf("Message too large, truncating to %d bytes\n", MAX_MSG_SIZE);
+          bytes_received = MAX_MSG_SIZE;
+          buffer[MAX_MSG_SIZE] = '\0';
+        }
 
         unsigned char encrypted_message[BUFFER_SIZE];
         int encrypted_length;
