@@ -57,7 +57,7 @@ class GameLoop:
 
     def handle_message(self, dt, camera, screen):
         buffersize = 8192
-        readable, _ , _ = select.select([self.udp_socket_to_receive], [], [], 0.001) 
+        readable, _ , _ = select.select([self.udp_socket_to_receive], [], [], 0.001)
         for s in readable:
             data, addr = s.recvfrom(buffersize)
             if data:
@@ -76,8 +76,9 @@ class GameLoop:
                     self.num_players = int(dict["Map"]["nb_player"])
                     print(self.num_players)
                     self.state.start_game(self.num_players) # Pass ai_config_values , ai_config_values=self.ai_config_values
-                    for i in range(self.num_players-1):
-                        self.state.map._place_player_starting_areas_multi(self.state.selected_mode, self.state.selected_players, self.num_players, i, self.state.polygon)
+                    # SUPPRIMER CETTE BOUCLE ENTIÈRE - Elle est probablement incorrecte et cause le problème
+                    # for i in range(self.num_players-1):
+                    #     self.state.map._place_player_starting_areas_multi(self.state.selected_mode, self.state.selected_players, self.num_players, i+2, self.state.polygon) # i+2 pour commencer les équipes à partir de 2 pour les joueurs rejoignant
                     self.state.states = PLAY # Transition to PLAY only after game starts
                     self.reseau.send_action_via_udp({"players": self.num_players})
                 # elif "representation" in received_message:
@@ -87,7 +88,11 @@ class GameLoop:
                 elif "players" in received_message:
                     # print("players", received_message)
                     dict = self.string_to_dict(received_message)
-                    self.state.map._place_player_starting_areas_multi(self.state.selected_mode, self.state.selected_players, self.num_players, dict["players"], self.state.polygon)
+                    # IMPORTANT : Utiliser dict["players"] comme numéro d'équipe pour le joueur qui rejoint.
+                    # Assurez-vous que dict["players"] contient le NUMÉRO D'ÉQUIPE CORRECT (2, 3, etc.)
+                    team_joueur_rejoignant = int(dict["players"]) # Convertir en int pour s'assurer
+                    print(f"Joueur rejoignant, équipe : {team_joueur_rejoignant}") # DEBUG
+                    self.state.map._place_player_starting_areas_multi(self.state.selected_mode, self.state.selected_players, self.num_players, team_joueur_rejoignant, self.state.polygon)
                 elif "speed" in received_message:
                     dict = self.string_to_dict(received_message)
                     self.state.set_speed(int(dict["speed"]))
