@@ -69,7 +69,6 @@ class TrainingBuilding(Building):
                 else:
                     return TRAIN_NOT_FOUND_UNIT
             else:
-                print("Train busy")
                 return TRAIN_BUSY
         else:
             return TRAIN_NOT_ACTIVE
