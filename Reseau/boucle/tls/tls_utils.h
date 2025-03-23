@@ -10,6 +10,14 @@
 #define BLOCK_SIZE 16
 #define HMAC_KEY_LENGTH 32
 #define HMAC_LENGTH 32  // SHA256 output length
+#define BUFFER_SIZE 1024
+
+// Structure pour stocker le message final avec IV
+struct final_message {
+    unsigned char iv[IV_LENGTH];
+    unsigned char encrypted_data[BUFFER_SIZE];
+    unsigned char hmac[HMAC_LENGTH];
+};
 
 void encrypt_message(const unsigned char *key, const unsigned char *iv,
                      const char *message, unsigned char *encrypted, int *len);
