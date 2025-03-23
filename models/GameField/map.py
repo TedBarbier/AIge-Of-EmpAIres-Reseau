@@ -588,9 +588,9 @@ class Map:
             current_player = Player(center_Y, center_X, team, num_players, True)
             current_player.linked_map = self
             self.players_dict[current_player.team] = current_player
-
+            gen_option = MODE_GENERATION.get(mode)
             if not(self.check_cell(center_Y, center_X)) :
-                gen_option = MODE_GENERATION.get(mode)
+                
 
                 entities_gen = gen_option.get("entities")
                 for entity_type, number in entities_gen.items():
