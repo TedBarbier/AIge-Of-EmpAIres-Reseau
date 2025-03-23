@@ -65,7 +65,6 @@ class GameLoop:
                 if "Map" in received_message:
                     dict = self.string_to_dict(received_message)
                     self.state.map.players_dict[self.num_players].reset(dict["Map"]["nb_cellX"],dict["Map"]["nb_cellY"], self.num_players)
-                    print(self.state.map.players_dict[self.num_players].entities_dict)
                     self.state.selected_mode = dict["Map"]["mode"]
                     self.state.selected_map_type = dict["Map"]["map_type"]
                     self.state.selected_players = dict["Map"]["nb_max_players"]
@@ -77,6 +76,7 @@ class GameLoop:
                     self.num_players = int(dict["Map"]["nb_player"])
                     print(self.num_players)
                     self.state.start_game(self.num_players) # Pass ai_config_values , ai_config_values=self.ai_config_values
+                    self.state.map._place_player_starting_areas_multi(self.state.selected_mode, self.state.selected_players, self.num_players, self.num_players, self.state.polygon)
                     self.state.states = PLAY # Transition to PLAY only after game starts
                     self.reseau.send_action_via_udp({"players": self.num_players})
                 # elif "representation" in received_message:
@@ -147,7 +147,7 @@ class GameLoop:
                 self.state.set_players(self.startmenu.selected_player_count)
 
                 # Instantiate IAMenu for multiplayer mode - configure for player 1 initially
-                self.iamenu = IAMenu(self.screen, self.state.selected_players, num_player=1, is_multiplayer=True) # is_multiplayer=True, num_player=1
+                self.iamenu = IAMenu(self.screen, self.state.selected_players, num_player=self.num_players, is_multiplayer=True) # is_multiplayer=True, num_player=1
                 self.state.states = CONFIG_IA # Go to CONFIG_IA state
 
                 if self.state.display_mode == TERMINAL:
@@ -181,6 +181,7 @@ class GameLoop:
             if ai_values:
                 self.ai_config_values = ai_values # Store AI values
                 if self.state.is_multiplayer:
+                    self.state.start_game() #ai_config_values=self.ai_config_values
                     map_send = {"Map" :{
                         "nb_cellX" : self.state.map.nb_CellX,
                         "nb_cellY" : self.state.map.nb_CellY,
@@ -194,7 +195,6 @@ class GameLoop:
                         "score_players" : self.state.map.score_players,
                     }}
                     self.reseau.send_action_via_udp(map_send)
-                    self.state.start_game() #ai_config_values=self.ai_config_values
                     # In multiplayer, game starts when map data is received.
                     # self.state.start_game(ai_config_values=self.ai_config_values) # Start game after AI config (multiplayer start handled in message receive)
                     self.state.states = PLAY # Transition to PLAY state
