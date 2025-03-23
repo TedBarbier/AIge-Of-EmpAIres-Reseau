@@ -18,18 +18,21 @@ class AIProfile:
         self.aggressiveness = aggressiveness
         self.defense = defense
 
-    def compare_ratios(self, actual_ratios, target_ratios, context, keys_to_include=None):
-        if len(context['player'].get_entities_by_class(['F']))<1:
-            if context['player'].get_current_resources()["wood"]>=61:
-                result = context['player'].build_entity(context['player'].get_entities_by_class('v',is_free=True), 'F')
+    def compare_ratios(self, actual_ratios, target_ratios, context, keys_to_include=None, player=None):
+        if player == None:
+            player = context['player']
+
+        if len(player.get_entities_by_class(['F']))<1:
+            if player.get_current_resources()["wood"]>=61:
+                result = player.build_entity(player.get_entities_by_class('v',is_free=True), 'F')
                 return
             else :
-                v_ids = context['player'].get_entities_by_class(['v'],is_free=True)
-                c_ids = context['player'].ect(['W'], context['player'].cell_Y, context['player'].cell_X)
+                v_ids = player.get_entities_by_class(['v'],is_free=True)
+                c_ids = player.ect(['W'], player.cell_Y, player.cell_X)
                 counter = 0
                 c_pointer = 0
                 for id in v_ids:
-                    v = context['player'].linked_map.get_entity_by_id(id)
+                    v = player.linked_map.get_entity_by_id(id)
                     if not v.is_full():
                         if counter == 3:
                             counter = 0
@@ -40,7 +43,7 @@ class AIProfile:
                     else:
                         if context['drop_off_id'] is None:
                             return
-                        v.drop_to_entity(context['player'].entity_closest_to(["T","C"], v.cell_Y, v.cell_X, is_dead = True))
+                        v.drop_to_entity(player.entity_closest_to(["T","C"], v.cell_Y, v.cell_X, is_dead = True))
                         #v.drop_to_entity(context['player'].entity_closest_to(["T","C"], v.cell_Y, v.cell_X, is_dead = True))
                         
             return
@@ -54,18 +57,18 @@ class AIProfile:
             differences[key] = diff
         sorted_differences = sorted(differences.items(), key=lambda x: x[1], reverse=True)
         for building_repr in sorted_differences:
-            existing_ids = set(context['player'].get_entities_by_class(['A','B','C','K','T', 'F', 'S']))
-            villagers = context['player'].get_entities_by_class(['v'], is_free=True)
+            existing_ids = set(player.get_entities_by_class(['A','B','C','K','T', 'F', 'S']))
+            villagers = player.get_entities_by_class(['v'], is_free=True)
             if not villagers:
                 return
-            result = context['player'].build_entity(context['player'].get_entities_by_class(['v'],is_free=True), building_repr[0])
-            new_ids = set(context['player'].get_entities_by_class(['A','B','C','K','T', 'F', 'S']))
+            result = player.build_entity(player.get_entities_by_class(['v'],is_free=True), building_repr[0])
+            new_ids = set(player.get_entities_by_class(['A','B','C','K','T', 'F', 'S']))
             new_building_ids = new_ids - existing_ids
             if result != 0:
                 if not new_building_ids:
                     continue
                 new_building_id = new_building_ids.pop()
-                building = context['player'].linked_map.get_entity_by_id(new_building_id)
+                building = player.linked_map.get_entity_by_id(new_building_id)
                 if building.state == BUILDING_ACTIVE:
                     return
             elif result == 0:
@@ -73,12 +76,12 @@ class AIProfile:
                     for temp_resources in [("gold",'G'),("food",'F')]:
                         if context['resources'][temp_resources[0]]<context['resources'][resources_to_collect[0]]:
                             resources_to_collect=temp_resources
-                    v_ids = context['player'].get_entities_by_class(['v'],is_free=True)
-                    c_ids = context['player'].ect(resources_to_collect[1], context['player'].cell_Y, context['player'].cell_X)
+                    v_ids = player.get_entities_by_class(['v'],is_free=True)
+                    c_ids = player.ect(resources_to_collect[1], player.cell_Y, player.cell_X)
                     counter = 0
                     c_pointer = 0
                     for id in v_ids:
-                        v = context['player'].linked_map.get_entity_by_id(id)
+                        v = player.linked_map.get_entity_by_id(id)
                         if not v.is_full():
                             if counter == 3:
                                 counter = 0
@@ -89,7 +92,7 @@ class AIProfile:
                         if v.is_full():
                             if context['drop_off_id'] is None:
                                 return "Gathered resources"
-                            v.drop_to_entity(context['player'].entity_closest_to(["T","C"], v.cell_Y, v.cell_X, is_dead = True))
+                            v.drop_to_entity(player.entity_closest_to(["T","C"], v.cell_Y, v.cell_X, is_dead = True))
                     return "Gathered resources" 
 
     STOP_CONDITIONS = {TRAIN_NOT_AFFORDABLE, TRAIN_NOT_FOUND_UNIT, TRAIN_NOT_ACTIVE}
@@ -225,7 +228,7 @@ class AIProfile:
                     training_buildings = context['buildings']['training']
                     if not training_buildings:
                         keys_to_consider = ['B','S','A']
-                        self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context,keys_to_consider)
+                        self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context,keys_to_include=keys_to_consider,player=player)
                     for building in training_buildings:
                         (player.linked_map.get_entity_by_id(building)).train_unit(player, self.choose_units(player.linked_map.get_entity_by_id(building)))
                     # resources_to_collect=("wood",'W')
@@ -247,11 +250,11 @@ class AIProfile:
                     #         counter += 1
                     #     if v.is_full():
                     #         v.drop_to_entity(context['player'].entity_closest_to(["T","C"], v.cell_Y, v.cell_X, is_dead = True))
-                    self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context)
+                    self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
                     return "Train military units!"
                 
                 elif action == "Building structure!":
-                    self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context)
+                    self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
                     return "Building structure!"
 
             # Default to gathering resources if no attack actions are possible
@@ -319,7 +322,7 @@ class AIProfile:
                     training_buildings = context['buildings']['training']
                     if not training_buildings:
                         keys_to_consider = ['S','A','T']
-                        self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context,keys_to_consider)
+                        self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context,keys_to_include=keys_to_consider, player=player)
                     for building in training_buildings:
                         (player.linked_map.get_entity_by_id(building)).train_unit(player, self.choose_units(context['player'].linked_map.get_entity_by_id(building)))  
                     resources_to_collect=("wood",'W')
@@ -341,7 +344,7 @@ class AIProfile:
                     #         counter += 1
                     #     if v.is_full():
                     #         v.drop_to_entity(context['player'].entity_closest_to(["T","C"], v.cell_Y, v.cell_X, is_dead = True))
-                    self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context)
+                    self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
                     return "Train military units!"
                     
                 elif action == "Attacking the enemy!":
@@ -352,7 +355,7 @@ class AIProfile:
                     return "Attacking the enemy!"
                 
                 elif action == "Building structure!":
-                    self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context)
+                    self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
                     return "Building structure!"
                 
             return "Gathering resources!"
@@ -430,7 +433,7 @@ class AIProfile:
                     training_buildings = context['buildings']['training']
                     if not training_buildings:
                         keys_to_consider = ['T','B','S']
-                        self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, keys_to_consider)
+                        self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, keys_to_include=keys_to_consider, player=player)
                     for building in training_buildings:
                         (player.linked_map.get_entity_by_id(building)).train_unit(player,self.choose_units(player.linked_map.get_entity_by_id(building)))
                     resources_to_collect=("wood",'W')
@@ -453,7 +456,7 @@ class AIProfile:
                     #         counter += 1
                     #     if v.is_full():
                     #         v.drop_to_entity(context['player'].entity_closest_to(["T","C"], v.cell_Y, v.cell_X, is_dead = True))
-                    self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context)
+                    self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
                     return "Train military units!"
 
                 elif action == "Attacking the enemy!":
@@ -465,7 +468,7 @@ class AIProfile:
                     return "Attacking the enemy!"
                 
                 elif action == "Building structure!":
-                    self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context)
+                    self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
                     return "Building structure!"
             return "Gathering resources!"
         finally:
