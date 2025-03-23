@@ -102,8 +102,8 @@ class GameLoop:
                     dict = self.string_to_dict(received_message)
                     self.state.toggle_pause()
                 elif "update" in received_message:
-                    print("update")
                     dict = self.string_to_dict(received_message)
+                    print(dict)
                     if dict["get_context_to_send"]["player"] != self.num_players and dict["update"] is not None:
                         self.state.map.update_entity(dict, dt, camera, screen)
                         player=self.state.map.players_dict[dict["get_context_to_send"]["player"]]
