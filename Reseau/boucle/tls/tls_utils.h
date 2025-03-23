@@ -18,7 +18,7 @@ struct final_message {
     unsigned char iv[IV_LENGTH];
     unsigned char encrypted_data[BUFFER_SIZE];
     unsigned char hmac[HMAC_LENGTH];
-};
+} __attribute__((packed));
 #pragma pack(pop)
 
 void encrypt_message(const unsigned char *key, const unsigned char *iv,

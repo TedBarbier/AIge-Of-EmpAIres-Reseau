@@ -54,7 +54,7 @@ int generate_hmac(const unsigned char *hmac_key, const unsigned char *message,
         goto cleanup;
     }
 
-    size_t hmac_len;
+    size_t hmac_len = HMAC_LENGTH;
     if (EVP_DigestSignFinal(ctx, hmac, &hmac_len) <= 0) {
         fprintf(stderr, "Error finalizing HMAC\n");
         ERR_print_errors_fp(stderr);
@@ -62,6 +62,7 @@ int generate_hmac(const unsigned char *hmac_key, const unsigned char *message,
         goto cleanup;
     }
 
+    printf("Message length for HMAC: %d\n", message_len);
     printf("Generated HMAC: ");
     for(int i = 0; i < HMAC_LENGTH; i++) {
         printf("%02x", hmac[i]);
@@ -100,7 +101,7 @@ int verify_hmac(const unsigned char *hmac_key, const unsigned char *message,
         goto cleanup;
     }
 
-    size_t hmac_len;
+    size_t hmac_len = HMAC_LENGTH;
     unsigned char calculated_hmac[HMAC_LENGTH];
     if (EVP_DigestSignFinal(ctx, calculated_hmac, &hmac_len) <= 0) {
         fprintf(stderr, "Error finalizing HMAC\n");
@@ -109,6 +110,7 @@ int verify_hmac(const unsigned char *hmac_key, const unsigned char *message,
         goto cleanup;
     }
 
+    printf("Message length for HMAC: %d\n", message_len);
     printf("Calculated HMAC: ");
     for(int i = 0; i < HMAC_LENGTH; i++) {
         printf("%02x", calculated_hmac[i]);
