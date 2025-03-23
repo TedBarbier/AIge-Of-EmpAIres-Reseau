@@ -85,6 +85,10 @@ class GameLoop:
                 elif "speed" in received_message:
                     dict = self.string_to_dict(received_message)
                     self.state.set_speed(int(dict["speed"]))
+                elif "quit" in received_message:
+                    dict = self.string_to_dict(received_message)
+                    self.state.map.players_dict.pop(self.num_players)
+                    self.num_players -= 1
                 elif "update" in received_message:
                     dict = self.string_to_dict(received_message)
                     if dict["get_context_to_send"]["player"] != self.num_players and dict["update"] is not None:
@@ -199,7 +203,9 @@ class GameLoop:
 
     def handle_pause_events(self,dt, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
-            self.pausemenu.handle_click(event.pos, self.state)
+            result = self.pausemenu.handle_click(event.pos, self.state)
+            if result == "main_menu" and self.state.is_multiplayer:
+                self.reseau.send_action_via_udp({"quit": self.num_players})
 
     def handle_end_events(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:

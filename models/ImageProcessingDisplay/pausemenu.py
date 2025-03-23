@@ -87,6 +87,7 @@ class PauseMenu:
             game_state.toggle_pause()
         elif self.buttons['main_menu'].collidepoint(pos):
             game_state.go_to_main_menu()
+            return "main_menu"
         elif self.buttons['save'].collidepoint(pos):
             game_state.save()
         elif self.buttons['quit'].collidepoint(pos):
