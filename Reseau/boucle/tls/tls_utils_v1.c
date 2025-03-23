@@ -30,28 +30,34 @@ void pkcs7_unpad(unsigned char *data, int *data_len, int block_size) {
 
 int generate_hmac(const unsigned char *hmac_key, const unsigned char *message,
                   int message_len, unsigned char *hmac) {
-    HMAC_CTX *ctx = HMAC_CTX_new();
+    EVP_MAC *mac = EVP_MAC_fetch(NULL, "HMAC", NULL);
+    EVP_MAC_CTX *ctx = EVP_MAC_CTX_new(mac);
+    OSSL_PARAM params[2];
     unsigned int hmac_len;
     int result = 1;
 
-    if (!ctx) {
+    if (!mac || !ctx) {
         fprintf(stderr, "Error creating HMAC context\n");
-        return 0;
+        result = 0;
+        goto cleanup;
     }
 
-    if (!HMAC_Init_ex(ctx, hmac_key, HMAC_KEY_LENGTH, EVP_sha256(), NULL)) {
+    params[0] = OSSL_PARAM_construct_utf8_string("digest", "SHA256", 0);
+    params[1] = OSSL_PARAM_construct_end();
+
+    if (!EVP_MAC_init(ctx, hmac_key, HMAC_KEY_LENGTH, params)) {
         fprintf(stderr, "Error initializing HMAC\n");
         result = 0;
         goto cleanup;
     }
 
-    if (!HMAC_Update(ctx, message, message_len)) {
+    if (!EVP_MAC_update(ctx, message, message_len)) {
         fprintf(stderr, "Error updating HMAC\n");
         result = 0;
         goto cleanup;
     }
 
-    if (!HMAC_Final(ctx, hmac, &hmac_len)) {
+    if (!EVP_MAC_final(ctx, hmac, &hmac_len, HMAC_LENGTH)) {
         fprintf(stderr, "Error finalizing HMAC\n");
         result = 0;
         goto cleanup;
@@ -64,7 +70,8 @@ int generate_hmac(const unsigned char *hmac_key, const unsigned char *message,
     }
 
 cleanup:
-    HMAC_CTX_free(ctx);
+    if (ctx) EVP_MAC_CTX_free(ctx);
+    if (mac) EVP_MAC_free(mac);
     return result;
 }
 
