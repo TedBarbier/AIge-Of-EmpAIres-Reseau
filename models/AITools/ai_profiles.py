@@ -200,7 +200,7 @@ class AIProfile:
                         print("v_ids",v_ids)
                         if c_ids == []:
                             print("build")
-                            self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context)
+                            player.build_entity(player.get_entities_by_class('v',is_free=True), 'F')
                             return "Structure are built!"
                         if not v.is_full() :
                             if counter == 3:
