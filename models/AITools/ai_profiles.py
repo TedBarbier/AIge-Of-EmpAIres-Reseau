@@ -207,7 +207,6 @@ class AIProfile:
                 elif action == "Training villagers!":
                     for towncenter_id in player.get_entities_by_class(['T']):
                         towncenter=player.linked_map.get_entity_by_id(towncenter_id)
-                        print(action)
                         resultat = towncenter.train_unit(player,'v')
                         if resultat != None:
                             if player.get_current_resources()['food']<50:

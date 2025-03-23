@@ -95,25 +95,25 @@ def train_villager(context):
     return "Training villagers!"
 
 def gather_resources(context):
-    resources_to_collect=("wood",'W')
-    for temp_resources in [("gold",'G'),("food",'F')]:
-        if context['resources'][temp_resources[0]]<context['resources'][resources_to_collect[0]]:
-            resources_to_collect=temp_resources
-    v_ids = context['player'].get_entities_by_class(['v'],is_free=True)
-    c_ids = context['player'].ect(resources_to_collect[1], context['player'].cell_Y, context['player'].cell_X)
-    counter = 0
-    c_pointer = 0
-    for id in v_ids:
-        v = context['player'].linked_map.get_entity_by_id(id)
-        if not v.is_full():
-            if counter == 3:
-                counter = 0
-                if c_pointer<len(c_ids)-1:
-                    c_pointer += 1
-            v.collect_entity(c_ids[c_pointer])
-            counter += 1
-        else:
-            drop_resources(context)
+    # resources_to_collect=("wood",'W')
+    # for temp_resources in [("gold",'G'),("food",'F')]:
+    #     if context['resources'][temp_resources[0]]<context['resources'][resources_to_collect[0]]:
+    #         resources_to_collect=temp_resources
+    # v_ids = context['player'].get_entities_by_class(['v'],is_free=True)
+    # c_ids = context['player'].ect(resources_to_collect[1], context['player'].cell_Y, context['player'].cell_X)
+    # counter = 0
+    # c_pointer = 0
+    # for id in v_ids:
+    #     v = context['player'].linked_map.get_entity_by_id(id)
+    #     if not v.is_full():
+    #         if counter == 3:
+    #             counter = 0
+    #             if c_pointer<len(c_ids)-1:
+    #                 c_pointer += 1
+    #         v.collect_entity(c_ids[c_pointer])
+    #         counter += 1
+    #     else:
+    #         drop_resources(context)
     return "Gathering resources!"
 
 def train_military(context):
