@@ -574,6 +574,9 @@ class Map:
 
 
     def _place_player_starting_areas_multi(self, mode, selected_player, num_players ,team=1, polygon=None):
+
+        print("MAP: _place_player_starting_areas_multi() - Arguments:") # DEBUG
+        print(f"  mode: {mode}, selected_player: {selected_player}, num_players: {num_players}, team: {team}, polygon: {polygon}") # DEBUG
         if team not in self.players_dict:
             if polygon == None:
                 polygon = angle_distribution(self.nb_CellY, self.nb_CellX, selected_player, scale=0.75, rand_rot=0x1)

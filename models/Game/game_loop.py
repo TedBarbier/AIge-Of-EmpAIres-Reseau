@@ -65,17 +65,11 @@ class GameLoop:
                 if "Map" in received_message:
                     dict = self.string_to_dict(received_message)
                     print("----------------------------------------------------") # Séparateur pour la console
-                    print("CLIENT: Message 'Map' REÇU:")
-                    print(json.dumps(dict, indent=4)) # Afficher le message "Map" complet et indenté
+                    print("CLIENT: Message 'Map' BROADCAST REÇU:") # <<-- Indiquer que c'est BROADCAST
+                    print(json.dumps(dict, indent=4))
 
-                    team_player_local = int(dict["Map"]["team_player"]) # Récupérer team_player
-                    print(f"CLIENT: Numéro d'équipe extrait du message 'Map': {team_player_local}") # DEBUG
-
-                    print(f"CLIENT: Valeur de self.num_players AVANT mise à jour: {self.num_players}") # DEBUG
-                    self.num_players = team_player_local # Mettre à jour self.num_players avec team_player
-                    print(f"CLIENT: Valeur de self.num_players APRÈS mise à jour: {self.num_players}") # DEBUG
-
-                    self.state.map.players_dict[self.num_players].reset(dict["Map"]["nb_cellX"],dict["Map"]["nb_cellY"], self.num_players)
+                    # ADOPTER LA CARTE REÇUE (écrase la carte locale)
+                    self.state.map.players_dict[self.num_players].reset(dict["Map"]["nb_cellX"],dict["Map"]["nb_cellY"], self.num_players) # <<-- self.num_players actuel pour reset, mais va être changé après
                     self.state.selected_mode = dict["Map"]["mode"]
                     self.state.selected_map_type = dict["Map"]["map_type"]
                     self.state.selected_players = dict["Map"]["nb_max_players"]
@@ -85,14 +79,23 @@ class GameLoop:
                     self.state.map.score_players = dict["Map"]["score_players"]
                     self.state.polygon = dict["Map"]["polygon"]
 
+                    # RE-NUMÉROTATION SIMPLIFIÉE DES ÉQUIPES (basée sur l'ordre de "démarrage" multijoueur)
+                    # Le "dernier" (celui qui a envoyé sa carte) est équipe 1.
+                    # Les autres sont re-numérotés en équipes 2, 3, ... en fonction de l'ordre de "démarrage" (pas facile à déterminer précisément sans serveur)
+                    # VERSION TRÈS SIMPLIFIÉE : On va dire que si on reçoit un "Map", c'est que quelqu'un d'autre est devenu équipe 1,
+                    # et donc NOUS, on devient automatiquement équipe 2 (si on était équipe 1 avant), ou on reste à notre équipe actuelle si on était déjà 2 ou plus.
+                    self.num_players += 1
+                    print(f"CLIENT: Re-numérotation de self.num_players à : {self.num_players} (car Map BROADCAST reçu)") # DEBUG
+                    # Si on était déjà équipe 2, 3, etc., on GARDE notre numéro d'équipe (dans cette version simplifiée)
+
                     print(f"CLIENT: Appel de start_game AVEC l'équipe: {self.num_players}") # DEBUG
-                    self.state.start_game(self.num_players) # Utiliser self.num_players correct
+                    self.state.start_game(self.num_players) # Utiliser le NOUVEAU self.num_players
                     print(f"CLIENT: Retour de start_game.") # DEBUG
 
                     self.state.states = PLAY
-                    self.reseau.send_action_via_udp({"players": self.num_players})
+                    # PLUS BESOIN D'ENVOYER "players" ICI, car la carte BROADCAST est censée suffire à synchroniser tout le monde
+                    # self.reseau.send_action_via_udp({"players": self.num_players})
                     print("----------------------------------------------------") # Séparateur pour la console
-
                 elif "players" in received_message:
                     dict = self.string_to_dict(received_message)
                     team_joueur_rejoignant = int(dict["players"])
@@ -185,6 +188,7 @@ class GameLoop:
             self.startmenu.handle_keydown(event)
 
 
+      
     def handle_config_events(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
             ai_values = self.iamenu.handle_click(event.pos)
@@ -201,16 +205,17 @@ class GameLoop:
                         "speed" : self.state.speed,
                         "nb_max_players" : self.state.selected_players,
                         "polygon" : self.state.polygon,
-                        "team_player": 1, # L'hôte est TOUJOURS l'équipe 1 (important !)
+                        "team_player": 1, # On va dire que celui qui envoie sa map se prétend équipe 1 (temporaire)
                         "score_players" : self.state.map.score_players,
                     }}
-                    self.reseau.send_action_via_udp(map_send)
-                    # In multiplayer, game starts when map data is received.
-                    # self.state.start_game(ai_config_values=self.ai_config_values) # Start game after AI config (multiplayer start handled in message receive)
+                    # UTILISER send_action_via_udp (qui est déjà en BROADCAST selon toi)
+                    self.reseau.send_action_via_udp(map_send) # <<-- Utiliser send_action_via_udp (broadcast)
                     self.state.states = PLAY # Transition to PLAY state
                 else:
-                    self.state.start_game() # Start game after AI config (solo mode) ai_config_values=self.ai_config_values
+                    self.state.start_game() # Start game after AI config (solo mode)
                     self.state.states = PLAY # Transition to PLAY state
+
+    
 
 
     def handle_pause_events(self,dt, event):
