@@ -77,7 +77,7 @@ class GameLoop:
                     self.state.polygon = dict["Map"]["polygon"]
                     self.num_players = int(dict["Map"]["nb_player"])
                     print(self.num_players)
-                    self.state.start_game(self.num_players, ai_config_values=self.ai_config_values) # Pass ai_config_values
+                    self.state.start_game(self.num_players) # Pass ai_config_values , ai_config_values=self.ai_config_values
                     self.state.states = PLAY # Transition to PLAY only after game starts
                     self.reseau.send_action_via_udp({"players": self.num_players})
                 # elif "representation" in received_message:
