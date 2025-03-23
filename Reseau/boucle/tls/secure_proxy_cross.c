@@ -360,6 +360,11 @@ int main(int argc, char *argv[]) {
                 encrypt_message(encryption_key, iv, buffer, final_msg.encrypted_data, &encrypted_length);
                 printf("Original message length: %d\n", strlen(buffer));
                 printf("Encrypted length: %d\n", encrypted_length);
+                printf("Original message (hex): ");
+                for(int i = 0; i < strlen(buffer); i++) {
+                    printf("%02x", (unsigned char)buffer[i]);
+                }
+                printf("\n");
 
                 // Générer le HMAC sur les données chiffrées
                 generate_hmac(hmac_key, final_msg.encrypted_data, encrypted_length, final_msg.hmac);
@@ -422,7 +427,7 @@ int main(int argc, char *argv[]) {
                 msg_size = ntohl(msg_size);  // Convertir de network à host byte order
                 
                 // Vérifier que la taille est raisonnable
-                if (msg_size > BUFFER_SIZE + IV_LENGTH + HMAC_LENGTH) {
+                if (msg_size > BUFFER_SIZE + IV_LENGTH + HMAC_LENGTH || msg_size < IV_LENGTH + HMAC_LENGTH) {
                     printf("Received invalid message size: %d bytes\n", msg_size);
                     continue;
                 }
@@ -495,6 +500,11 @@ int main(int argc, char *argv[]) {
                     printf("Decrypted length: %d\n", decrypted_length);
                     decrypted_message[decrypted_length] = '\0';  // Assurer la null-termination
                     printf("Decrypted message: %s\n", decrypted_message);
+                    printf("Decrypted message (hex): ");
+                    for(int i = 0; i < decrypted_length; i++) {
+                        printf("%02x", decrypted_message[i]);
+                    }
+                    printf("\n");
 
                     struct sockaddr_in local_address;
                     local_address.sin_family = AF_INET;
