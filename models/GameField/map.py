@@ -746,8 +746,11 @@ class Map:
                     break
 
     def update_entity(self, dict, dt, camera, screen):
-        print(dict)
-
+        if self.state != "end":
+            self.update_all_entities(dt, camera, screen)
+            self.update_all_projectiles(dt)
+            self.update_all_dead_entities(dt)
+            self.update_all_players(dt)
 
 
 
