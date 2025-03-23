@@ -182,24 +182,17 @@ class AIProfile:
             for action in actions:
                 print("action",action)
                 if action == "Gathering resources!":
-                    print("Gathering resources!, on try")
                     resources_to_collect=("wood",'W')
                     for temp_resources in [("gold",'G'),("food",'F')]:
                         if context['resources'][temp_resources[0]]<context['resources'][resources_to_collect[0]]:
                             resources_to_collect=temp_resources
                     v_ids = player.get_entities_by_class(['v'],is_free=True)
-                    print("c",resources_to_collect[1])
                     c_ids = player.ect(resources_to_collect[1], player.cell_Y, player.cell_X)
                     counter = 0
                     c_pointer = 0
-                    print("v_ids",v_ids)
                     for id in v_ids:
                         v = player.linked_map.get_entity_by_id(id)
-                        print("c_ids",c_ids)
-                        print("v",v)
-                        print("v_ids",v_ids)
                         if c_ids == []:
-                            print("build")
                             player.build_entity(player.get_entities_by_class('v',is_free=True), 'F')
                             return "Structure are built!"
                         if not v.is_full() :
@@ -214,7 +207,7 @@ class AIProfile:
                                 if unit.is_full():
                                     unit.drop_to_entity(player.entity_closest_to(["T","C"], unit.cell_Y, unit.cell_X, is_dead = True))
                     return "Gathering resources!"
-                elif action == "Training villagers":
+                elif action == "Training villagers!":
                     print("here the training villagers")
                     for towncenter_id in context['player'].get_entities_by_class(['T']):
                         towncenter=context['player'].linked_map.get_entity_by_id(towncenter_id)
