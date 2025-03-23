@@ -42,22 +42,32 @@ int generate_hmac(const unsigned char *hmac_key, const unsigned char *message,
 
     if (EVP_DigestSignInit(ctx, NULL, EVP_sha256(), NULL, pkey) <= 0) {
         fprintf(stderr, "Error initializing HMAC\n");
+        ERR_print_errors_fp(stderr);
         result = 0;
         goto cleanup;
     }
 
     if (EVP_DigestSignUpdate(ctx, message, message_len) <= 0) {
         fprintf(stderr, "Error updating HMAC\n");
+        ERR_print_errors_fp(stderr);
         result = 0;
         goto cleanup;
     }
 
-    size_t hmac_len;
+    size_t hmac_len = HMAC_LENGTH;
     if (EVP_DigestSignFinal(ctx, hmac, &hmac_len) <= 0) {
         fprintf(stderr, "Error finalizing HMAC\n");
+        ERR_print_errors_fp(stderr);
         result = 0;
         goto cleanup;
     }
+
+    printf("Message length for HMAC: %d\n", message_len);
+    printf("Generated HMAC: ");
+    for(int i = 0; i < HMAC_LENGTH; i++) {
+        printf("%02x", hmac[i]);
+    }
+    printf("\n");
 
 cleanup:
     if (ctx) EVP_MD_CTX_free(ctx);
@@ -67,11 +77,56 @@ cleanup:
 
 int verify_hmac(const unsigned char *hmac_key, const unsigned char *message,
                  int message_len, const unsigned char *received_hmac) {
-    unsigned char calculated_hmac[HMAC_LENGTH];
-    if (!generate_hmac(hmac_key, message, message_len, calculated_hmac)) {
-        return 0; // HMAC generation failed
+    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
+    EVP_PKEY *pkey = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL, hmac_key, HMAC_KEY_LENGTH);
+    int result = 1; // 1 = success, 0 = failure
+    
+    if (!ctx || !pkey) {
+        fprintf(stderr, "Error creating HMAC context or key\n");
+        result = 0;
+        goto cleanup;
     }
-    return memcmp(calculated_hmac, received_hmac, HMAC_LENGTH) == 0;
+
+    if (EVP_DigestSignInit(ctx, NULL, EVP_sha256(), NULL, pkey) <= 0) {
+        fprintf(stderr, "Error initializing HMAC\n");
+        ERR_print_errors_fp(stderr);
+        result = 0;
+        goto cleanup;
+    }
+
+    if (EVP_DigestSignUpdate(ctx, message, message_len) <= 0) {
+        fprintf(stderr, "Error updating HMAC\n");
+        ERR_print_errors_fp(stderr);
+        result = 0;
+        goto cleanup;
+    }
+
+    size_t hmac_len = HMAC_LENGTH;
+    unsigned char calculated_hmac[HMAC_LENGTH];
+    if (EVP_DigestSignFinal(ctx, calculated_hmac, &hmac_len) <= 0) {
+        fprintf(stderr, "Error finalizing HMAC\n");
+        ERR_print_errors_fp(stderr);
+        result = 0;
+        goto cleanup;
+    }
+
+    printf("Message length for HMAC: %d\n", message_len);
+    printf("Calculated HMAC: ");
+    for(int i = 0; i < HMAC_LENGTH; i++) {
+        printf("%02x", calculated_hmac[i]);
+    }
+    printf("\nReceived HMAC: ");
+    for(int i = 0; i < HMAC_LENGTH; i++) {
+        printf("%02x", received_hmac[i]);
+    }
+    printf("\n");
+
+    result = memcmp(calculated_hmac, received_hmac, HMAC_LENGTH) == 0;
+
+cleanup:
+    if (ctx) EVP_MD_CTX_free(ctx);
+    if (pkey) EVP_PKEY_free(pkey);
+    return result;
 }
 
 void encrypt_message(const unsigned char *key, const unsigned char *iv,
