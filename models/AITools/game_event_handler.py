@@ -72,6 +72,7 @@ class GameEventHandler:
         return context
 
     def get_context_to_send(self):
+        print(self.players.get_current_resources())
         context ={
             'resources': self.players.get_current_resources(),
             'buildings': {
