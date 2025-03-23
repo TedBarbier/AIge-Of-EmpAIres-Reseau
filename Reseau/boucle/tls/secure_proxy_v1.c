@@ -1,4 +1,4 @@
-#include "tls_utils_cross.h"
+#include "tls_utils_v1.h"
 #include <errno.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
@@ -44,9 +44,7 @@ typedef int socket_t;
 #define PORT_12345 12345
 #define PORT_1234 1234
 #define MULTICAST_PORT 8000
-#define BUFFER_SIZE 8192
-#define MAX_MESSAGE_SIZE                                                       \
-  (BUFFER_SIZE + IV_LENGTH + HMAC_LENGTH) // Taille maximale totale d'un message
+#define BUFFER_SIZE 1024
 #define MULTICAST_IP "239.255.255.250"
 #define MAX_MSG_SIZE 1024
 #define MULTICAST_GROUP "239.0.0.1"
@@ -215,20 +213,6 @@ int read_key_from_file(const char *filename, const char *key_name,
   return 1;
 }
 
-// Fonction pour générer un IV aléatoire
-void generate_random_iv(unsigned char *iv) {
-  for (int i = 0; i < IV_LENGTH; i++) {
-    iv[i] = rand() % 256;
-  }
-}
-
-// Fonction pour vérifier si le message provient de notre propre interface
-int is_own_message(const struct sockaddr_in *sender_addr, const char *own_ip) {
-  char sender_ip[INET_ADDRSTRLEN];
-  inet_ntop(AF_INET, &(sender_addr->sin_addr), sender_ip, INET_ADDRSTRLEN);
-  return (strcmp(sender_ip, own_ip) == 0);
-}
-
 int main(int argc, char *argv[]) {
 #ifdef _WIN32
   WSADATA wsaData;
@@ -376,257 +360,74 @@ int main(int argc, char *argv[]) {
         printf("Received message from Python: %s\n", buffer);
         printf("Forward it to multicast group: %s\n", MULTICAST_IP);
 
-        // Générer un IV aléatoire
-        unsigned char iv[IV_LENGTH];
-        generate_random_iv(iv);
-
-        // Préparer le message final
-        struct final_message final_msg;
-        memcpy(final_msg.iv, iv, IV_LENGTH);
-
-        // Chiffrer le message
-        size_t encrypted_length;
-        encrypt_message(encryption_key, iv, buffer, final_msg.encrypted_data,
+        unsigned char encrypted_message[BUFFER_SIZE];
+        int encrypted_length;
+        encrypt_message(encryption_key, iv, buffer, encrypted_message,
                         &encrypted_length);
-        printf("Original message length: %zu\n", strlen(buffer));
-        printf("Encrypted length: %zu\n", encrypted_length);
-        printf("Original message (hex): ");
-        for (size_t i = 0; i < strlen(buffer); i++) {
-          printf("%02x", (unsigned char)buffer[i]);
-        }
-        printf("\n");
 
-        // Générer le HMAC sur les données chiffrées
-        generate_hmac(hmac_key, final_msg.encrypted_data, encrypted_length,
-                      final_msg.hmac);
+        unsigned char hmac[HMAC_LENGTH];
+        generate_hmac(hmac_key, encrypted_message, encrypted_length, hmac);
 
-        // Envoyer le message complet
+        unsigned char final_message[BUFFER_SIZE + HMAC_LENGTH];
+        memcpy(final_message, encrypted_message, encrypted_length);
+        memcpy(final_message + encrypted_length, hmac, HMAC_LENGTH);
+        int final_length = encrypted_length + HMAC_LENGTH;
+
         set_multicast_interface(socket_fd_multicast, selected_interface_ip);
         struct sockaddr_in multicast_send_addr;
         multicast_send_addr.sin_family = AF_INET;
         multicast_send_addr.sin_addr.s_addr = inet_addr(MULTICAST_IP);
         multicast_send_addr.sin_port = htons(MULTICAST_PORT);
-
-        // Envoyer d'abord la taille du message
-        uint32_t msg_size = htonl(IV_LENGTH + encrypted_length + HMAC_LENGTH);
-        printf("Sending message size: %d bytes\n", ntohl(msg_size));
-        printf("IV length: %d, Encrypted length: %zu, HMAC length: %d\n",
-               IV_LENGTH, encrypted_length, HMAC_LENGTH);
-
-        // Créer un buffer temporaire pour le message
-        unsigned char *temp_buffer =
-            malloc(IV_LENGTH + encrypted_length + HMAC_LENGTH);
-        if (!temp_buffer) {
-          fprintf(stderr, "Failed to allocate memory for message\n");
-          continue;
-        }
-
-        // Copier les données dans le buffer temporaire
-        memcpy(temp_buffer, final_msg.iv, IV_LENGTH);
-        memcpy(temp_buffer + IV_LENGTH, final_msg.encrypted_data,
-               encrypted_length);
-        memcpy(temp_buffer + IV_LENGTH + encrypted_length, final_msg.hmac,
-               HMAC_LENGTH);
-
-// Envoyer la taille et le message
 #ifdef _WIN32
-        sendto(socket_fd_multicast, (char *)&msg_size, sizeof(uint32_t), 0,
-               (struct sockaddr *)&multicast_send_addr,
-               sizeof(multicast_send_addr));
-        sendto(socket_fd_multicast, (char *)temp_buffer,
-               IV_LENGTH + encrypted_length + HMAC_LENGTH, 0,
-               (struct sockaddr *)&multicast_send_addr,
-               sizeof(multicast_send_addr));
+        sendto(socket_fd_multicast, (char *)final_message, final_length, 0,
 #else
-        sendto(socket_fd_multicast, &msg_size, sizeof(uint32_t), 0,
-               (struct sockaddr *)&multicast_send_addr,
-               sizeof(multicast_send_addr));
-        sendto(socket_fd_multicast, temp_buffer,
-               IV_LENGTH + encrypted_length + HMAC_LENGTH, 0,
-               (struct sockaddr *)&multicast_send_addr,
-               sizeof(multicast_send_addr));
+        sendto(socket_fd_multicast, final_message, final_length, 0,
 #endif
-
-        free(temp_buffer);
+               (struct sockaddr *)&multicast_send_addr,
+               sizeof(multicast_send_addr));
       }
     }
 
     if (FD_ISSET(socket_fd_multicast, &readfds)) {
-      // D'abord recevoir la taille du message
-      uint32_t msg_size;
+      unsigned char buffer[BUFFER_SIZE + HMAC_LENGTH];
 #ifdef _WIN32
-      int size_received =
-          recvfrom(socket_fd_multicast, (char *)&msg_size, sizeof(uint32_t), 0,
-                   (struct sockaddr *)&client_address, &addrlen);
+      int bytes_received = recvfrom(
+          socket_fd_multicast, (char *)buffer, BUFFER_SIZE + HMAC_LENGTH, 0,
 #else
-      int size_received =
-          recvfrom(socket_fd_multicast, &msg_size, sizeof(uint32_t), 0,
-                   (struct sockaddr *)&client_address, &addrlen);
+      int bytes_received =
+          recvfrom(socket_fd_multicast, buffer, BUFFER_SIZE + HMAC_LENGTH, 0,
 #endif
+          (struct sockaddr *)&client_address, &addrlen);
+      if (bytes_received > HMAC_LENGTH) {
+        printf("Received message from multicast group\n");
 
-      if (size_received == SOCKET_ERROR_VAL) {
-#ifdef _WIN32
-        int error = WSAGetLastError();
-        if (error == WSAEWOULDBLOCK) {
-          continue; // Pas de données disponibles, continuer la boucle
-        }
-#else
-        if (errno == EAGAIN || errno == EWOULDBLOCK) {
-          continue; // Pas de données disponibles, continuer la boucle
-        }
-#endif
-        perror("Error receiving message size");
-        continue;
-      }
+        int encrypted_length = bytes_received - HMAC_LENGTH;
+        unsigned char *encrypted_message = buffer;
+        unsigned char *received_hmac = buffer + encrypted_length;
 
-      if (size_received > 0) {
-        msg_size = ntohl(msg_size); // Convertir de network à host byte order
-
-        // Vérifier que la taille est raisonnable
-        if (msg_size > MAX_MESSAGE_SIZE || msg_size < IV_LENGTH + HMAC_LENGTH) {
-          printf("Received invalid message size: %u bytes (max allowed: %d)\n",
-                 msg_size, MAX_MESSAGE_SIZE);
+        if (!verify_hmac(hmac_key, encrypted_message, encrypted_length,
+                         received_hmac)) {
+          printf("HMAC verification failed - message may be tampered\n");
           continue;
         }
+        printf("HMAC verification successful\n");
 
-        printf("Received message size: %u bytes\n", msg_size);
+        unsigned char decrypted_message[BUFFER_SIZE];
+        int decrypted_length = encrypted_length;
+        decrypt_message(encryption_key, iv, encrypted_message,
+                        decrypted_message, &decrypted_length);
 
-        // Recevoir le message avec la taille exacte
-        unsigned char *temp_buffer = malloc(msg_size);
-        if (!temp_buffer) {
-          fprintf(stderr, "Failed to allocate memory for received message\n");
-          continue;
-        }
-
-        // Recevoir le message en plusieurs parties si nécessaire
-        size_t total_received = 0;
-        while (total_received < msg_size) {
+        struct sockaddr_in local_address;
+        local_address.sin_family = AF_INET;
+        local_address.sin_addr.s_addr = inet_addr("127.0.0.1");
+        local_address.sin_port = htons(PORT_1234);
 #ifdef _WIN32
-          int bytes_received = recvfrom(
-              socket_fd_multicast, (char *)(temp_buffer + total_received),
-              msg_size - total_received, 0, (struct sockaddr *)&client_address,
-              &addrlen);
+        sendto(socket_fd_multicast, (char *)decrypted_message, decrypted_length,
+               0,
 #else
-          int bytes_received =
-              recvfrom(socket_fd_multicast, temp_buffer + total_received,
-                       msg_size - total_received, 0,
-                       (struct sockaddr *)&client_address, &addrlen);
+        sendto(socket_fd_multicast, decrypted_message, decrypted_length, 0,
 #endif
-
-          if (bytes_received == SOCKET_ERROR_VAL) {
-#ifdef _WIN32
-            int error = WSAGetLastError();
-            if (error == WSAEWOULDBLOCK) {
-              continue; // Réessayer la réception
-            }
-#else
-            if (errno == EAGAIN || errno == EWOULDBLOCK) {
-              continue; // Réessayer la réception
-            }
-#endif
-            perror("Error receiving message data");
-            free(temp_buffer);
-            break;
-          }
-
-          if (bytes_received <= 0) {
-            printf("Connection closed or error while receiving message\n");
-            free(temp_buffer);
-            break;
-          }
-
-          total_received += bytes_received;
-        }
-
-        if (total_received == msg_size) {
-          printf("Successfully received complete message (%zu bytes)\n",
-                 total_received);
-          printf("Received message from multicast group\n");
-          printf("Message size: %d bytes\n", total_received);
-
-          // Copier les données dans la structure
-          struct final_message received_msg;
-          memcpy(received_msg.iv, temp_buffer, IV_LENGTH);
-          memcpy(received_msg.encrypted_data, temp_buffer + IV_LENGTH,
-                 total_received - IV_LENGTH - HMAC_LENGTH);
-          memcpy(received_msg.hmac, temp_buffer + total_received - HMAC_LENGTH,
-                 HMAC_LENGTH);
-
-          // Calculer la taille réelle des données chiffrées
-          size_t actual_encrypted_length =
-              total_received - IV_LENGTH - HMAC_LENGTH;
-          printf("Actual encrypted data length: %zu\n",
-                 actual_encrypted_length);
-          printf("IV length: %d, HMAC length: %d\n", IV_LENGTH, HMAC_LENGTH);
-
-          // Vérifier le HMAC sur les données chiffrées
-          printf("Verifying HMAC...\n");
-          printf("HMAC key length: %d\n", HMAC_KEY_LENGTH);
-          printf("HMAC length: %d\n", HMAC_LENGTH);
-          printf("Data being verified: ");
-          for (size_t i = 0; i < actual_encrypted_length; i++) {
-            printf("%02x", received_msg.encrypted_data[i]);
-          }
-          printf("\n");
-
-          if (!verify_hmac(hmac_key, received_msg.encrypted_data,
-                           actual_encrypted_length, received_msg.hmac)) {
-            printf("HMAC verification failed - message may be tampered\n");
-            printf("Expected HMAC: ");
-            for (size_t i = 0; i < HMAC_LENGTH; i++) {
-              printf("%02x", received_msg.hmac[i]);
-            }
-            printf("\n");
-            free(temp_buffer);
-            continue;
-          }
-          printf("HMAC verification successful\n");
-
-          // Déchiffrer le message avec l'IV reçu
-          unsigned char decrypted_message[BUFFER_SIZE];
-          size_t decrypted_length = actual_encrypted_length;
-          printf("Decrypting with IV: ");
-          for (size_t i = 0; i < IV_LENGTH; i++) {
-            printf("%02x", received_msg.iv[i]);
-          }
-          printf("\n");
-          decrypt_message(encryption_key, received_msg.iv,
-                          received_msg.encrypted_data, decrypted_message,
-                          &decrypted_length);
-          printf("Decrypted length: %zu\n", decrypted_length);
-          decrypted_message[decrypted_length] =
-              '\0'; // Assurer la null-termination
-          printf("Decrypted message: %s\n", decrypted_message);
-          printf("Decrypted message (hex): ");
-          for (size_t i = 0; i < decrypted_length; i++) {
-            printf("%02x", decrypted_message[i]);
-          }
-          printf("\n");
-
-          // Vérifier si le message provient de notre propre interface
-          if (!is_own_message(&client_address, selected_interface_ip)) {
-            struct sockaddr_in local_address;
-            local_address.sin_family = AF_INET;
-            local_address.sin_addr.s_addr = inet_addr("127.0.0.1");
-            local_address.sin_port = htons(PORT_1234);
-#ifdef _WIN32
-            sendto(socket_fd_multicast, (char *)decrypted_message,
-                   decrypted_length, 0, (struct sockaddr *)&local_address,
-                   sizeof(local_address));
-#else
-            sendto(socket_fd_multicast, decrypted_message, decrypted_length, 0,
-                   (struct sockaddr *)&local_address, sizeof(local_address));
-#endif
-          } else {
-            printf("Ignoring message from own interface (%s)\n",
-                   selected_interface_ip);
-          }
-        } else {
-          printf(
-              "Failed to receive complete message. Expected %d bytes, got %d\n",
-              msg_size, total_received);
-        }
-        free(temp_buffer);
+               (struct sockaddr *)&local_address, sizeof(local_address));
       }
     }
   }
