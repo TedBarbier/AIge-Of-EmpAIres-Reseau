@@ -87,7 +87,10 @@ class GameLoop:
                     self.state.set_speed(int(dict["speed"]))
                 elif "quit" in received_message:
                     dict = self.string_to_dict(received_message)
-                    self.state.map.players_dict.pop(self.num_players)
+                    self.state.map.players_dict.pop(dict["quit"])
+                    for player in self.state.map.players_dict.keys():
+                        self.state.map.players_dict[player-1]  = self.state.map.players_dict[player].values()
+                        self.state.map.players_dict.pop(player)
                     self.num_players -= 1
                 elif "update" in received_message:
                     dict = self.string_to_dict(received_message)
