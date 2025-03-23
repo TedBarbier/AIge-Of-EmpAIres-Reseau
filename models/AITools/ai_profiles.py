@@ -218,7 +218,7 @@ class AIProfile:
                     context['enemy_id'] = self.closest_enemy_building(context)
                     for unit in unit_list:
                         unit.attack_entity(context['enemy_id'])
-                    return "Attacking in progress"
+                    return "Attacking the enemy!"
 
                 elif action == "Train military units!":
                     # Train military units in training buildings
@@ -248,11 +248,11 @@ class AIProfile:
                     #     if v.is_full():
                     #         v.drop_to_entity(context['player'].entity_closest_to(["T","C"], v.cell_Y, v.cell_X, is_dead = True))
                     self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context)
-                    return "Trained military units"
+                    return "Train military units!"
                 
                 elif action == "Building structure!":
                     self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context)
-                    return "Structure are built!"
+                    return "Building structure!"
 
             # Default to gathering resources if no attack actions are possible
             return "Gathering resources!"
@@ -342,18 +342,18 @@ class AIProfile:
                     #     if v.is_full():
                     #         v.drop_to_entity(context['player'].entity_closest_to(["T","C"], v.cell_Y, v.cell_X, is_dead = True))
                     self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context)
-                    return "Trained military units"
+                    return "Train military units!"
                     
                 elif action == "Attacking the enemy!":
                     unit_list = context['units']['military_free'][:len(context['units']['military_free'])//2]
                     context['enemy_id'] = self.closest_enemy_building(context)
                     for unit in unit_list:
                         unit.attack_entity(context['enemy_id'])
-                    return "Attacking in progress"
+                    return "Attacking the enemy!"
                 
                 elif action == "Building structure!":
                     self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context)
-                    return "Structure are built!"
+                    return "Building structure!"
                 
             return "Gathering resources!"
         finally:
@@ -423,7 +423,7 @@ class AIProfile:
                             if context['drop_off_id'] is None:
                                 return "Dropped of resources"
                             villager.drop_to_entity(player.entity_closest_to(["T","C"], villager.cell_Y, villager.cell_X, is_dead = True))  # Drop off resources
-                    return "Dropped off resources"
+                    return "Dropping off resources!"
 
                 elif action == "Train military units!":
                     # Train military units in training buildings
@@ -454,7 +454,7 @@ class AIProfile:
                     #     if v.is_full():
                     #         v.drop_to_entity(context['player'].entity_closest_to(["T","C"], v.cell_Y, v.cell_X, is_dead = True))
                     self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context)
-                    return "Trained military units"
+                    return "Train military units!"
 
                 elif action == "Attacking the enemy!":
                     unit_list = context['units']['military_free']
@@ -462,11 +462,11 @@ class AIProfile:
                     for unit in unit_list:
                         unit.attack_entity(context['enemy_id'])
                         
-                    return "Attacking in progress"
+                    return "Attacking the enemy!"
                 
                 elif action == "Building structure!":
                     self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context)
-                    return "Structure are built!"
+                    return "Building structure!"
             return "Gathering resources!"
         finally:
             player.is_busy = False
