@@ -87,11 +87,11 @@ def check_housing(context):
 
 # ---- Actions ----
 def train_villager(context):
-    for towncenter_id in context['player'].get_entities_by_class(['T']):
-        towncenter=context['player'].linked_map.get_entity_by_id(towncenter_id)
-        towncenter.train_unit(context['player'],'v')
-        if context['player'].get_current_resources()['food']<50:
-            gather_resources(context)
+    # for towncenter_id in context['player'].get_entities_by_class(['T']):
+    #     towncenter=context['player'].linked_map.get_entity_by_id(towncenter_id)
+    #     towncenter.train_unit(context['player'],'v')
+    #     if context['player'].get_current_resources()['food']<50:
+    #         gather_resources(context)
     return "Training villagers!"
 
 def gather_resources(context):

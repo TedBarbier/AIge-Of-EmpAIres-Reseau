@@ -175,12 +175,9 @@ class AIProfile:
         
         if player is None:
             player = context['player']
-        print("player",player)
 
         try:
-            # print("try")
             for action in actions:
-                print("action",action)
                 if action == "Gathering resources!":
                     resources_to_collect=("wood",'W')
                     for temp_resources in [("gold",'G'),("food",'F')]:
@@ -208,14 +205,12 @@ class AIProfile:
                                     unit.drop_to_entity(player.entity_closest_to(["T","C"], unit.cell_Y, unit.cell_X, is_dead = True))
                     return "Gathering resources!"
                 elif action == "Training villagers!":
-                    print(player.get_entities_by_class(['T']))
                     for towncenter_id in player.get_entities_by_class(['T']):
-                        print("enter here")
                         towncenter=player.linked_map.get_entity_by_id(towncenter_id)
+                        print(action)
                         resultat = towncenter.train_unit(player,'v')
                         print(resultat)
                         if player.get_current_resources()['food']<50:
-                            print("enter here v2")
                             return "Gathering resources!"
                     return "Training villagers!"
                 elif action == "Attacking the enemy!":
