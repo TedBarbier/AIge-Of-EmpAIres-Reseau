@@ -105,23 +105,6 @@ class GameLoop:
                     dict = self.string_to_dict(received_message)
                     if dict["get_context_to_send"]["player"] != self.num_players and dict["update"] is not None:
                         self.state.map.update_entity(dict, dt, camera, screen)
-                        player=self.state.map.players_dict[dict["get_context_to_send"]["player"]]
-
-                        gold = {"gold":dict["get_context_to_send"]["resources"]["gold"] - player.get_current_resources()["gold"]}
-                        wood = {"wood": dict["get_context_to_send"]["resources"]["wood"] - player.get_current_resources()["wood"]}
-                        food = {"food": dict["get_context_to_send"]["resources"]["food"] - player.get_current_resources()["food"]}
-                        if gold["gold"] > 0:
-                            player.add_resources(gold)
-                        else:
-                            player.remove_resources(gold)
-                        if wood["wood"] > 0:
-                            player.add_resources(wood)
-                        else:
-                            player.remove_resources(wood)
-                        if food["food"] > 0:
-                            player.add_resource(food)
-                        else:
-                            player.remove_resources(food)
                         print("strategy", dict["get_context_to_send"]["strategy"])
                         print("test",dict["get_context_to_send"]["player"])
                         if dict["get_context_to_send"]["strategy"] == "aggressive":
