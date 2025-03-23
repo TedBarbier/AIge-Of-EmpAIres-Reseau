@@ -209,9 +209,9 @@ class AIProfile:
                         towncenter=player.linked_map.get_entity_by_id(towncenter_id)
                         print(action)
                         resultat = towncenter.train_unit(player,'v')
-                        print(resultat)
-                        if player.get_current_resources()['food']<50:
-                            return "Gathering resources!"
+                        if resultat != None:
+                            if player.get_current_resources()['food']<50:
+                                return "Gathering resources!"
                     return "Training villagers!"
                 elif action == "Attacking the enemy!":
                     villager_free=[player.linked_map.get_entity_by_id(v_id) for v_id in player.get_entities_by_class(['v'],is_free=True)]
