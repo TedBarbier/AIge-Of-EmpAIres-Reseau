@@ -5,6 +5,7 @@ import socket
 import select
 from tkinter import messagebox, Button, Tk
 import socket # Import socket for networking
+import json # Import json for networking
 
 from ImageProcessingDisplay import UserInterface, EndMenu, StartMenu, PauseMenu, IAMenu, MultiplayerMenu
 from GLOBAL_VAR import *
@@ -32,41 +33,31 @@ class GameLoop:
         self.pausemenu = PauseMenu(self.screen)
         self.endmenu = EndMenu(self.screen)
         self.ui = UserInterface(self.screen)
-        #self.iamenu = IAMenu(self.screen, self.state.selected_players) # Assuming IAMenu is used somewhere
+        self.iamenu = None # IAMenu will be instantiated when needed
         self.multiplayer_menu = MultiplayerMenu(self.screen) # Instantiate MultiplayerMenu
         self.action_in_progress = False
         self.num_players = 1
         self.udp_socket_to_receive = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.udp_socket_to_receive.bind(("127.0.0.1", 1234))
         self.reseau=Send()
-    
+        self.ai_config_values = None # To store AI config values after IAMenu confirmation
+
+
     def string_to_dict(self, string_data):
         """
         Transforme une chaîne de caractères en dictionnaire Python.
-
-        Cette fonction tente d'interpréter la chaîne de caractères comme du JSON.
-        Si la chaîne est au format JSON valide, elle sera convertie en dictionnaire.
-        Sinon, une erreur sera levée.
-
-        Args:
-            string_data: La chaîne de caractères à transformer.
-
-        Returns:
-            Un dictionnaire Python si la chaîne est au format JSON valide.
-            None si la chaîne n'est pas au format JSON valide (et une erreur est affichée).
+        ... (rest of the docstring as before)
         """
         try:
-            # Utilise json.loads() pour parser la chaîne JSON et la convertir en dictionnaire
             dictionnaire = json.loads(string_data)
             return dictionnaire
         except json.JSONDecodeError as e:
             print(f"Erreur de décodage JSON : La chaîne n'est pas un JSON valide.\nErreur : {e}")
-            return None # Ou vous pouvez choisir de lever l'exception à nouveau, ou retourner une valeur par défaut
-
+            return None
 
     def handle_message(self, dt, camera, screen):
         buffersize = 8192
-        readable, _ , _ = select.select([self.udp_socket_to_receive], [], [], 0.1) 
+        readable, _ , _ = select.select([self.udp_socket_to_receive], [], [], 0.1)
         for s in readable:
             data, addr = s.recvfrom(buffersize)
             if data:
@@ -85,7 +76,8 @@ class GameLoop:
                     self.state.polygon = dict["Map"]["polygon"]
                     self.num_players = int(dict["Map"]["nb_player"])
                     print(self.num_players)
-                    self.state.start_game(self.num_players)
+                    self.state.start_game(self.num_players, ai_config_values=self.ai_config_values) # Pass ai_config_values
+                    self.state.states = PLAY # Transition to PLAY only after game starts
                     self.reseau.send_action_via_udp({"players": self.num_players})
                 # elif "representation" in received_message:
                 #     #print("received players")
@@ -110,10 +102,10 @@ class GameLoop:
                             self.state.map.players_dict[self.num_players].ai_profile._defensive_strategy(dict["update"], dict["get_context_to_send"],player)
                         elif dict["get_context_to_send"]["strategy"] == "balanced":
                             self.state.map.players_dict[self.num_players].ai_profile._balanced_strategy(dict["update"], dict["get_context_to_send"],player)
-                        
+
                 else:
                     return(received_message)
-            
+
     def handle_start_events(self, event):
         if pygame.key.get_pressed()[pygame.K_F12]:
             loaded = self.state.load()
@@ -134,14 +126,16 @@ class GameLoop:
                 self.state.set_difficulty_mode(self.startmenu.selected_mode_index)
                 self.state.set_display_mode(self.startmenu.display_mode)
                 self.state.set_players(self.startmenu.selected_player_count)
-                self.state.start_game()
-                self.state.states = PLAY
+
+                # Instantiate IAMenu for solo mode
+                self.iamenu = IAMenu(self.screen, self.state.selected_players, is_multiplayer=False) # is_multiplayer=False
+                self.state.states = CONFIG_IA # Go to CONFIG_IA state
 
                 if self.state.display_mode == TERMINAL:
                     self.state.set_screen_size(20, 20)
                     pygame.display.set_mode(
                         (self.state.screen_width, self.state.screen_height),
-                        pygame.HWSURFACE | pygame.DOUBLEBUF,
+                        pygame.HWSURFACpygame.HWSURFACE | pygame.DOUBLEBUF,
                     )
             elif start_menu_action == "multiplayer": # If multiplayer is clicked
                 self.num_players = 1
@@ -151,33 +145,16 @@ class GameLoop:
                 self.state.set_difficulty_mode(self.startmenu.selected_mode_index)
                 self.state.set_display_mode(self.startmenu.display_mode)
                 self.state.set_players(self.startmenu.selected_player_count)
-                self.state.start_game(self.num_players)
-                self.state.states = PLAY
-                map_send = {"Map" :{
-                    "nb_cellX" : self.state.map.nb_CellX,
-                    "nb_cellY" : self.state.map.nb_CellY,
-                    "seed" : self.state.map.seed,
-                    "map_type" : self.state.selected_map_type,
-                    "mode" : self.state.selected_mode,
-                    "speed" : self.state.speed,
-                    "nb_max_players" : self.state.selected_players,
-                    "polygon" : self.state.polygon,
-                    "nb_player" : len(self.state.map.players_dict) + 1,
-                    # "entity_matrix" : self.state.map.entity_matrix,
-                    # "entity_id_dict" : self.state.map.entity_id_dict,
-                    # "resource_id_dict" : self.state.map.resource_id_dict,
-                    # "dead_entities" : self.state.map.dead_entities,
-                    "score_players" : self.state.map.score_players,
-                    # "player_dict" : self.state.map.players_dict
-                }}
 
-                self.reseau.send_action_via_udp(map_send)
+                # Instantiate IAMenu for multiplayer mode - configure for player 1 initially
+                self.iamenu = IAMenu(self.screen, self.state.selected_players, num_player=1, is_multiplayer=True) # is_multiplayer=True, num_player=1
+                self.state.states = CONFIG_IA # Go to CONFIG_IA state
 
                 if self.state.display_mode == TERMINAL:
                     self.state.set_screen_size(20, 20)
                     pygame.display.set_mode(
                         (self.state.screen_width, self.state.screen_height),
-                        pygame.HWSURFACE | pygame.DOUBLEBUF,
+                        pygame.HWSURFACpygame.HWSURFACE | pygame.DOUBLEBUF,
                     )
             else:
                 # Check if clicking on player count or cell count enables editing
@@ -197,63 +174,34 @@ class GameLoop:
             # Handle keyboard events for editing
             self.startmenu.handle_keydown(event)
 
-    # def handle_multiplayer_menu_events(self, event): # New event handler for multiplayer menu
-    #     if event.type == pygame.MOUSEBUTTONDOWN:
-    #         multiplayer_menu_action = self.multiplayer_menu.handle_click(event.pos)
-    #         if multiplayer_menu_action == "principal_solo":
-    #             self.state.states = START # Retour à l'état START
-    #         elif multiplayer_menu_action == "heberger":
-    #             print("Hosting game (placeholder)") # Placeholder for hosting logic
-    #             self.state.is_multiplayer = True # Set multiplayer flag
-    #             #self.state.states = START # Retour à l'état START pour le moment, ou peut-être un état d'attente
-    #         elif isinstance(multiplayer_menu_action, tuple) and multiplayer_menu_action[0] == "rejoindre":
-    #             ip_to_join = multiplayer_menu_action[1]
-    #             print([executable_path, ip_to_join])
-    #             run_process = subprocess.run([executable_path, ip_to_join], capture_output=True, text=True)
-    #             self.state.is_multiplayer = True # Set multiplayer flag
-    #             # Afficher la sortie du programme
-    #             print("Sortie du programme :")
-    #             print(run_process.stdout)
 
-    #             # Afficher les erreurs, le cas échéant
-    #             if run_process.stderr:
-    #                 print("Erreurs :")
-    #                 print(run_process.stderr)
-    #             self.reseau.send_action_via_udp("Rejoindre la partie")
-    #             #self.state.states = START # Retour à l'état START pour le moment, ou peut-être un état d'attente
-    #         elif multiplayer_menu_action == "annuler_hebergement":
-    #             self.multiplayer_menu.menu_state = "principal" # Reset multiplayer menu state
-    #         elif multiplayer_menu_action == "start_hosting": # Handle "Heberger_config" click
-    #             self.state.is_multiplayer = True
-    #             map_type = self.multiplayer_menu.map_options[self.multiplayer_menu.selected_map_index]
-    #             mode = self.multiplayer_menu.selected_mode_index
-    #             player_count = self.multiplayer_menu.selected_player_count
-    #             map_cell_count_x = self.multiplayer_menu.map_cell_count_x
-    #             map_cell_count_y = self.multiplayer_menu.map_cell_count_y
+    def handle_config_events(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            ai_values = self.iamenu.handle_click(event.pos)
+            if ai_values:
+                self.ai_config_values = ai_values # Store AI values
+                if self.state.is_multiplayer:
+                    map_send = {"Map" :{
+                        "nb_cellX" : self.state.map.nb_CellX,
+                        "nb_cellY" : self.state.map.nb_CellY,
+                        "seed" : self.state.map.seed,
+                        "map_type" : self.state.selected_map_type,
+                        "mode" : self.state.selected_mode,
+                        "speed" : self.state.speed,
+                        "nb_max_players" : self.state.selected_players,
+                        "polygon" : self.state.polygon,
+                        "nb_player" : len(self.state.map.players_dict) + 1,
+                        "score_players" : self.state.map.score_players,
+                    }}
+                    self.reseau.send_action_via_udp(map_send)
+                    self.state.start_game() #ai_config_values=self.ai_config_values
+                    # In multiplayer, game starts when map data is received.
+                    # self.state.start_game(ai_config_values=self.ai_config_values) # Start game after AI config (multiplayer start handled in message receive)
+                    self.state.states = PLAY # Transition to PLAY state
+                else:
+                    self.state.start_game() # Start game after AI config (solo mode) ai_config_values=self.ai_config_values
+                    self.state.states = PLAY # Transition to PLAY state
 
-    #             self.state.set_map_size(map_cell_count_x, map_cell_count_y) # Set map size from multiplayer menu
-    #             self.state.set_players(player_count) # Set player count
-    #             self.state.set_difficulty_mode(mode) # Set mode based on string
-    #             self.state.set_map_type(map_type) # set map type based on string
-    #             self.polygon = self.state.map.generate_map_multi(map_type, mode, player_count) # Call generate_map_multi
-
-    #             self.state.states = PLAY # Change state to PLAY
-
-
-        # elif event.type == pygame.KEYDOWN:
-        #     keydown_action = self.multiplayer_menu.handle_keydown(event)
-        #     if keydown_action is not None and isinstance(keydown_action, tuple) and keydown_action[0] == "rejoindre":
-        #         ip_to_join = keydown_action[1]
-        #         print(f"Joining game at IP: {ip_to_join} (from keydown) (placeholder)") # Placeholder for joining logic
-        #         self.state.is_multiplayer = True
-        #         self.state.states = START # Retour à l'état START pour le moment, ou peut-être un état d'attente
-
-        # self.multiplayer_menu.update()
-
-
-    # def handle_config_events(self,dt, event):
-    #     if event.type == pygame.MOUSEBUTTONDOWN:
-    #         self.iamenu.handle_click(event.pos, self.state)
 
     def handle_pause_events(self,dt, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -326,7 +274,7 @@ class GameLoop:
         if keys[pygame.K_F12]:
             loaded = self.state.load()
             if loaded:
-                pygame.display.set_mode((self.state.screen_width, self.state.screen_height), pygame.HWSURFACE | pygame.DOUBLEBUF | pygame.RESIZABLE)
+                pygame.display.set_mode((self.state.screen_width, self.state.screen_height), pygame.HWSURFACpygame.HWSURFACE | pygame.DOUBLEBUF | pygame.RESIZABLE)
                 if self.state.states == PAUSE:
                     self.state.toggle_pause()
 
@@ -375,10 +323,8 @@ class GameLoop:
     def render_display(self, dt, mouse_x, mouse_y):
         if self.state.states == START: # Utiliser START ici
             self.startmenu.draw()
-        # elif self.state.states == MULTIMENU: # Utiliser MULTIMENU ici
-        #     self.multiplayer_menu.draw()
-        # elif self.state.states == CONFIG:
-        #     self.iamenu.draw()
+        elif self.state.states == CONFIG_IA: # Render IAMenu when in CONFIG_IA state
+            self.iamenu.draw()
         elif self.state.states == PAUSE:
             self.pausemenu.draw()
         elif self.state.states == END:
@@ -414,8 +360,8 @@ class GameLoop:
                 if self.state.states == START: # Utiliser START ici
                     self.state.change_music("start")
                     self.handle_start_events(event)
-                # elif self.state.states == MULTIMENU: # Utiliser MULTIMENU ici
-                #     self.handle_multiplayer_menu_events(event)
+                elif self.state.states == CONFIG_IA: # Handle events for CONFIG_IA state
+                    self.handle_config_events(event)
                 elif self.state.states == PAUSE:
                     self.handle_pause_events(dt, event)
                 elif self.state.states == PLAY:
@@ -427,7 +373,7 @@ class GameLoop:
             if self.state.mouse_held:
                 self.state.map.minimap.update_camera(self.state.camera, mouse_x, mouse_y)
 
-            if not (self.state.states == START): # Pas d'input clavier dans le menu start et multijoueur
+            if not (self.state.states == START or self.state.states == CONFIG_IA): # No keyboard input in START and CONFIG_IA
                 self.handle_keyboard_inputs(move_flags, dt)
 
             self.state.update(dt)
@@ -436,12 +382,12 @@ class GameLoop:
                 self.update_game_state(dt)
                 if self.state.is_multiplayer:
                     self.handle_message(dt, self.state.camera, self.screen)
+            elif self.state.states == CONFIG_IA:
+                pygame.mouse.set_visible(True) # Show mouse cursor in config menu
+
+
             self.render_display(dt, mouse_x, mouse_y)
 
 
         pygame.quit()
 
-
-if __name__ == "__main__":
-    game = GameLoop()
-    game.run()

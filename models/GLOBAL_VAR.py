@@ -94,7 +94,7 @@ PLAY = 1
 PAUSE = 2
 END = 3
 # MULTIMENU = 4
-CONFIG = 5
+CONFIG_IA = 5
 WAITING = 6
 
 #map
