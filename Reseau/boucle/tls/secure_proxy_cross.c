@@ -210,6 +210,13 @@ void generate_random_iv(unsigned char *iv) {
     }
 }
 
+// Fonction pour vérifier si le message provient de notre propre interface
+int is_own_message(const struct sockaddr_in *sender_addr, const char *own_ip) {
+    char sender_ip[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &(sender_addr->sin_addr), sender_ip, INET_ADDRSTRLEN);
+    return (strcmp(sender_ip, own_ip) == 0);
+}
+
 int main(int argc, char *argv[]) {
     #ifdef _WIN32
     WSADATA wsaData;
@@ -557,17 +564,22 @@ int main(int argc, char *argv[]) {
                     }
                     printf("\n");
 
-                    struct sockaddr_in local_address;
-                    local_address.sin_family = AF_INET;
-                    local_address.sin_addr.s_addr = inet_addr("127.0.0.1");
-                    local_address.sin_port = htons(PORT_1234);
-                    #ifdef _WIN32
-                    sendto(socket_fd_multicast, (char*)decrypted_message, decrypted_length, 0,
-                           (struct sockaddr *)&local_address, sizeof(local_address));
-                    #else
-                    sendto(socket_fd_multicast, decrypted_message, decrypted_length, 0,
-                           (struct sockaddr *)&local_address, sizeof(local_address));
-                    #endif
+                    // Vérifier si le message provient de notre propre interface
+                    if (!is_own_message(&client_address, selected_interface_ip)) {
+                        struct sockaddr_in local_address;
+                        local_address.sin_family = AF_INET;
+                        local_address.sin_addr.s_addr = inet_addr("127.0.0.1");
+                        local_address.sin_port = htons(PORT_1234);
+                        #ifdef _WIN32
+                        sendto(socket_fd_multicast, (char*)decrypted_message, decrypted_length, 0,
+                               (struct sockaddr *)&local_address, sizeof(local_address));
+                        #else
+                        sendto(socket_fd_multicast, decrypted_message, decrypted_length, 0,
+                               (struct sockaddr *)&local_address, sizeof(local_address));
+                        #endif
+                    } else {
+                        printf("Ignoring message from own interface (%s)\n", selected_interface_ip);
+                    }
                 } else {
                     printf("Failed to receive complete message. Expected %d bytes, got %d\n", 
                            msg_size, total_received);
