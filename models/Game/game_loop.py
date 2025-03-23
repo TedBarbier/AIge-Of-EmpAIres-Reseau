@@ -98,9 +98,6 @@ class GameLoop:
                 elif "speed" in received_message:
                     dict = self.string_to_dict(received_message)
                     self.state.set_speed(int(dict["speed"]))
-                elif "pause" in received_message:
-                    dict = self.string_to_dict(received_message)
-                    self.state.toggle_pause()
                 elif "update" in received_message:
                     dict = self.string_to_dict(received_message)
                     print(dict)
@@ -341,7 +338,6 @@ class GameLoop:
         # Pause
         if keys[pygame.K_p] or keys[pygame.K_ESCAPE] :
             self.state.toggle_pause()
-            self.reseau.send_action_via_udp("pause")
 
         # Mouvement de la caméra
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
@@ -372,7 +368,7 @@ class GameLoop:
         self.state.camera.move(dt, 5 * scale)
 
     def update_game_state(self, dt):
-        if not (self.state.states == PAUSE): # Ne pas mettre à jour l'état du jeu dans le menu multijoueur ou pause
+        if not (self.state.states == PAUSE) or self.state.is_multiplayer: # Ne pas mettre à jour l'état du jeu dans le menu multijoueur ou pause
             self.state.map.update_all_events(dt*self.state.speed, self.state.camera, self.screen)
             self.state.endgame()
 
