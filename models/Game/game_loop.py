@@ -106,6 +106,8 @@ class GameLoop:
                     if dict["get_context_to_send"]["player"] != self.num_players and dict["update"] is not None:
                         self.state.map.update_entity(dict, dt, camera, screen)
                         player=self.state.map.players_dict[dict["get_context_to_send"]["player"]]
+                        context = player.game_handler.get_context_for_player()
+                        context["resources"] = dict["get_context_to_send"]["resources"]
                         print("strategy", dict["get_context_to_send"]["strategy"])
                         print("test",dict["get_context_to_send"]["player"])
                         if dict["get_context_to_send"]["strategy"] == "aggressive":
