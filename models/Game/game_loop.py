@@ -58,6 +58,7 @@ class GameLoop:
     def handle_message(self, dt, camera, screen):
         buffersize = 8192
         readable, _ , _ = select.select([self.udp_socket_to_receive], [], [], 0.1)
+        readable, _ , _ = select.select([self.udp_socket_to_receive], [], [], 0.001) 
         for s in readable:
             data, addr = s.recvfrom(buffersize)
             if data:
