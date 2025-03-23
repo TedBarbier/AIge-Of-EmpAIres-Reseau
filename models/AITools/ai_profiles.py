@@ -213,7 +213,8 @@ class AIProfile:
                         towncenter=context['player'].linked_map.get_entity_by_id(towncenter_id)
                         towncenter.train_unit(context['player'],'v')
                         if context['player'].get_current_resources()['food']<50:
-                            gather_resources(context)
+                            actions.insert(0, "Gathering resources!")
+                            continue
                 elif action == "Attacking the enemy!":
                     villager_free=[player.linked_map.get_entity_by_id(v_id) for v_id in player.get_entities_by_class(['v'],is_free=True)]
                     unit_list = context['units']['military_free']+villager_free[:len(villager_free)//2]
