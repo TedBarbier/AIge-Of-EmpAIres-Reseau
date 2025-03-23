@@ -98,6 +98,9 @@ class GameLoop:
                 elif "speed" in received_message:
                     dict = self.string_to_dict(received_message)
                     self.state.set_speed(int(dict["speed"]))
+                elif "pause" in received_message:
+                    dict = self.string_to_dict(received_message)
+                    self.state.toggle_pause()
                 elif "update" in received_message:
                     dict = self.string_to_dict(received_message)
                     if dict["get_context_to_send"]["player"] != self.num_players and dict["update"] is not None:
@@ -296,8 +299,10 @@ class GameLoop:
         # Changer la vitesse de Jeu
         if keys[pygame.K_1]:
             self.state.set_speed(self.state.speed+0.1)
+            self.reseau.send_action_via_udp({"speed": self.state.speed+0.1})
         if keys[pygame.K_2]:
             self.state.set_speed(self.state.speed-0.1)
+            self.reseau.send_action_via_udp({"speed": self.state.speed-0.1})
 
         if keys[pygame.K_3]:
             self.state.set_speed(0.3)
@@ -340,6 +345,7 @@ class GameLoop:
         # Pause
         if keys[pygame.K_p] or keys[pygame.K_ESCAPE] :
             self.state.toggle_pause()
+            self.reseau.send_action_via_udp("pause")
 
         # Mouvement de la caméra
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:

@@ -440,10 +440,11 @@ class Map:
         # Rest of your map generation code
         if gen_mode == "Carte Centree":
             self.generate_gold_center(selected_player)
+        self.c_generate_clusters(selected_player, gen_mode)
         for i in range(1, team+1):
             polygon = self._place_player_starting_areas_multi(mode, selected_player, team, i, polygon)
 
-        self.c_generate_clusters(selected_player, gen_mode)
+        
         return polygon
 
     def c_generate_clusters(self, num_players, gen_mode):
