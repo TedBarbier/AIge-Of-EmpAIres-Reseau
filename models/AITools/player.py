@@ -270,12 +270,12 @@ class Player:
         self.linked_map = None
 
         self.decision_tree= tree
-        # if self.team == self.num_players and self.is_multiplayer:
-        #     strat = choose_strategy(self)
-        # elif not is_multiplayer:
-        #     strat = choose_strategy(self)
-        # else:
-        strat = ["aggressive",1,1] 
+        if self.team == self.num_players and self.is_multiplayer:
+            strat = choose_strategy(self)
+        elif not is_multiplayer:
+            strat = choose_strategy(self)
+        else:
+            strat = ["aggressive",1,1] 
         if is_multiplayer and self.team == self.num_players:
             self.ai_profile = AIProfile(strat[0],strat[1],strat[2])
         elif is_multiplayer:
