@@ -50,7 +50,7 @@ class GameState:
             pygame.mixer.music.stop()  # Arrêter la musique actuelle
             pygame.mixer.music.load(MUSIC[state])  # Charger la nouvelle musique
             pygame.mixer.music.play(-1)  # Jouer en boucle (-1 = boucle infinie)
-            pygame.mixer.music.set_volume(5.0)
+            pygame.mixer.music.set_volume(0.05)
             self.music_state = state
     
 
