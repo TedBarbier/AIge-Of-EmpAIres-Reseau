@@ -107,11 +107,11 @@ class GameLoop:
                         self.state.map.update_entity(dict, dt, camera, screen)
                         player=self.state.map.players_dict[dict["get_context_to_send"]["player"]]
 
-                        gold = dict["get_context_to_send"]["resources"]["gold"] - player.get_current_resources()["gold"]
-                        wood = dict["get_context_to_send"]["resources"]["wood"] - player.get_current_resources()["wood"]
-                        food = dict["get_context_to_send"]["resources"]["food"] - player.get_current_resources()["food"]
+                        gold = {"gold":dict["get_context_to_send"]["resources"]["gold"] - player.get_current_resources()["gold"]}
+                        wood = {"wood": dict["get_context_to_send"]["resources"]["wood"] - player.get_current_resources()["wood"]}
+                        food = {"food": dict["get_context_to_send"]["resources"]["food"] - player.get_current_resources()["food"]}
                         if gold > 0:
-                            player.add_resources(gold)
+                            player.add_resources("gold"gold)
                         else:
                             player.remove_resources(gold)
                         if wood > 0:
