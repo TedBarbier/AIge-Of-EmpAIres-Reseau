@@ -213,6 +213,13 @@ int read_key_from_file(const char *filename, const char *key_name,
   return 1;
 }
 
+// Fonction pour vérifier si le message vient de notre propre interface
+int is_own_message(const struct sockaddr_in *source_addr, const char *selected_interface_ip) {
+    char source_ip[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &(source_addr->sin_addr), source_ip, INET_ADDRSTRLEN);
+    return (strcmp(source_ip, selected_interface_ip) == 0);
+}
+
 int main(int argc, char *argv[]) {
 #ifdef _WIN32
   WSADATA wsaData;
@@ -399,6 +406,12 @@ int main(int argc, char *argv[]) {
 #endif
           (struct sockaddr *)&client_address, &addrlen);
       if (bytes_received > HMAC_LENGTH) {
+        // Vérifier si le message vient de notre propre interface
+        if (is_own_message(&client_address, selected_interface_ip)) {
+          printf("Ignoring message from own interface\n");
+          continue;
+        }
+        
         printf("Received message from multicast group\n");
 
         int encrypted_length = bytes_received - HMAC_LENGTH;
