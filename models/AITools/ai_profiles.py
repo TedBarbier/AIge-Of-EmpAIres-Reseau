@@ -214,7 +214,14 @@ class AIProfile:
                                 if unit.is_full():
                                     unit.drop_to_entity(player.entity_closest_to(["T","C"], unit.cell_Y, unit.cell_X, is_dead = True))
                     return "Gathering resources!"
-                if action == "Attacking the enemy!":
+                elif action == "Training villagers":
+                    print("here the training villagers")
+                    for towncenter_id in context['player'].get_entities_by_class(['T']):
+                        towncenter=context['player'].linked_map.get_entity_by_id(towncenter_id)
+                        towncenter.train_unit(context['player'],'v')
+                        if context['player'].get_current_resources()['food']<50:
+                            gather_resources(context)
+                elif action == "Attacking the enemy!":
                     villager_free=[player.linked_map.get_entity_by_id(v_id) for v_id in player.get_entities_by_class(['v'],is_free=True)]
                     unit_list = context['units']['military_free']+villager_free[:len(villager_free)//2]
                     context['enemy_id'] = self.closest_enemy_building(context)

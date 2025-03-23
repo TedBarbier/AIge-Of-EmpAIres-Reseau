@@ -87,6 +87,7 @@ def check_housing(context):
 
 # ---- Actions ----
 def train_villager(context):
+    print("enter the matrix")
     for towncenter_id in context['player'].get_entities_by_class(['T']):
         towncenter=context['player'].linked_map.get_entity_by_id(towncenter_id)
         towncenter.train_unit(context['player'],'v')
