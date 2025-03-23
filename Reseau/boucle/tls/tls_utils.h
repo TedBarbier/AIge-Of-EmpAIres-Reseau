@@ -22,13 +22,13 @@ struct final_message {
 #pragma pack(pop)
 
 void encrypt_message(const unsigned char *key, const unsigned char *iv,
-                     const char *message, unsigned char *encrypted, int *len);
+                     const char *message, unsigned char *encrypted, size_t *len);
 void decrypt_message(const unsigned char *key, const unsigned char *iv,
                      const unsigned char *encrypted, unsigned char *decrypted,
-                     int *len);
+                     size_t *len);
 int generate_hmac(const unsigned char *hmac_key, const unsigned char *message,
-                   int message_len, unsigned char *hmac);
+                   size_t message_len, unsigned char *hmac);
 int verify_hmac(const unsigned char *hmac_key, const unsigned char *message,
-                 int message_len, const unsigned char *received_hmac);
+                 size_t message_len, const unsigned char *received_hmac);
 
 #endif

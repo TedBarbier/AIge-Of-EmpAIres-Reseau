@@ -13,23 +13,23 @@
 // Définition des constantes de taille
 #define BLOCK_SIZE 16
 
-void pkcs7_pad(unsigned char *data, int *data_len, int block_size) {
-    int padding_len = block_size - (*data_len % block_size);
-    for (int i = 0; i < padding_len; i++) {
+void pkcs7_pad(unsigned char *data, size_t *data_len, size_t block_size) {
+    size_t padding_len = block_size - (*data_len % block_size);
+    for (size_t i = 0; i < padding_len; i++) {
         data[*data_len + i] = padding_len;
     }
     *data_len += padding_len;
-    printf("Padded length: %d\n", *data_len);
+    printf("Padded length: %zu\n", *data_len);
 }
 
-void pkcs7_unpad(unsigned char *data, int *data_len, int block_size) {
-    int padding_len = data[*data_len - 1];
-    printf("Padding length: %d\n", padding_len);
+void pkcs7_unpad(unsigned char *data, size_t *data_len, size_t block_size) {
+    size_t padding_len = data[*data_len - 1];
+    printf("Padding length: %zu\n", padding_len);
     *data_len -= padding_len;
 }
 
 int generate_hmac(const unsigned char *hmac_key, const unsigned char *message,
-                   int message_len, unsigned char *hmac) {
+                   size_t message_len, unsigned char *hmac) {
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
     EVP_PKEY *pkey = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL, hmac_key, HMAC_KEY_LENGTH);
     int result = 1; // 1 = success, 0 = failure
@@ -62,9 +62,9 @@ int generate_hmac(const unsigned char *hmac_key, const unsigned char *message,
         goto cleanup;
     }
 
-    printf("Message length for HMAC: %d\n", message_len);
+    printf("Message length for HMAC: %zu\n", message_len);
     printf("Generated HMAC: ");
-    for(int i = 0; i < HMAC_LENGTH; i++) {
+    for(size_t i = 0; i < HMAC_LENGTH; i++) {
         printf("%02x", hmac[i]);
     }
     printf("\n");
@@ -76,7 +76,7 @@ cleanup:
 }
 
 int verify_hmac(const unsigned char *hmac_key, const unsigned char *message,
-                 int message_len, const unsigned char *received_hmac) {
+                 size_t message_len, const unsigned char *received_hmac) {
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
     EVP_PKEY *pkey = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL, hmac_key, HMAC_KEY_LENGTH);
     int result = 1; // 1 = success, 0 = failure
@@ -110,13 +110,13 @@ int verify_hmac(const unsigned char *hmac_key, const unsigned char *message,
         goto cleanup;
     }
 
-    printf("Message length for HMAC: %d\n", message_len);
+    printf("Message length for HMAC: %zu\n", message_len);
     printf("Calculated HMAC: ");
-    for(int i = 0; i < HMAC_LENGTH; i++) {
+    for(size_t i = 0; i < HMAC_LENGTH; i++) {
         printf("%02x", calculated_hmac[i]);
     }
     printf("\nReceived HMAC: ");
-    for(int i = 0; i < HMAC_LENGTH; i++) {
+    for(size_t i = 0; i < HMAC_LENGTH; i++) {
         printf("%02x", received_hmac[i]);
     }
     printf("\n");
@@ -130,10 +130,10 @@ cleanup:
 }
 
 void encrypt_message(const unsigned char *key, const unsigned char *iv,
-                     const char *message, unsigned char *encrypted, int *len) {
+                     const char *message, unsigned char *encrypted, size_t *len) {
     EVP_CIPHER_CTX *ctx;
     int ciphertext_len = 0;
-    int plaintext_len = strlen(message);
+    size_t plaintext_len = strlen(message);
     unsigned char *padded_message = malloc(plaintext_len + BLOCK_SIZE);
 
     memcpy(padded_message, message, plaintext_len);
@@ -153,7 +153,7 @@ void encrypt_message(const unsigned char *key, const unsigned char *iv,
     }
 
     if (1 != EVP_EncryptUpdate(ctx, encrypted, &ciphertext_len, padded_message,
-                             plaintext_len)) {
+                             (int)plaintext_len)) {
         ERR_print_errors_fp(stderr);
         EVP_CIPHER_CTX_free(ctx);
         free(padded_message);
@@ -167,7 +167,7 @@ void encrypt_message(const unsigned char *key, const unsigned char *iv,
         free(padded_message);
         exit(EXIT_FAILURE);
     }
-    *len = ciphertext_len + final_len;
+    *len = (size_t)(ciphertext_len + final_len);
 
     EVP_CIPHER_CTX_free(ctx);
     free(padded_message);
@@ -175,7 +175,7 @@ void encrypt_message(const unsigned char *key, const unsigned char *iv,
 
 void decrypt_message(const unsigned char *key, const unsigned char *iv,
                      const unsigned char *encrypted, unsigned char *decrypted,
-                     int *len) {
+                     size_t *len) {
     EVP_CIPHER_CTX *ctx;
     int plaintext_len = 0;
 
@@ -190,7 +190,7 @@ void decrypt_message(const unsigned char *key, const unsigned char *iv,
         exit(EXIT_FAILURE);
     }
 
-    if (1 != EVP_DecryptUpdate(ctx, decrypted, &plaintext_len, encrypted, *len)) {
+    if (1 != EVP_DecryptUpdate(ctx, decrypted, &plaintext_len, encrypted, (int)*len)) {
         ERR_print_errors_fp(stderr);
         EVP_CIPHER_CTX_free(ctx);
         exit(EXIT_FAILURE);
@@ -202,7 +202,7 @@ void decrypt_message(const unsigned char *key, const unsigned char *iv,
         EVP_CIPHER_CTX_free(ctx);
         exit(EXIT_FAILURE);
     }
-    *len = plaintext_len + final_len;
+    *len = (size_t)(plaintext_len + final_len);
 
     pkcs7_unpad(decrypted, len, BLOCK_SIZE);
 
