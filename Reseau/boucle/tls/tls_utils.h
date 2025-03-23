@@ -12,12 +12,14 @@
 #define HMAC_LENGTH 32  // SHA256 output length
 #define BUFFER_SIZE 1024
 
-// Structure pour stocker le message final avec IV
+// Force l'alignement à 1 byte pour la compatibilité cross-platform
+#pragma pack(push, 1)
 struct final_message {
     unsigned char iv[IV_LENGTH];
     unsigned char encrypted_data[BUFFER_SIZE];
     unsigned char hmac[HMAC_LENGTH];
 };
+#pragma pack(pop)
 
 void encrypt_message(const unsigned char *key, const unsigned char *iv,
                      const char *message, unsigned char *encrypted, int *len);
