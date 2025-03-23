@@ -104,6 +104,8 @@ class GameState:
                 self.states = PAUSE
             self.switch_time_acc = 0
 
+            
+
     def set_screen_size(self, width, height):
         self.screen_width = width
         self.screen_height = height
