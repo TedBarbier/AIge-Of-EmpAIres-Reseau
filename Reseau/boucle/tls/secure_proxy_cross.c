@@ -420,6 +420,13 @@ int main(int argc, char *argv[]) {
             #endif
             if (size_received > 0) {
                 msg_size = ntohl(msg_size);  // Convertir de network à host byte order
+                
+                // Vérifier que la taille est raisonnable
+                if (msg_size > BUFFER_SIZE + IV_LENGTH + HMAC_LENGTH) {
+                    printf("Received invalid message size: %d bytes\n", msg_size);
+                    continue;
+                }
+                
                 printf("Received message size: %d bytes\n", msg_size);
                 
                 // Recevoir le message avec la taille exacte
@@ -437,7 +444,7 @@ int main(int argc, char *argv[]) {
                                             (struct sockaddr *)&client_address, &addrlen);
                 #endif
 
-                if (bytes_received > 0) {
+                if (bytes_received > 0 && bytes_received == msg_size) {
                     printf("Received message from multicast group\n");
                     printf("Message size: %d bytes\n", bytes_received);
 
@@ -500,6 +507,9 @@ int main(int argc, char *argv[]) {
                     sendto(socket_fd_multicast, decrypted_message, decrypted_length, 0,
                            (struct sockaddr *)&local_address, sizeof(local_address));
                     #endif
+                } else {
+                    printf("Failed to receive complete message. Expected %d bytes, got %d\n", 
+                           msg_size, bytes_received);
                 }
                 free(temp_buffer);
             }
