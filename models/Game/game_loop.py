@@ -76,7 +76,8 @@ class GameLoop:
                     self.num_players = int(dict["Map"]["nb_player"])
                     print(self.num_players)
                     self.state.start_game(self.num_players) # Pass ai_config_values , ai_config_values=self.ai_config_values
-                    self.state.map._place_player_starting_areas_multi(self.state.selected_mode, self.state.selected_players, self.num_players, self.num_players, self.state.polygon)
+                    for i in range(self.num_players-1):
+                        self.state.map._place_player_starting_areas_multi(self.state.selected_mode, self.state.selected_players, self.num_players, i, self.state.polygon)
                     self.state.states = PLAY # Transition to PLAY only after game starts
                     self.reseau.send_action_via_udp({"players": self.num_players})
                 # elif "representation" in received_message:
@@ -93,7 +94,7 @@ class GameLoop:
                 elif "update" in received_message:
                     dict = self.string_to_dict(received_message)
                     print("update")
-                    print(self.num_players == dict["get_context_to_send"]["player"])
+                    print(self.num_players == dict["get_context_to_send"]["player"], dict["get_context_to_send"]["player"], self.num_players)
                     if dict["get_context_to_send"]["player"] != self.num_players and dict["update"] is not None:
                         self.state.map.update_entity(dict, dt, camera, screen)
                         #print(self.state.map.players_dict[dict["get_context_to_send"]["player"]])
