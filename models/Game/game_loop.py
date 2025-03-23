@@ -107,7 +107,9 @@ class GameLoop:
                         self.state.map.update_entity(dict, dt, camera, screen)
                         player=self.state.map.players_dict[dict["get_context_to_send"]["player"]]
 
-                        resources = dict["get_context_to_send"]["resources"] - player.get_current_resources()
+                        gold = dict["get_context_to_send"]["resources"]["gold"] - player.get_current_resources()["gold"]
+                        wood = dict["get_context_to_send"]["resources"]["wood"] - player.get_current_resources()["wood"]
+                        food = dict["get_context_to_send"]["resources"]["food"] - player.get_current_resources()["food"]
                         if resources["gold"] > 0:
                             player.add_resource({"gold", resources["gold"]})
                         else:
