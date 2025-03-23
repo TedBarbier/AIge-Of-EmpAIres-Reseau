@@ -64,6 +64,17 @@ class GameLoop:
                 received_message = data.decode('utf-8')
                 if "Map" in received_message:
                     dict = self.string_to_dict(received_message)
+                    print("----------------------------------------------------") # Séparateur pour la console
+                    print("CLIENT: Message 'Map' REÇU:")
+                    print(json.dumps(dict, indent=4)) # Afficher le message "Map" complet et indenté
+
+                    team_player_local = int(dict["Map"]["team_player"]) # Récupérer team_player
+                    print(f"CLIENT: Numéro d'équipe extrait du message 'Map': {team_player_local}") # DEBUG
+
+                    print(f"CLIENT: Valeur de self.num_players AVANT mise à jour: {self.num_players}") # DEBUG
+                    self.num_players = team_player_local # Mettre à jour self.num_players avec team_player
+                    print(f"CLIENT: Valeur de self.num_players APRÈS mise à jour: {self.num_players}") # DEBUG
+
                     self.state.map.players_dict[self.num_players].reset(dict["Map"]["nb_cellX"],dict["Map"]["nb_cellY"], self.num_players)
                     self.state.selected_mode = dict["Map"]["mode"]
                     self.state.selected_map_type = dict["Map"]["map_type"]
@@ -73,43 +84,34 @@ class GameLoop:
                     self.state.map.seed = dict["Map"]["seed"]
                     self.state.map.score_players = dict["Map"]["score_players"]
                     self.state.polygon = dict["Map"]["polygon"]
-                    self.num_players = int(dict["Map"]["nb_player"])
-                    print(self.num_players)
-                    self.state.start_game(self.num_players) # Pass ai_config_values , ai_config_values=self.ai_config_values
-                    # SUPPRIMER CETTE BOUCLE ENTIÈRE - Elle est probablement incorrecte et cause le problème
-                    # for i in range(self.num_players-1):
-                    #     self.state.map._place_player_starting_areas_multi(self.state.selected_mode, self.state.selected_players, self.num_players, i+2, self.state.polygon) # i+2 pour commencer les équipes à partir de 2 pour les joueurs rejoignant
-                    self.state.states = PLAY # Transition to PLAY only after game starts
+
+                    print(f"CLIENT: Appel de start_game AVEC l'équipe: {self.num_players}") # DEBUG
+                    self.state.start_game(self.num_players) # Utiliser self.num_players correct
+                    print(f"CLIENT: Retour de start_game.") # DEBUG
+
+                    self.state.states = PLAY
                     self.reseau.send_action_via_udp({"players": self.num_players})
-                # elif "representation" in received_message:
-                #     #print("received players")
-                #     dict = self.string_to_dict(received_message)
-                #     self.state.map.create_entity(dict)
+                    print("----------------------------------------------------") # Séparateur pour la console
+
                 elif "players" in received_message:
-                    # print("players", received_message)
                     dict = self.string_to_dict(received_message)
-                    # IMPORTANT : Utiliser dict["players"] comme numéro d'équipe pour le joueur qui rejoint.
-                    # Assurez-vous que dict["players"] contient le NUMÉRO D'ÉQUIPE CORRECT (2, 3, etc.)
-                    team_joueur_rejoignant = int(dict["players"]) # Convertir en int pour s'assurer
-                    print(f"Joueur rejoignant, équipe : {team_joueur_rejoignant}") # DEBUG
+                    team_joueur_rejoignant = int(dict["players"])
+                    print("----------------------------------------------------") # Séparateur pour la console
+                    print("CLIENT: Message 'players' REÇU:")
+                    print(json.dumps(dict, indent=4)) # Afficher le message "players" complet et indenté
+                    print(f"CLIENT: Joueur rejoignant, équipe : {team_joueur_rejoignant}") # DEBUG
                     self.state.map._place_player_starting_areas_multi(self.state.selected_mode, self.state.selected_players, self.num_players, team_joueur_rejoignant, self.state.polygon)
+                    print("----------------------------------------------------") # Séparateur pour la console
+
                 elif "speed" in received_message:
                     dict = self.string_to_dict(received_message)
                     self.state.set_speed(int(dict["speed"]))
                 elif "update" in received_message:
                     dict = self.string_to_dict(received_message)
-                    print("update")
-                    print(self.num_players == dict["get_context_to_send"]["player"], dict["get_context_to_send"]["player"], self.num_players)
+                    print("CLIENT: Message 'update' REÇU (non pertinent pour ce problème, mais affiché):") # DEBUG
+                    print(json.dumps(dict, indent=4)) # Afficher le message "update" complet et indenté (pour info)
                     if dict["get_context_to_send"]["player"] != self.num_players and dict["update"] is not None:
                         self.state.map.update_entity(dict, dt, camera, screen)
-                        #print(self.state.map.players_dict[dict["get_context_to_send"]["player"]])
-                        # player=self.state.map.players_dict[dict["get_context_to_send"]["player"]]
-                        # if dict["get_context_to_send"]["strategy"] == "aggressive":
-                        #     self.state.map.players_dict[self.num_players].ai_profile._aggressive_strategy(dict["update"], dict["get_context_to_send"],player)
-                        # elif dict["get_context_to_send"]["strategy"] == "defensive":
-                        #     self.state.map.players_dict[self.num_players].ai_profile._defensive_strategy(dict["update"], dict["get_context_to_send"],player)
-                        # elif dict["get_context_to_send"]["strategy"] == "balanced":
-                        #     self.state.map.players_dict[self.num_players].ai_profile._balanced_strategy(dict["update"], dict["get_context_to_send"],player)
 
                 else:
                     return(received_message)
@@ -199,7 +201,7 @@ class GameLoop:
                         "speed" : self.state.speed,
                         "nb_max_players" : self.state.selected_players,
                         "polygon" : self.state.polygon,
-                        "nb_player" : len(self.state.map.players_dict) + 1,
+                        "team_player": 1, # L'hôte est TOUJOURS l'équipe 1 (important !)
                         "score_players" : self.state.map.score_players,
                     }}
                     self.reseau.send_action_via_udp(map_send)
@@ -398,4 +400,3 @@ class GameLoop:
 
 
         pygame.quit()
-
