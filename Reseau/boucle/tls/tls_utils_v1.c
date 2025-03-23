@@ -30,51 +30,61 @@ void pkcs7_unpad(unsigned char *data, int *data_len, int block_size) {
 
 int generate_hmac(const unsigned char *hmac_key, const unsigned char *message,
                   int message_len, unsigned char *hmac) {
-  EVP_MD_CTX *ctx = EVP_MD_CTX_new();
-  EVP_PKEY *pkey =
-      EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL, hmac_key, HMAC_KEY_LENGTH);
-  int result = 1; // 1 = success, 0 = failure
+    HMAC_CTX *ctx = HMAC_CTX_new();
+    unsigned int hmac_len;
+    int result = 1;
 
-  if (!ctx || !pkey) {
-    fprintf(stderr, "Error creating HMAC context or key\n");
-    result = 0;
-    goto cleanup;
-  }
+    if (!ctx) {
+        fprintf(stderr, "Error creating HMAC context\n");
+        return 0;
+    }
 
-  if (EVP_DigestSignInit(ctx, NULL, EVP_sha256(), NULL, pkey) <= 0) {
-    fprintf(stderr, "Error initializing HMAC\n");
-    result = 0;
-    goto cleanup;
-  }
+    if (!HMAC_Init_ex(ctx, hmac_key, HMAC_KEY_LENGTH, EVP_sha256(), NULL)) {
+        fprintf(stderr, "Error initializing HMAC\n");
+        result = 0;
+        goto cleanup;
+    }
 
-  if (EVP_DigestSignUpdate(ctx, message, message_len) <= 0) {
-    fprintf(stderr, "Error updating HMAC\n");
-    result = 0;
-    goto cleanup;
-  }
+    if (!HMAC_Update(ctx, message, message_len)) {
+        fprintf(stderr, "Error updating HMAC\n");
+        result = 0;
+        goto cleanup;
+    }
 
-  size_t hmac_len;
-  if (EVP_DigestSignFinal(ctx, hmac, &hmac_len) <= 0) {
-    fprintf(stderr, "Error finalizing HMAC\n");
-    result = 0;
-    goto cleanup;
-  }
+    if (!HMAC_Final(ctx, hmac, &hmac_len)) {
+        fprintf(stderr, "Error finalizing HMAC\n");
+        result = 0;
+        goto cleanup;
+    }
+
+    if (hmac_len != HMAC_LENGTH) {
+        fprintf(stderr, "Invalid HMAC length: %u (expected %d)\n", hmac_len, HMAC_LENGTH);
+        result = 0;
+        goto cleanup;
+    }
 
 cleanup:
-  if (ctx)
-    EVP_MD_CTX_free(ctx);
-  if (pkey)
-    EVP_PKEY_free(pkey);
-  return result;
+    HMAC_CTX_free(ctx);
+    return result;
 }
 
 int verify_hmac(const unsigned char *hmac_key, const unsigned char *message,
                 int message_len, const unsigned char *received_hmac) {
-  unsigned char calculated_hmac[HMAC_LENGTH];
-  if (!generate_hmac(hmac_key, message, message_len, calculated_hmac)) {
-    return 0; // HMAC generation failed
-  }
-  return memcmp(calculated_hmac, received_hmac, HMAC_LENGTH) == 0;
+    unsigned char calculated_hmac[HMAC_LENGTH];
+    
+    if (!generate_hmac(hmac_key, message, message_len, calculated_hmac)) {
+        return 0;
+    }
+    
+    // Comparaison sécurisée contre les attaques temporelles
+    int result = 1;
+    for (int i = 0; i < HMAC_LENGTH; i++) {
+        if (calculated_hmac[i] != received_hmac[i]) {
+            result = 0;
+            break;
+        }
+    }
+    return result;
 }
 
 void encrypt_message(const unsigned char *key, const unsigned char *iv,
