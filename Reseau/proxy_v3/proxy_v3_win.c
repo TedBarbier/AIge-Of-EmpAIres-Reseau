@@ -28,7 +28,7 @@
 #define PORT_12345 12345
 #define PORT_1234 1234
 #define MULTICAST_PORT 8000
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 8192
 #define MULTICAST_IP "239.255.255.250"
 
 void set_nonblocking(int socket) {
