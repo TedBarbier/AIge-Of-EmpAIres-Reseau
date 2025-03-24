@@ -172,7 +172,7 @@ class AIProfile:
         elif self.strategy == "balanced":
             return self._balanced_strategy(actions, context)
 
-    def _aggressive_strategy(self, actions, context, player=None):
+    def _aggressive_strategy(self, actions, context, player=None,build_repr=None):
         """
         Implement the aggressive strategy by prioritizing attacks and military training.
         """
@@ -272,12 +272,11 @@ class AIProfile:
                     return "Train military units!"
                 
                 elif action == "Building structure!":
-                    dict = player.game_handler.get_context_to_send()
-                    if dict['build_repr'] is None: 
+                    if build_repr is None: 
                         repr = self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
-                        dict["build_reper"] = repr 
+                        build_repr = repr 
                     else:
-                        player.build_entity(player.get_entities_by_class(['v'], is_free=True), dict["build_reper"])
+                        player.build_entity(player.get_entities_by_class(['v'], is_free=True), build_repr)
                     return "Building structure!"
                 
                 elif action == "Building House!":
@@ -289,7 +288,7 @@ class AIProfile:
         finally:
             player.is_busy = False
 
-    def _defensive_strategy(self, actions, context, player=None):
+    def _defensive_strategy(self, actions, context, player=None,build_repr=None):
         """
         Implement the defensive strategy by focusing on repairs and defenses.
         """
