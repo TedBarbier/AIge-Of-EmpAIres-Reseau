@@ -247,30 +247,54 @@ class GameLoop:
 
     def handle_config_events(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
-            ai_values = self.iamenu.handle_click(event.pos)
-            if ai_values:
-                self.state.ai_config_values = ai_values # Store AI values
-                if self.state.is_multiplayer:
-                    self.state.start_game(ai_config=self.state.ai_config_values) #ai_config_values=self.ai_config_values
-                    map_send = {"Map" :{
-                        "nb_cellX" : self.state.map.nb_CellX,
-                        "nb_cellY" : self.state.map.nb_CellY,
-                        "seed" : self.state.map.seed,
-                        "map_type" : self.state.selected_map_type,
-                        "mode" : self.state.selected_mode,
-                        "speed" : self.state.speed,
-                        "nb_max_players" : self.state.selected_players,
-                        "polygon" : self.state.polygon,
-                        "team_player": 1, # On va dire que celui qui envoie sa map se prétend équipe 1 (temporaire)
-                        "score_players" : self.state.map.score_players,
-                        "ai_profile" : self.state.ai_config_values
-                    }}
-                    # UTILISER send_action_via_udp (qui est déjà en BROADCAST selon toi)
-                    self.reseau.send_action_via_udp(map_send) # <<-- Utiliser send_action_via_udp (broadcast)
-                    self.state.states = PLAY # Transition to PLAY state
-                else:
-                    self.state.start_game() # Start game after AI config (solo mode)
-                    self.state.states = PLAY # Transition to PLAY state
+            if event.button == 1: # Vérifie que c'est le bouton gauche
+                self.iamenu.handle_click(event.pos) # handle_click gère maintenant le début du drag
+
+        elif event.type == pygame.MOUSEMOTION: # Gestion du mouvement de la souris pour le drag
+            if self.iamenu and self.iamenu.dragging_slider: # Vérifie que iamenu est instancié et qu'un slider est glissé
+                slider_set = self.iamenu.dragging_slider["slider_set"]
+                slider_type = self.iamenu.dragging_slider["type"]
+                slider_rect = slider_set[slider_type]
+
+                # Calculer la nouvelle valeur du slider en fonction de la position X de la souris
+                mouse_x_relative = event.pos[0] - slider_rect.x
+                value_ratio = max(0, min(1, mouse_x_relative / slider_rect.width)) # Ratio entre 0 et 1
+                new_value = 1 + 2 * value_ratio # Convertir ratio en valeur entre 1 et 3
+                new_value = round(max(1, min(3, new_value)), 1) # Assurer valeur entre 1 et 3 et arrondir à 0.1
+
+                if slider_type == "aggressive":
+                    slider_set["aggressive_value"] = new_value
+                elif slider_type == "defensive":
+                    slider_set["defensive_value"] = new_value
+
+        elif event.type == pygame.MOUSEBUTTONUP: # Fin du glissement et confirmation potentielle
+            if event.button == 1: # Vérifie que c'est le bouton gauche
+                if self.iamenu: # Vérifie que iamenu est instancié avant d'accéder à dragging_slider
+                    self.iamenu.dragging_slider = None # Arrêter le glissement quand le bouton de la souris est relâché
+                    ai_values = self.iamenu.handle_click(event.pos) # Ré-appelle handle_click pour vérifier si "Confirmer" est cliqué
+
+                    if ai_values: # <--- Déplacer la logique de démarrage du jeu ICI, dans MOUSEBUTTONUP et seulement si ai_values est retourné (bouton "Confirmer" cliqué)
+                        self.state.ai_config_values = ai_values # Stocker les valeurs de l'IA
+                        if self.state.is_multiplayer:
+                            self.state.start_game(ai_config=self.state.ai_config_values)
+                            map_send = {"Map" :{
+                                "nb_cellX" : self.state.map.nb_CellX,
+                                "nb_cellY" : self.state.map.nb_CellY,
+                                "seed" : self.state.map.seed,
+                                "map_type" : self.state.selected_map_type,
+                                "mode" : self.state.selected_mode,
+                                "speed" : self.state.speed,
+                                "nb_max_players" : self.state.selected_players,
+                                "polygon" : self.state.polygon,
+                                "team_player": 1,
+                                "score_players" : self.state.map.score_players,
+                                "ai_profile" : self.state.ai_config_values
+                            }}
+                            self.reseau.send_action_via_udp(map_send)
+                            self.state.states = PLAY
+                        else:
+                            self.state.start_game()
+                            self.state.states = PLAY
 
 
 

@@ -1,6 +1,13 @@
 import pygame
-from GLOBAL_VAR import *  # Assurez-vous que GLOBAL_VAR est correctement défini si nécessaire
 from random import uniform
+
+# Assurez-vous que GLOBAL_VAR est correctement défini et contient SCREEN_WIDTH, SCREEN_HEIGHT, etc.
+# Si ce n'est pas le cas, vous devrez peut-être définir SCREEN_WIDTH, SCREEN_HEIGHT ici ou les importer correctement.
+# Exemple (si GLOBAL_VAR.py n'est pas disponible ici):
+# SCREEN_WIDTH = 800
+# SCREEN_HEIGHT = 600
+# etc.
+# Pour l'instant, je vais supposer que GLOBAL_VAR est correctement configuré ou que vous remplacerez par des valeurs concrètes si nécessaire.
 
 class IAMenu:
     def __init__(self, screen, selected_players, num_player=1, is_multiplayer=False):
@@ -19,6 +26,7 @@ class IAMenu:
         self.is_multiplayer = is_multiplayer
         self.sliders = []
         self.confirm_button = pygame.Rect(0, 0, 200, 50)
+        self.dragging_slider = None  # Pour suivre le slider en cours de glissement
 
         self.slider_spacing = 100
 
@@ -38,7 +46,7 @@ class IAMenu:
 
         if self.is_multiplayer:
             # Mode multijoueur: afficher seulement le joueur spécifié par num_player
-            player_index = self.num_player # Ajuster l'index car num_player est 1-indexé
+            player_index = self.num_player - 1 # Correction de l'index pour le mode multijoueur
             if 0 <= player_index < len(self.sliders): # Vérification pour éviter les erreurs d'index
                 slider_set = self.sliders[player_index]
                 player_label = f"Player {self.num_player} (IA)" # Indiquer que c'est l'IA en multijoueur
@@ -59,9 +67,13 @@ class IAMenu:
 
     def _draw_slider(self, slider_rect, value, label):
         pygame.draw.rect(self.screen, (200, 200, 200), slider_rect)
-        thumb_x = slider_rect.x + int((value - 1) / 2 * slider_rect.width)
-        pygame.draw.rect(self.screen, (0, 0, 255), (thumb_x, slider_rect.y - 5, 10, 20))
+        thumb_rect = self._get_thumb_rect(slider_rect, value) # Obtenir le rect du thumb
+        pygame.draw.rect(self.screen, (0, 0, 255), thumb_rect)
         self._draw_text(f"{label}: {value}", (slider_rect.x, slider_rect.y - 20))
+
+    def _get_thumb_rect(self, slider_rect, value):
+        thumb_x = slider_rect.x + int((value - 1) / 2 * slider_rect.width)
+        return pygame.Rect(thumb_x, slider_rect.y - 5, 10, 20)
 
     def _draw_text(self, text, pos, centered=False):
         font = pygame.font.Font(None, 28)
@@ -79,17 +91,41 @@ class IAMenu:
         # Gestion des clics pour seulement les sliders affichés (important en multijoueur)
         sliders_to_check = []
         if self.is_multiplayer:
-            player_index = self.num_player
+            player_index = self.num_player - 1  # Ajuster l'index car num_player est 1-indexé
             if 0 <= player_index < len(self.sliders):
                 sliders_to_check.append(self.sliders[player_index])
         else:
             sliders_to_check = self.sliders
 
         for slider_set in sliders_to_check:
+            aggressive_thumb_rect = self._get_thumb_rect(slider_set["aggressive"], slider_set["aggressive_value"]) # Récupérer le rect du thumb agressif
+            defensive_thumb_rect = self._get_thumb_rect(slider_set["defensive"], slider_set["defensive_value"]) # Récupérer le rect du thumb défensif
+
+            if aggressive_thumb_rect.collidepoint(pos): # Vérifier collision avec le thumb agressif
+                self.dragging_slider = {"slider_set": slider_set, "type": "aggressive"} # Enregistrer le slider agressif comme étant glissé
+                return  # Important: retourner pour ne pas traiter le clic comme un simple incrément/décrément
+
+            elif defensive_thumb_rect.collidepoint(pos): # Vérifier collision avec le thumb défensif
+                self.dragging_slider = {"slider_set": slider_set, "type": "defensive"} # Enregistrer le slider défensif comme étant glissé
+                return  # Important: retourner
+
             if slider_set["aggressive"].collidepoint(pos):
-                slider_set["aggressive_value"] = min(3, max(1, round(slider_set["aggressive_value"] + 0.1, 1)))
-            elif slider_set["defensive"].collidepoint(pos):
-                slider_set["defensive_value"] = min(3, max(1, round(slider_set["defensive_value"] + 0.1, 1)))
+                slider_width = slider_set["aggressive"].width
+                click_pos_relative_to_slider = pos[0] - slider_set["aggressive"].x
+
+                if click_pos_relative_to_slider < slider_width / 2:
+                    slider_set["aggressive_value"] = max(1, round(slider_set["aggressive_value"] - 0.1, 1))
+                else:
+                    slider_set["aggressive_value"] = min(3, round(slider_set["aggressive_value"] + 0.1, 1))
+
+            if slider_set["defensive"].collidepoint(pos): # CHANGEMENT ICI : 'if' et non 'elif'
+                slider_width = slider_set["defensive"].width
+                click_pos_relative_to_slider = pos[0] - slider_set["defensive"].x
+
+                if click_pos_relative_to_slider < slider_width / 2:
+                    slider_set["defensive_value"] = max(1, round(slider_set["defensive_value"] - 0.1, 1))
+                else:
+                    slider_set["defensive_value"] = min(3, round(slider_set["defensive_value"] + 0.1, 1))
 
         if self.confirm_button.collidepoint(pos):
             return self.get_ai_values()
@@ -98,7 +134,7 @@ class IAMenu:
     def get_ai_values(self):
         result = []
         if self.is_multiplayer:
-            s = self.sliders[self.num_player]
+            s = self.sliders[self.num_player - 1] # Correction de l'index pour le mode multijoueur
             if s["defensive_value"] >= s["aggressive_value"]-0.5 and s["defensive_value"] <= s["aggressive_value"]+0.5 :
                 result.append("balanced")
                 result.append(s["aggressive_value"])
@@ -127,43 +163,3 @@ class IAMenu:
                     result.append(s["aggressive_value"])
                     result.append(s["defensive_value"])
             return result
-
-
-if __name__ == '__main__':
-    pygame.init()
-    screen = pygame.display.set_mode((800, 600))
-    pygame.display.set_caption("IA Menu Test")
-
-    # Exemple d'utilisation en mode solo (comme avant)
-    ia_menu_solo = IAMenu(screen, selected_players=3)
-
-    # Exemple d'utilisation en mode multijoueur pour le joueur 2
-    ia_menu_multi_player2 = IAMenu(screen, selected_players=3, num_player=2, is_multiplayer=True)
-
-    running_solo = False # False par défaut pour tester le mode multijoueur
-    running_multi = True # True pour tester le mode multijoueur
-
-    if running_solo:
-        ia_menu = ia_menu_solo
-    elif running_multi:
-        ia_menu = ia_menu_multi_player2
-    else: # Par défaut, mode solo
-        ia_menu = ia_menu_solo
-
-
-    running = True
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:  # Bouton gauche de la souris
-                    ai_values = ia_menu.handle_click(event.pos)
-                    if ai_values:
-                        print("Valeurs de l'IA confirmées:", ai_values)
-                        running = False # Pour cet exemple, on quitte après confirmation
-
-        ia_menu.draw()
-        pygame.display.flip()
-
-    pygame.quit()
