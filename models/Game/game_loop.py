@@ -41,6 +41,7 @@ class GameLoop:
         self.udp_socket_to_receive.bind(("127.0.0.1", 1234))
         self.reseau=Send()
         self.ai_config_values = None # To store AI config values after IAMenu confirmation
+        self.dict_action = {}
 
 
     def string_to_dict(self, string_data):
@@ -143,6 +144,8 @@ class GameLoop:
 
                 elif "players" in received_message:
                     team_joueur_rejoignant = int(dict_message["players"])
+                    if team_joueur_rejoignant not in self.state.map.players_dict.keys():
+                        self.dict_action[team_joueur_rejoignant]=[]
                     self.state.map._place_player_starting_areas_multi(
                         self.state.selected_mode, self.state.selected_players,
                         self.num_players,team_joueur_rejoignant, self.state.polygon, dict_message["ai_profile"]
@@ -171,6 +174,13 @@ class GameLoop:
 
                 elif "update" in received_message:
                     context = dict_message["get_context_to_send"]
+                    if context["player"] not in self.dict_action.keys():
+                        self.dict_action[context["player"]]=[]
+                    if dict_message["update"] != "Gathering resources!":
+                        self.dict_action[context["player"]].append(dict_message["update"])
+                    if self.dict_action[context["player"]]==[]:
+                        self.dict_action[context["player"]].append(dict_message["update"])
+                    action=self.dict_action[context["player"]][0]
                     if context["player"] != self.num_players and dict_message["update"] is not None:
                         if context["player"] not in self.state.map.players_dict.keys():
                             return "Player not found"
@@ -180,11 +190,20 @@ class GameLoop:
                             print(context["player"],self.state.map.players_dict[context["player"]].get_current_resources(), "vs", context["resources"], self.state.map.players_dict[context["player"]].get_current_resources()==context["resources"])
                             ai_profile = self.state.map.players_dict[self.num_players].ai_profile
                             if strategy == "aggressive":
-                                ai_profile._aggressive_strategy(dict_message["update"], context, player)
+                                result=ai_profile._aggressive_strategy(action, context, player)
+                                print("result", result)
+                                if result==self.dict_action[context["player"]]:
+                                    self.dict_action[context["player"]].pop(0)
                             elif strategy == "defensive":
-                                ai_profile._defensive_strategy(dict_message["update"], context, player)
+                                result=ai_profile._defensive_strategy(action, context, player)
+                                print("result", result)
+                                if result== self.dict_action[context["player"]]:
+                                    self.dict_action[context["player"]].pop(0)
                             elif strategy == "balanced":
-                                ai_profile._balanced_strategy(dict_message["update"], context, player)
+                                result=ai_profile._balanced_strategy(action, context, player)
+                                print("result", result)
+                                if result==self.dict_action[context["player"]]:
+                                    self.dict_action[context["player"]].pop(0)
                 else:
                     return received_message
 
