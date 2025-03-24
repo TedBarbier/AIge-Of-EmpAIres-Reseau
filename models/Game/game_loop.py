@@ -117,8 +117,12 @@ class GameLoop:
 
                 if "Map" in received_message:
                     map_data = dict_message["Map"]
-                    self.state.map.players_dict[self.num_players].reset(
-                        map_data["nb_cellX"], map_data["nb_cellY"], self.num_players, map_data["ai_profile"]
+                    print("self.num_players", self.num_players)
+                    if self.num_players not in self.state.map.players_dict.keys():
+                            return "Player not found"
+                    else:
+                        self.state.map.players_dict[self.num_players].reset(
+                    map_data["nb_cellX"], map_data["nb_cellY"], self.num_players, map_data["ai_profile"]
                     )
                     self.state.selected_mode = map_data["mode"]
                     self.state.selected_map_type = map_data["map_type"]
