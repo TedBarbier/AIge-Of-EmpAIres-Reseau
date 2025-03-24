@@ -188,6 +188,7 @@ class AIProfile:
                 if action == "Gathering resources!":
                     resources_to_collect=("wood",'W')
                     for temp_resources in [("gold",'G'),("food",'F')]:
+                        print(context['resources'], player.get_current_resources(), context["resources"] == player.get_current_resources())
                         if context['resources'][temp_resources[0]]<context['resources'][resources_to_collect[0]]:
                             resources_to_collect=temp_resources
                     v_ids = player.get_entities_by_class(['v'],is_free=True)
