@@ -55,55 +55,124 @@ class GameLoop:
             print(f"Erreur de décodage JSON : La chaîne n'est pas un JSON valide.\nErreur : {e}")
             return None
 
+    # def handle_message(self, dt, camera, screen):
+    #     buffersize = 8192
+    #     readable, _, _ = select.select([self.udp_socket_to_receive], [], [], 0)
+    #     for s in readable:
+    #         data, addr = s.recvfrom(buffersize)
+    #         if data:
+    #             received_message = data.decode('utf-8')
+    #             if "Map" in received_message:
+    #                 dict = self.string_to_dict(received_message)
+    #                 self.state.map.players_dict[self.num_players].reset(dict["Map"]["nb_cellX"], dict["Map"]["nb_cellY"], self.num_players)
+    #                 self.state.selected_mode = dict["Map"]["mode"]
+    #                 self.state.selected_map_type = dict["Map"]["map_type"]
+    #                 self.state.selected_players = dict["Map"]["nb_max_players"]
+    #                 self.state.speed = dict["Map"]["speed"]
+    #                 self.state.map = Map(dict["Map"]["nb_cellX"], dict["Map"]["nb_cellY"])
+    #                 self.state.map.seed = dict["Map"]["seed"]
+    #                 self.state.map.score_players = dict["Map"]["score_players"]
+    #                 self.state.polygon = dict["Map"]["polygon"]
+    #                 self.num_players += 1
+    #                 self.state.start_game(self.num_players)
+    #                 self.state.map._place_player_starting_areas_multi(self.state.selected_mode, self.state.selected_players, self.num_players, 1, self.state.polygon)
+    #                 self.state.states = PLAY
+    #                 self.reseau.send_action_via_udp({"players": self.num_players})
+    #             elif "players" in received_message:
+    #                 dict = self.string_to_dict(received_message)
+    #                 team_joueur_rejoignant = int(dict["players"])
+    #                 self.state.map._place_player_starting_areas_multi(self.state.selected_mode, self.state.selected_players, self.num_players, team_joueur_rejoignant, self.state.polygon)
+    #             elif "speed" in received_message:
+    #                 dict = self.string_to_dict(received_message)
+    #                 self.state.set_speed(int(dict["speed"]))
+    #             elif "quit" in received_message:
+    #                 dict = self.string_to_dict(received_message)
+    #                 self.state.map.players_dict.pop(dict["quit"])
+    #                 for player in self.state.map.players_dict.keys():
+    #                     self.state.map.players_dict[player-1]  = self.state.map.players_dict[player].values()
+    #                     self.state.map.players_dict.pop(player)
+    #                 self.num_players -= 1
+    #             elif "update" in received_message:
+    #                 dict = self.string_to_dict(received_message)
+    #                 if dict["get_context_to_send"]["player"] != self.num_players and dict["update"] is not None:
+    #                     player=self.state.map.players_dict[dict["get_context_to_send"]["player"]]
+    #                     if dict["get_context_to_send"]["strategy"] == "aggressive":
+    #                         self.state.map.players_dict[self.num_players].ai_profile._aggressive_strategy(dict["update"], dict["get_context_to_send"],player)
+    #                     elif dict["get_context_to_send"]["strategy"] == "defensive":
+    #                         self.state.map.players_dict[self.num_players].ai_profile._defensive_strategy(dict["update"], dict["get_context_to_send"],player)
+    #                     elif dict["get_context_to_send"]["strategy"] == "balanced":
+    #                         self.state.map.players_dict[self.num_players].ai_profile._balanced_strategy(dict["update"], dict["get_context_to_send"],player)
+    #             else:
+    #                 return received_message
+
     def handle_message(self, dt, camera, screen):
         buffersize = 8192
-        readable, _, _ = select.select([self.udp_socket_to_receive], [], [], 0.001)
+        readable, _, _ = select.select([self.udp_socket_to_receive], [], [], 0)
+
         for s in readable:
             data, addr = s.recvfrom(buffersize)
             if data:
                 received_message = data.decode('utf-8')
+                dict_message = self.string_to_dict(received_message)
+
                 if "Map" in received_message:
-                    dict = self.string_to_dict(received_message)
-                    self.state.map.players_dict[self.num_players].reset(dict["Map"]["nb_cellX"], dict["Map"]["nb_cellY"], self.num_players)
-                    self.state.selected_mode = dict["Map"]["mode"]
-                    self.state.selected_map_type = dict["Map"]["map_type"]
-                    self.state.selected_players = dict["Map"]["nb_max_players"]
-                    self.state.speed = dict["Map"]["speed"]
-                    self.state.map = Map(dict["Map"]["nb_cellX"], dict["Map"]["nb_cellY"])
-                    self.state.map.seed = dict["Map"]["seed"]
-                    self.state.map.score_players = dict["Map"]["score_players"]
-                    self.state.polygon = dict["Map"]["polygon"]
+                    map_data = dict_message["Map"]
+                    self.state.map.players_dict[self.num_players].reset(
+                        map_data["nb_cellX"], map_data["nb_cellY"], self.num_players
+                    )
+                    self.state.selected_mode = map_data["mode"]
+                    self.state.selected_map_type = map_data["map_type"]
+                    self.state.selected_players = map_data["nb_max_players"]
+                    self.state.speed = map_data["speed"]
+                    self.state.map = Map(map_data["nb_cellX"], map_data["nb_cellY"])
+                    self.state.map.seed = map_data["seed"]
+                    self.state.map.score_players = map_data["score_players"]
+                    self.state.polygon = map_data["polygon"]
                     self.num_players += 1
                     self.state.start_game(self.num_players)
-                    self.state.map._place_player_starting_areas_multi(self.state.selected_mode, self.state.selected_players, self.num_players, 1, self.state.polygon)
+                    self.state.map._place_player_starting_areas_multi(
+                        self.state.selected_mode, self.state.selected_players,
+                        self.num_players, 1, self.state.polygon
+                    )
                     self.state.states = PLAY
                     self.reseau.send_action_via_udp({"players": self.num_players})
+
                 elif "players" in received_message:
-                    dict = self.string_to_dict(received_message)
-                    team_joueur_rejoignant = int(dict["players"])
-                    self.state.map._place_player_starting_areas_multi(self.state.selected_mode, self.state.selected_players, self.num_players, team_joueur_rejoignant, self.state.polygon)
+                    team_joueur_rejoignant = int(dict_message["players"])
+                    self.state.map._place_player_starting_areas_multi(
+                        self.state.selected_mode, self.state.selected_players,
+                        self.num_players, team_joueur_rejoignant, self.state.polygon
+                    )
+
                 elif "speed" in received_message:
-                    dict = self.string_to_dict(received_message)
-                    self.state.set_speed(int(dict["speed"]))
+                    self.state.set_speed(int(dict_message["speed"]))
+
                 elif "quit" in received_message:
-                    dict = self.string_to_dict(received_message)
-                    self.state.map.players_dict.pop(dict["quit"])
-                    for player in self.state.map.players_dict.keys():
-                        self.state.map.players_dict[player-1]  = self.state.map.players_dict[player].values()
-                        self.state.map.players_dict.pop(player)
+                    player_id = dict_message["quit"]
+                    self.state.map.players_dict.pop(player_id)
                     self.num_players -= 1
+                    # Re-index players_dict
+                    self.state.map.players_dict = {
+                        i: self.state.map.players_dict[k]
+                        for i, k in enumerate(sorted(self.state.map.players_dict.keys()))
+                    }
+
                 elif "update" in received_message:
-                    dict = self.string_to_dict(received_message)
-                    if dict["get_context_to_send"]["player"] != self.num_players and dict["update"] is not None:
-                        player=self.state.map.players_dict[dict["get_context_to_send"]["player"]]
-                        if dict["get_context_to_send"]["strategy"] == "aggressive":
-                            self.state.map.players_dict[self.num_players].ai_profile._aggressive_strategy(dict["update"], dict["get_context_to_send"],player)
-                        elif dict["get_context_to_send"]["strategy"] == "defensive":
-                            self.state.map.players_dict[self.num_players].ai_profile._defensive_strategy(dict["update"], dict["get_context_to_send"],player)
-                        elif dict["get_context_to_send"]["strategy"] == "balanced":
-                            self.state.map.players_dict[self.num_players].ai_profile._balanced_strategy(dict["update"], dict["get_context_to_send"],player)
+                    context = dict_message["get_context_to_send"]
+                    if context["player"] != self.num_players and dict_message["update"] is not None:
+                        player = self.state.map.players_dict[context["player"]]
+                        strategy = context["strategy"]
+                        ai_profile = self.state.map.players_dict[self.num_players].ai_profile
+
+                        if strategy == "aggressive":
+                            ai_profile._aggressive_strategy(dict_message["update"], context, player)
+                        elif strategy == "defensive":
+                            ai_profile._defensive_strategy(dict_message["update"], context, player)
+                        elif strategy == "balanced":
+                            ai_profile._balanced_strategy(dict_message["update"], context, player)
                 else:
                     return received_message
+
 
     def handle_start_events(self, event):
         if pygame.key.get_pressed()[pygame.K_F12]:
@@ -174,7 +243,7 @@ class GameLoop:
             self.startmenu.handle_keydown(event)
 
 
-      
+
     def handle_config_events(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
             ai_values = self.iamenu.handle_click(event.pos)
@@ -201,7 +270,7 @@ class GameLoop:
                     self.state.start_game() # Start game after AI config (solo mode)
                     self.state.states = PLAY # Transition to PLAY state
 
-    
+
 
 
     def handle_pause_events(self,dt, event):
