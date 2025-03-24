@@ -385,7 +385,7 @@ class Player:
         if villager_id_list:
             if entity_id == None:
                 if (representation in ["T","H"]) and (len(self.get_entities_by_class(["T","H"])) * 5) >= MAX_UNIT_POPULATION:
-                    return BUILDING_POPULATION_MAX_LIMIT
+                    return (BUILDING_POPULATION_MAX_LIMIT,   "")
                 
                 BuildingClass = CLASS_MAPPING.get(representation, None)
                 Instance = BuildingClass(self.linked_map.id_generator,None, None, None, self.team)
@@ -401,19 +401,19 @@ class Player:
                         if villager != None:
                             villager.build_entity(Instance.id)
                 
-                    return 1
+                    return (1, representation)
                 else:
                     self.linked_map.id_generator.free_ticket(Instance.id)
-                return 0
+                return (0, "")
             else:
                 for villager_id in villager_id_list:
                         villager = self.linked_map.get_entity_by_id(villager_id)
 
                         if villager != None:
                             villager.build_entity(entity_id)
-                return 1
+                return (1, "")
         else:
-            return 0
+            return (0, "")
 
 
 
