@@ -26,7 +26,7 @@ class AIProfile:
         if len(player.get_entities_by_class(['F']))<1:
             if player.get_current_resources()["wood"]>=61:
                 result = player.build_entity(player.get_entities_by_class('v',is_free=True), 'F')
-                return "Building structure!"
+                return ("Building structure!", 'F')
             else :
                 v_ids = player.get_entities_by_class(['v'],is_free=True)
                 c_ids = player.ect(['W'], player.cell_Y, player.cell_X)
@@ -64,40 +64,44 @@ class AIProfile:
             villagers = player.get_entities_by_class(['v'], is_free=True)
             if not villagers:
                 return None
-            result = player.build_entity(player.get_entities_by_class(['v'],is_free=True), building_repr[0])
+
+            result = player.build_entity(player.get_entities_by_class(['v'], is_free=True), building_repr[0])
             new_ids = set(player.get_entities_by_class(['A','B','C','K','T', 'F', 'S']))
             new_building_ids = new_ids - existing_ids
-            if result != 0:
+
+            if result[1] != "" and result[0] == 1:  
+                representation = result[1]
                 if not new_building_ids:
                     continue
                 new_building_id = new_building_ids.pop()
                 building = player.linked_map.get_entity_by_id(new_building_id)
                 if building.state == BUILDING_ACTIVE:
-                    return "Building structure!"
-            elif result == 0:
-                    resources_to_collect=("wood",'W')
-                    for temp_resources in [("gold",'G'),("food",'F')]:
-                        if context['resources'][temp_resources[0]]<context['resources'][resources_to_collect[0]]:
-                            resources_to_collect=temp_resources
-                    v_ids = player.get_entities_by_class(['v'],is_free=True)
-                    c_ids = player.ect(resources_to_collect[1], player.cell_Y, player.cell_X)
-                    counter = 0
-                    c_pointer = 0
-                    for id in v_ids:
-                        v = player.linked_map.get_entity_by_id(id)
-                        if not v.is_full():
-                            if counter == 3:
-                                counter = 0
-                                if c_pointer<len(c_ids)-1:
-                                    c_pointer += 1
-                            v.collect_entity(c_ids[c_pointer])
-                            counter += 1
-                        if v.is_full():
-                            if context['drop_off_id'] is None:
-                                return "Gathering resources!"
-                            v.drop_to_entity(player.entity_closest_to(["T","C"], v.cell_Y, v.cell_X, is_dead = True))
-                            return "Dropping off resources!"
-                    return "Gathering resources!"
+                    return representation
+
+            elif result[0] == 0:
+                resources_to_collect = ("wood", 'W')
+                for temp_resources in [("gold", 'G'), ("food", 'F')]:
+                    if context['resources'][temp_resources[0]] < context['resources'][resources_to_collect[0]]:
+                        resources_to_collect = temp_resources
+                v_ids = player.get_entities_by_class(['v'], is_free=True)
+                c_ids = player.ect(resources_to_collect[1], player.cell_Y, player.cell_X)
+                counter = 0
+                c_pointer = 0
+                for id in v_ids:
+                    v = player.linked_map.get_entity_by_id(id)
+                    if not v.is_full():
+                        if counter == 3:
+                            counter = 0
+                            if c_pointer < len(c_ids) - 1:
+                                c_pointer += 1
+                        v.collect_entity(c_ids[c_pointer])
+                        counter += 1
+                    if v.is_full():
+                        if context['drop_off_id'] is None:
+                            return "Gathering resources!"
+                        v.drop_to_entity(player.entity_closest_to(["T", "C"], v.cell_Y, v.cell_X, is_dead=True))
+                        return "Dropping off resources!"
+                return "Gathering resources!"
 
     STOP_CONDITIONS = {TRAIN_NOT_AFFORDABLE, TRAIN_NOT_FOUND_UNIT, TRAIN_NOT_ACTIVE}
 
@@ -268,7 +272,12 @@ class AIProfile:
                     return "Train military units!"
                 
                 elif action == "Building structure!":
-                    self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
+                    dict = player.game_handler.get_context_to_send()
+                    if dict['build_repr'] is None: 
+                        repr = self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
+                        dict["build_reper"] = repr 
+                    else:
+                        player.build_entity(player.get_entities_by_class(['v'], is_free=True), dict["build_reper"])
                     return "Building structure!"
                 
                 elif action == "Building House!":
