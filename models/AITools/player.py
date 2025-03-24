@@ -387,7 +387,11 @@ class Player:
                 if (representation in ["T","H"]) and (len(self.get_entities_by_class(["T","H"])) * 5) >= MAX_UNIT_POPULATION:
                     return (BUILDING_POPULATION_MAX_LIMIT,   "")
                 
+                print(representation)
+                print(str(representation))
                 BuildingClass = CLASS_MAPPING.get(representation, None)
+                print("type",BuildingClass)
+                print("id_generator", self.linked_map.id_generator)
                 Instance = BuildingClass(self.linked_map.id_generator,None, None, None, self.team)
                 
                 if isinstance(Instance, Building) and Instance.affordable_by(self.get_current_resources()):

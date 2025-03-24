@@ -104,10 +104,10 @@ class AIProfile:
                         counter += 1
                     if v.is_full():
                         if context['drop_off_id'] is None:
-                            return "Gathering resources!"
+                            return 0
                         v.drop_to_entity(player.entity_closest_to(["T", "C"], v.cell_Y, v.cell_X, is_dead=True))
-                        return "Dropping off resources!"
-                return "Gathering resources!"
+                        return 0
+                return 0
 
     STOP_CONDITIONS = {TRAIN_NOT_AFFORDABLE, TRAIN_NOT_FOUND_UNIT, TRAIN_NOT_ACTIVE}
 
@@ -280,7 +280,7 @@ class AIProfile:
                 elif action == "Building structure!":
                     if build_repr is None:
                         repr = self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
-                        if repr is not None:
+                        if repr !=0:
                             print("ag repr",repr)
                             self.repr=repr
                     else:
@@ -394,7 +394,7 @@ class AIProfile:
                 elif action == "Building structure!":
                     if build_repr is None: 
                         repr = self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
-                        if repr is not None:
+                        if repr != 0:
                             print("def repr",repr)
                             self.repr=repr
                     else:
@@ -520,7 +520,7 @@ class AIProfile:
                 elif action == "Building structure!":
                     if build_repr is None: 
                         repr = self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
-                        if repr is not None:
+                        if repr != 0:
                             print("bal repr", repr)
                             self.repr=repr
                     else:
