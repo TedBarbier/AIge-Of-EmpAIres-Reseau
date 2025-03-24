@@ -115,6 +115,8 @@ class GameLoop:
             if data:
                 received_message = data.decode('utf-8')
                 dict_message = self.string_to_dict(received_message)
+                self.reseau.packets_received += 1
+                print(f"Paquets envoyés: {self.reseau.packets_sent}, Paquets reçus: {self.reseau.packets_received}")
 
                 if "Map" in received_message:
                     map_data = dict_message["Map"]
