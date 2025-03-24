@@ -8,21 +8,6 @@ class GameEventHandler:
         self.ai_profiles = ai_profiles
         self.send = Send()
 
-
-    def process_ai_decisions(self, tree):
-        all_action = []
-        context = self.get_context_for_player()
-        actions = self.ai_profiles.decide_action(tree, context)
-        dict_actions={"update":actions, "get_context_to_send" : self.get_context_to_send()}
-        self.send.send_action_via_udp(dict_actions)
-        all_action.append(actions)
-        # self.send.send_action_via_udp(context)
-
-        # Envoi des actions via UDP
-        # for action in all_action:
-        #     self.send.send_action_via_udp(action)
-            # Vous pouvez également envoyer via IPC si nécessaire
-            # self.send_action_via_ipc(action)
     
     def process_ai_decisions(self, tree):
         all_action = []
