@@ -192,17 +192,14 @@ class GameLoop:
                             ai_profile = self.state.map.players_dict[self.num_players].ai_profile
                             if strategy == "aggressive":
                                 result=ai_profile._aggressive_strategy(action, context, player)
-                                print("result", result)
                                 if result==self.dict_action[context["player"]]:
                                     self.dict_action[context["player"]].pop(0)
                             elif strategy == "defensive":
                                 result=ai_profile._defensive_strategy(action, context, player)
-                                print("result", result)
                                 if result== self.dict_action[context["player"]]:
                                     self.dict_action[context["player"]].pop(0)
                             elif strategy == "balanced":
                                 result=ai_profile._balanced_strategy(action, context, player)
-                                print("result", result)
                                 if result==self.dict_action[context["player"]]:
                                     self.dict_action[context["player"]].pop(0)
                 else:
