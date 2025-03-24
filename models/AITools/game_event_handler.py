@@ -23,6 +23,17 @@ class GameEventHandler:
         #     self.send.send_action_via_udp(action)
             # Vous pouvez également envoyer via IPC si nécessaire
             # self.send_action_via_ipc(action)
+    
+    def process_ai_decisions(self, tree):
+        all_action = []
+        context = self.get_context_for_player()
+        actions = self.ai_profiles.decide_action(tree, context)
+        dict_actions={"update":actions, "get_context_to_send" : self.get_context_to_send()}
+        dict_actions['get_context_to_send']["build_repr"]=self.ai_profiles.repr
+        self.send.send_action_via_udp(dict_actions)
+        dict_actions['get_context_to_send']["build_repr"]=None
+        all_action.append(actions)
+
  
     def receive_context(self):
         host = '127.0.0.1'

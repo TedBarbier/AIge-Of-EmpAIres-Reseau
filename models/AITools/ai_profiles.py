@@ -17,6 +17,7 @@ class AIProfile:
         self.strategy = strategy
         self.aggressiveness = aggressiveness
         self.defense = defense
+        self.repr=None
 
     def compare_ratios(self, actual_ratios, target_ratios, context, keys_to_include=None, player=None, build_repr=None):
 
@@ -26,7 +27,7 @@ class AIProfile:
         if len(player.get_entities_by_class(['F']))<1:
             if player.get_current_resources()["wood"]>=61:
                 result = player.build_entity(player.get_entities_by_class('v',is_free=True), 'F')
-                return ("Building structure!", 'F')
+                return  'F'
             else :
                 v_ids = player.get_entities_by_class(['v'],is_free=True)
                 c_ids = player.ect(['W'], player.cell_Y, player.cell_X)
@@ -272,9 +273,10 @@ class AIProfile:
                     return "Train military units!"
                 
                 elif action == "Building structure!":
-                    if build_repr is None: 
+                    if build_repr is None:
                         repr = self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
-                        build_repr = repr 
+                        if repr is not None:
+                            self.repr=repr
                     else:
                         player.build_entity(player.get_entities_by_class(['v'], is_free=True), build_repr)
                     return "Building structure!"
@@ -384,7 +386,12 @@ class AIProfile:
                     return "Attacking the enemy!"
                 
                 elif action == "Building structure!":
-                    self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
+                    if build_repr is None: 
+                        repr = self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
+                        if repr is not None:
+                            self.repr=repr
+                    else:
+                        player.build_entity(player.get_entities_by_class(['v'], is_free=True), build_repr)
                     return "Building structure!"
                 
                 elif action == "Building House!":
@@ -396,7 +403,7 @@ class AIProfile:
         finally:
             player.is_busy = False
 
-    def _balanced_strategy(self, actions, context, player=None):
+    def _balanced_strategy(self, actions, context, player=None, build_repr = None):
         """
         Implement the balanced strategy by combining gathering, training, and attacks.
         """
@@ -504,7 +511,12 @@ class AIProfile:
                     return "Attacking the enemy!"
                 
                 elif action == "Building structure!":
-                    self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
+                    if build_repr is None: 
+                        repr = self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
+                        if repr is not None:
+                            self.repr=repr
+                    else:
+                        player.build_entity(player.get_entities_by_class(['v'], is_free=True), build_repr)
                     return "Building structure!"
                 
                 elif action == "Building House!":
