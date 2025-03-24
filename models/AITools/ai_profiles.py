@@ -130,7 +130,7 @@ class AIProfile:
     def closest_enemy_building(self,context, player_a=None):
         if player_a == None:
             player_a = context['player']
-        player = self.closest_player(context)
+        player = self.closest_player(context, player_a=player_a)
         minus_building = player.ect(BUILDINGS, player.cell_Y, player.cell_X)
         if minus_building:
             closest = minus_building[0]
