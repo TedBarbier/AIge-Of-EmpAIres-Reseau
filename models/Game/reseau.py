@@ -8,6 +8,7 @@ class Send:
         self.udp_port = 12345
         # Création du socket UDP
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.udp_socket.setblocking(0)
 
     def send_action_via_udp(self, context_to_send):
             try:
@@ -18,5 +19,8 @@ class Send:
                 #print(f"Envoi de : {action_json} à {self.udp_host}:{self.udp_port} \n")
                 self.udp_socket.sendto(action_json.encode('utf-8'), (self.udp_host, self.udp_port))
                 #print(f"Action envoyée via UDP : {action_json} \n")
+            except BlockingIOError:
+                # Handle the error if the socket is non-blocking and the send buffer is full
+                print("Socket send buffer is full, data not sent.")
             except Exception as e:
                 print(f"Erreur lors de l'envoi de l'action UDP : {e}")
