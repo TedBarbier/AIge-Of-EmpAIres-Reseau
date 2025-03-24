@@ -160,19 +160,16 @@ class GameLoop:
                 elif "update" in received_message:
                     context = dict_message["get_context_to_send"]
                     if context["player"] != self.num_players and dict_message["update"] is not None:
-                        if not self.state.map.players_dict[context["player"]]:
-                            print("context", context)
-                        else:
-                            player = self.state.map.players_dict[context["player"]]
-                            strategy = context["strategy"]
-                            ai_profile = self.state.map.players_dict[self.num_players].ai_profile
-
-                            if strategy == "aggressive":
-                                ai_profile._aggressive_strategy(dict_message["update"], context, player)
-                            elif strategy == "defensive":
-                                ai_profile._defensive_strategy(dict_message["update"], context, player)
-                            elif strategy == "balanced":
-                                ai_profile._balanced_strategy(dict_message["update"], context, player)
+                        print(self.state.map.players_dict[context["player"]], context["player"])
+                        player = self.state.map.players_dict[context["player"]]
+                        strategy = context["strategy"]
+                        ai_profile = self.state.map.players_dict[self.num_players].ai_profile
+                        if strategy == "aggressive":
+                            ai_profile._aggressive_strategy(dict_message["update"], context, player)
+                        elif strategy == "defensive":
+                            ai_profile._defensive_strategy(dict_message["update"], context, player)
+                        elif strategy == "balanced":
+                            ai_profile._balanced_strategy(dict_message["update"], context, player)
                 else:
                     return received_message
 
