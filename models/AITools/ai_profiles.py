@@ -256,6 +256,10 @@ class AIProfile:
                 elif action == "Building structure!":
                     self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
                     return "Building structure!"
+                
+                elif action == "Building House!":
+                    player.build_entity(player.get_entities_by_class(['v'],is_free=True), 'H')
+                    return "Building House!"
 
             # Default to gathering resources if no attack actions are possible
             return "Gathering resources!"
@@ -357,6 +361,11 @@ class AIProfile:
                 elif action == "Building structure!":
                     self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
                     return "Building structure!"
+                
+                elif action == "Building House!":
+                    player.build_entity(player.get_entities_by_class(['v'],is_free=True), 'H')
+                    return "Building House!"
+
                 
             return "Gathering resources!"
         finally:
@@ -464,12 +473,16 @@ class AIProfile:
                     context['enemy_id'] = self.closest_enemy_building(context)
                     for unit in unit_list:
                         unit.attack_entity(context['enemy_id'])
-                        
                     return "Attacking the enemy!"
                 
                 elif action == "Building structure!":
                     self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
                     return "Building structure!"
+                
+                elif action == "Building House!":
+                    player.build_entity(player.get_entities_by_class(['v'],is_free=True), 'H')
+                    return "Building House!"
+                
             return "Gathering resources!"
         finally:
             player.is_busy = False
