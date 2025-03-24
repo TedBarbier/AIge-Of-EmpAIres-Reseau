@@ -177,8 +177,8 @@ class GameLoop:
                         else:
                             player = self.state.map.players_dict[context["player"]]
                             strategy = context["strategy"]
-                            if self.state.map.players_dict[context["player"]].get_current_resources()!=context["resources"]:
-                                print("pas les mêmes ressources")
+                            # if self.state.map.players_dict[context["player"]].get_current_resources()!=context["resources"]:
+                            #     print()
                             ai_profile = self.state.map.players_dict[self.num_players].ai_profile
                             if strategy == "aggressive":
                                 ai_profile._aggressive_strategy(dict_message["update"], context, player)
