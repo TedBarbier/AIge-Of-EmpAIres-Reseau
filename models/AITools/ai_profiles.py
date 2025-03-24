@@ -19,7 +19,7 @@ class AIProfile:
         self.defense = defense
 
     def compare_ratios(self, actual_ratios, target_ratios, context, keys_to_include=None, player=None):
-        if player == None:
+        if player is None:
             player = context['player']
 
         if len(player.get_entities_by_class(['F']))<1:
@@ -115,7 +115,7 @@ class AIProfile:
             return units_list[n]
         
     def closest_player(self,context, player_a=None):
-        if player_a == None:
+        if player_a is None:
             player_a = context['player']
         list_player = player_a.linked_map.players_dict.values()
         distance = {}
@@ -128,7 +128,7 @@ class AIProfile:
         return closest[0]
     
     def closest_enemy_building(self,context, player_a=None):
-        if player_a == None:
+        if player_a is None:
             player_a = context['player']
         player = self.closest_player(context, player_a=player_a)
         minus_building = player.ect(BUILDINGS, player.cell_Y, player.cell_X)
