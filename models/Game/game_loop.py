@@ -183,11 +183,12 @@ class GameLoop:
                     action=self.dict_action[context["player"]][0]
                     if context["player"] != self.num_players and dict_message["update"] is not None:
                         if context["player"] not in self.state.map.players_dict.keys():
-                            return "Player not found"
+                            print( "Player not found")
                         else:
                             player = self.state.map.players_dict[context["player"]]
                             strategy = context["strategy"]
-                            print(context["player"],self.state.map.players_dict[context["player"]].get_current_resources(), "vs", context["resources"], self.state.map.players_dict[context["player"]].get_current_resources()==context["resources"])
+                            # if self.state.map.players_dict[context["player"]].get_current_resources()!=context["resources"]:
+                            #     print()
                             ai_profile = self.state.map.players_dict[self.num_players].ai_profile
                             if strategy == "aggressive":
                                 result=ai_profile._aggressive_strategy(action, context, player)
