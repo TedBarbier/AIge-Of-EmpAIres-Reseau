@@ -129,10 +129,10 @@ class GameLoop:
                     self.state.map.score_players = map_data["score_players"]
                     self.state.polygon = map_data["polygon"]
                     self.num_players += 1
-                    self.state.start_game(self.num_players, map_data["ai_profile"])
+                    self.state.start_game(self.num_players, self.ai_config_values)
                     self.state.map._place_player_starting_areas_multi(
                         self.state.selected_mode, self.state.selected_players,
-                        self.num_players, 1, self.state.polygon, self.state.ai_config_values
+                        self.num_players, 1, self.state.polygon, map_data["ai_profile"]
                     )
                     self.state.states = PLAY
                     self.reseau.send_action_via_udp({"players": self.num_players, "ai_profile": self.ai_config_values})
