@@ -27,6 +27,7 @@ class AIProfile:
         if len(player.get_entities_by_class(['F']))<1:
             if player.get_current_resources()["wood"]>=61:
                 result = player.build_entity(player.get_entities_by_class('v',is_free=True), 'F')
+                print("farm")
                 return  'F'
             else :
                 v_ids = player.get_entities_by_class(['v'],is_free=True)
@@ -76,8 +77,12 @@ class AIProfile:
                     continue
                 new_building_id = new_building_ids.pop()
                 building = player.linked_map.get_entity_by_id(new_building_id)
+
                 if building.state == BUILDING_ACTIVE:
+                    print("cr test")
                     return representation
+                print("cr")
+                return representation
 
             elif result[0] == 0:
                 resources_to_collect = ("wood", 'W')
@@ -249,7 +254,7 @@ class AIProfile:
                     for building in training_buildings:
                         print(player.linked_map.get_entity_by_id(building))
                         print(player.linked_map.get_entity_by_id(building))
-                        (player.linked_map.get_entity_by_id(building)).train_unit(player, self.choose_units(player.linked_map.get_entity_by_id(building)))
+                        player.linked_map.get_entity_by_id(building).train_unit(player, self.choose_units(player.linked_map.get_entity_by_id(building)))
                     # resources_to_collect=("wood",'W')
                     # for temp_resources in [("gold",'G'),("food",'F')]:
                     #     if context['resources'][temp_resources[0]]<context['resources'][resources_to_collect[0]]:
@@ -276,6 +281,7 @@ class AIProfile:
                     if build_repr is None:
                         repr = self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
                         if repr is not None:
+                            print("ag repr",repr)
                             self.repr=repr
                     else:
                         player.build_entity(player.get_entities_by_class(['v'], is_free=True), build_repr)
@@ -355,7 +361,7 @@ class AIProfile:
                         self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context,keys_to_include=keys_to_consider, player=player)
                     for building in training_buildings:
                         print(player.linked_map.get_entity_by_id(building))
-                        (player.linked_map.get_entity_by_id(building)).train_unit(player, self.choose_units(context['player'].linked_map.get_entity_by_id(building)))  
+                        player.linked_map.get_entity_by_id(building).train_unit(player, self.choose_units(context['player'].linked_map.get_entity_by_id(building)))  
                     resources_to_collect=("wood",'W')
                     for temp_resources in [("gold",'G'),("food",'F')]:
                         if context['resources'][temp_resources[0]]<context['resources'][resources_to_collect[0]]:
@@ -389,6 +395,7 @@ class AIProfile:
                     if build_repr is None: 
                         repr = self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
                         if repr is not None:
+                            print("def repr",repr)
                             self.repr=repr
                     else:
                         player.build_entity(player.get_entities_by_class(['v'], is_free=True), build_repr)
@@ -479,7 +486,7 @@ class AIProfile:
                         self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, keys_to_include=keys_to_consider, player=player)
                     for building in training_buildings:
                         print(player.linked_map.get_entity_by_id(building))
-                        (player.linked_map.get_entity_by_id(building)).train_unit(player,self.choose_units(player.linked_map.get_entity_by_id(building)))
+                        player.linked_map.get_entity_by_id(building).train_unit(player,self.choose_units(player.linked_map.get_entity_by_id(building)))
                     resources_to_collect=("wood",'W')
                     for temp_resources in [("gold",'G'),("food",'F')]:
                         if context['resources'][temp_resources[0]]<context['resources'][resources_to_collect[0]]:
@@ -514,6 +521,7 @@ class AIProfile:
                     if build_repr is None: 
                         repr = self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
                         if repr is not None:
+                            print("bal repr", repr)
                             self.repr=repr
                     else:
                         player.build_entity(player.get_entities_by_class(['v'], is_free=True), build_repr)
