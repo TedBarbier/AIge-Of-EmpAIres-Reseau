@@ -173,7 +173,7 @@ class GameLoop:
                     context = dict_message["get_context_to_send"]
                     if context["player"] != self.num_players and dict_message["update"] is not None:
                         if context["player"] not in self.state.map.players_dict.keys():
-                            return "Player not found"
+                            print( "Player not found")
                         else:
                             player = self.state.map.players_dict[context["player"]]
                             strategy = context["strategy"]
