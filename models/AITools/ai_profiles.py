@@ -268,6 +268,8 @@ class AIProfile:
                     return "Train military units!"
                 
                 elif action == "Building structure!":
+                    while context["resources"] != player.get_current_resources():
+                        pass
                     self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
                     return "Building structure!"
                 
