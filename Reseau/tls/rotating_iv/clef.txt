@@ -1,0 +1,8 @@
+# Clés de chiffrement (32 octets en hexadécimal)
+encryption_key=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+
+# Vecteur d'initialisation (16 octets en hexadécimal)
+iv=0123456789abcdef0123456789abcdef
+
+# Clé HMAC (32 octets en hexadécimal)
+hmac_key=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
