@@ -33,7 +33,7 @@ class AIProfile:
                 counter = 0
                 c_pointer = 0
                 if v_ids == []:
-                    return None
+                    return 
                 for id in v_ids:
                     v = player.linked_map.get_entity_by_id(id)
                     if not v.is_full():
@@ -174,11 +174,11 @@ class AIProfile:
         """
         target_ratios_building = {
             'T': 0.13,   
-            'C': 0.13,   
-            'F': 0.13,    
+            'C': 0.125,   
+            'F': 0.135,    
             'B': 0.18,    
-            'S': 0.165,  
-            'A': 0.165,   
+            'S': 0.16,  
+            'A': 0.17,   
             'K': 0.1
         }
         if player is not None:
@@ -221,6 +221,7 @@ class AIProfile:
                 elif action == "Training villagers!":
                     for towncenter_id in player.get_entities_by_class(['T']):
                         towncenter=player.linked_map.get_entity_by_id(towncenter_id)
+
                         resultat = towncenter.train_unit(player,'v')
                         if resultat != None:
                             if player.get_current_resources()['food']<50:
@@ -241,6 +242,8 @@ class AIProfile:
                         keys_to_consider = ['B','S','A']
                         self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context,keys_to_include=keys_to_consider,player=player)
                     for building in training_buildings:
+                        print(player.linked_map.get_entity_by_id(building))
+                        print(player.linked_map.get_entity_by_id(building))
                         (player.linked_map.get_entity_by_id(building)).train_unit(player, self.choose_units(player.linked_map.get_entity_by_id(building)))
                     # resources_to_collect=("wood",'W')
                     # for temp_resources in [("gold",'G'),("food",'F')]:
@@ -288,11 +291,11 @@ class AIProfile:
             player = context['player']
         target_ratios_building = {
             'T': 0.13,  
-            'C': 0.15,   
-            'F': 0.15,    
+            'C': 0.145,   
+            'F': 0.155,    
             'B': 0.08,    
-            'S': 0.15,  
-            'A': 0.15,   
+            'S': 0.14,  
+            'A': 0.16,   
             'K': 0.19
         }
 
@@ -341,6 +344,7 @@ class AIProfile:
                         keys_to_consider = ['S','A','T']
                         self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context,keys_to_include=keys_to_consider, player=player)
                     for building in training_buildings:
+                        print(player.linked_map.get_entity_by_id(building))
                         (player.linked_map.get_entity_by_id(building)).train_unit(player, self.choose_units(context['player'].linked_map.get_entity_by_id(building)))  
                     resources_to_collect=("wood",'W')
                     for temp_resources in [("gold",'G'),("food",'F')]:
@@ -393,13 +397,13 @@ class AIProfile:
         if player is None:
             player = context['player']
         target_ratios_building = {
-            'T': 0.2,   
-            'C': 0.12,   
-            'F': 0.2,    
-            'B': 0.12,    
+            'T': 0.15,   
+            'C': 0.10,   
+            'F': 0.25,    
+            'B': 0.11,    
             'S': 0.12,  
-            'A': 0.12,   
-            'K': 0.12
+            'A': 0.13,   
+            'K': 0.14
         }
 
         try:
@@ -459,7 +463,7 @@ class AIProfile:
                         keys_to_consider = ['T','B','S']
                         self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, keys_to_include=keys_to_consider, player=player)
                     for building in training_buildings:
-                        print("building",building)
+                        print(player.linked_map.get_entity_by_id(building))
                         (player.linked_map.get_entity_by_id(building)).train_unit(player,self.choose_units(player.linked_map.get_entity_by_id(building)))
                     resources_to_collect=("wood",'W')
                     for temp_resources in [("gold",'G'),("food",'F')]:

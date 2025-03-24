@@ -176,10 +176,12 @@ class GameLoop:
                     context = dict_message["get_context_to_send"]
                     if context["player"] not in self.dict_action.keys():
                         self.dict_action[context["player"]]=[]
-                    if self.dict_action[context["player"]]==[] and self.dict_action != None:
+                    if self.dict_action[context["player"]]==[] and dict_message["update"] != None:
                         self.dict_action[context["player"]].append(dict_message["update"])
-                    if dict_message["update"] != "Gathering resources!" and self.dict_action != None and dict_message["update"] != self.dict_action[context["player"]][-1]:
+                    if dict_message["update"] != "Gathering resources!" and dict_message["update"] != None and dict_message["update"] != self.dict_action[context["player"]][-1]:
                         self.dict_action[context["player"]].append(dict_message["update"])
+                    if self.dict_action[context["player"]] ==[]:
+                        self.dict_action[context["player"]].append("Gathering resources!")
                     action=self.dict_action[context["player"]][0]
                     print("dict_action", self.dict_action)
                     if context["player"] != self.num_players and dict_message["update"] is not None:
