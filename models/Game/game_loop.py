@@ -176,31 +176,39 @@ class GameLoop:
                     context = dict_message["get_context_to_send"]
                     if context["player"] not in self.dict_action.keys():
                         self.dict_action[context["player"]]=[]
-                    if dict_message["update"] != "Gathering resources!":
+                    if self.dict_action[context["player"]]==[] and self.dict_action != None:
                         self.dict_action[context["player"]].append(dict_message["update"])
-                    if self.dict_action[context["player"]]==[]:
+                    if dict_message["update"] != "Gathering resources!" and self.dict_action != None and dict_message["update"] != self.dict_action[context["player"]][-1]:
                         self.dict_action[context["player"]].append(dict_message["update"])
                     action=self.dict_action[context["player"]][0]
+                    print("dict_action", self.dict_action)
                     if context["player"] != self.num_players and dict_message["update"] is not None:
                         if context["player"] not in self.state.map.players_dict.keys():
                             print( "Player not found")
                         else:
                             player = self.state.map.players_dict[context["player"]]
                             strategy = context["strategy"]
+                            print("send strategy",strategy)
                             # if self.state.map.players_dict[context["player"]].get_current_resources()!=context["resources"]:
                             #     print()
                             ai_profile = self.state.map.players_dict[self.num_players].ai_profile
                             if strategy == "aggressive":
                                 result=ai_profile._aggressive_strategy(action, context, player)
-                                if result==self.dict_action[context["player"]]:
+                                print("result",result)
+                                print(result==self.dict_action[context["player"]][0])
+                                if result==self.dict_action[context["player"]][0]:
                                     self.dict_action[context["player"]].pop(0)
                             elif strategy == "defensive":
                                 result=ai_profile._defensive_strategy(action, context, player)
-                                if result== self.dict_action[context["player"]]:
+                                print("result",result)
+                                print(result==self.dict_action[context["player"]][0])
+                                if result== self.dict_action[context["player"]][0]:
                                     self.dict_action[context["player"]].pop(0)
                             elif strategy == "balanced":
                                 result=ai_profile._balanced_strategy(action, context, player)
-                                if result==self.dict_action[context["player"]]:
+                                print("result",result)
+                                print(result==self.dict_action[context["player"]][0])
+                                if result==self.dict_action[context["player"]][0]:
                                     self.dict_action[context["player"]].pop(0)
                 else:
                     return received_message

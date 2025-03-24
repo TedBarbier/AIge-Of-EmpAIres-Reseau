@@ -33,7 +33,7 @@ class AIProfile:
                 counter = 0
                 c_pointer = 0
                 if v_ids == []:
-                        return "No villagers!"
+                    return None
                 for id in v_ids:
                     v = player.linked_map.get_entity_by_id(id)
                     if not v.is_full():
@@ -63,7 +63,7 @@ class AIProfile:
             existing_ids = set(player.get_entities_by_class(['A','B','C','K','T', 'F', 'S']))
             villagers = player.get_entities_by_class(['v'], is_free=True)
             if not villagers:
-                return "No villagers!"
+                return None
             result = player.build_entity(player.get_entities_by_class(['v'],is_free=True), building_repr[0])
             new_ids = set(player.get_entities_by_class(['A','B','C','K','T', 'F', 'S']))
             new_building_ids = new_ids - existing_ids
@@ -97,7 +97,7 @@ class AIProfile:
                                 return "Gathering resources!"
                             v.drop_to_entity(player.entity_closest_to(["T","C"], v.cell_Y, v.cell_X, is_dead = True))
                             return "Dropping off resources!"
-                    return "Gathering resources!" 
+                    return "Gathering resources!"
 
     STOP_CONDITIONS = {TRAIN_NOT_AFFORDABLE, TRAIN_NOT_FOUND_UNIT, TRAIN_NOT_ACTIVE}
 
@@ -200,7 +200,7 @@ class AIProfile:
                     counter = 0
                     c_pointer = 0
                     if v_ids == []:
-                        return "No villagers!"
+                        return None
                     for id in v_ids:
                         v = player.linked_map.get_entity_by_id(id)
                         if c_ids == []:
@@ -308,7 +308,7 @@ class AIProfile:
                     counter = 0
                     c_pointer = 0
                     if v_ids == []:
-                        return "No villagers!"
+                        return None
                     for id in v_ids:
                         v = player.linked_map.get_entity_by_id(id)
                         if c_ids == []:
@@ -404,7 +404,6 @@ class AIProfile:
 
         try:
             for action in actions:
-                print("action",action)
                 if action == "Gathering resources!":
                     resources_to_collect=("wood",'W')
                     for temp_resources in [("gold",'G'),("food",'F')]:
@@ -415,7 +414,7 @@ class AIProfile:
                     counter = 0
                     c_pointer = 0
                     if v_ids == []:
-                        return "No villagers!"
+                        return None
                     for id in v_ids:
                         v = player.linked_map.get_entity_by_id(id)
                         if c_ids == []:
@@ -460,6 +459,7 @@ class AIProfile:
                         keys_to_consider = ['T','B','S']
                         self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, keys_to_include=keys_to_consider, player=player)
                     for building in training_buildings:
+                        print("building",building)
                         (player.linked_map.get_entity_by_id(building)).train_unit(player,self.choose_units(player.linked_map.get_entity_by_id(building)))
                     resources_to_collect=("wood",'W')
                     for temp_resources in [("gold",'G'),("food",'F')]:

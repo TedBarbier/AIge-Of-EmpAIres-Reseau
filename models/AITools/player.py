@@ -291,6 +291,8 @@ class Player:
 
         self.life_time = 0
         self.all_context = GameEventHandler.get_context_for_player(self.game_handler)
+        if self.ai_profile is not None:
+            print(self.ai_profile.strategy)
 
     def add_entity(self, entity):
 
