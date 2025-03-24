@@ -114,19 +114,23 @@ class AIProfile:
             n = randint(0, 1)
             return units_list[n]
         
-    def closest_player(self,context):
-        list_player = context['player'].linked_map.players_dict.values()
+    def closest_player(self,context, player_a=None):
+        if player_a == None:
+            player_a = context['player']
+        list_player = player_a.linked_map.players_dict.values()
         distance = {}
         for player in list_player:
-            if player != context['player']:
-                dx = context['player'].cell_X - player.cell_X
-                dy = context['player'].cell_Y - player.cell_Y
+            if player != player_a:
+                dx = player_a.cell_X - player.cell_X
+                dy = player_a.cell_Y - player.cell_Y
                 distance[player] = (dx ** 2 + dy ** 2) ** 0.5
         closest = min(distance.items(), key=lambda x: x[1])
         return closest[0]
     
-    def closest_enemy_building(self,context):
-        player = self.closest_player(context)
+    def closest_enemy_building(self,context, player_a=None):
+        if player_a == None:
+            player_a = context['player']
+        player = self.closest_player(context, player_a=player_a)
         minus_building = player.ect(BUILDINGS, player.cell_Y, player.cell_X)
         if minus_building:
             closest = minus_building[0]
@@ -218,7 +222,7 @@ class AIProfile:
                 elif action == "Attacking the enemy!":
                     villager_free=[player.linked_map.get_entity_by_id(v_id) for v_id in player.get_entities_by_class(['v'],is_free=True)]
                     unit_list = context['units']['military_free']+villager_free[:len(villager_free)//2]
-                    context['enemy_id'] = self.closest_enemy_building(context)
+                    context['enemy_id'] = self.closest_enemy_building(context, player_a=player)
                     for unit in unit_list:
                         unit.attack_entity(context['enemy_id'])
                     return "Attacking the enemy!"
@@ -353,7 +357,7 @@ class AIProfile:
                     
                 elif action == "Attacking the enemy!":
                     unit_list = context['units']['military_free'][:len(context['units']['military_free'])//2]
-                    context['enemy_id'] = self.closest_enemy_building(context)
+                    context['enemy_id'] = self.closest_enemy_building(context, player_a=player)
                     for unit in unit_list:
                         unit.attack_entity(context['enemy_id'])
                     return "Attacking the enemy!"
@@ -470,7 +474,7 @@ class AIProfile:
 
                 elif action == "Attacking the enemy!":
                     unit_list = context['units']['military_free']
-                    context['enemy_id'] = self.closest_enemy_building(context)
+                    context['enemy_id'] = self.closest_enemy_building(context, player_a=player)
                     for unit in unit_list:
                         unit.attack_entity(context['enemy_id'])
                     return "Attacking the enemy!"
