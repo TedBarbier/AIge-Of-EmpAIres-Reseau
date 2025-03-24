@@ -155,11 +155,19 @@ class GameLoop:
                     player_id = dict_message["quit"]
                     self.state.map.players_dict.pop(player_id)
                     self.num_players -= 1
-                    # Re-index players_dict
-                    self.state.map.players_dict = {
-                        i: self.state.map.players_dict[k]
-                        for i, k in enumerate(sorted(self.state.map.players_dict.keys()))
-                    }
+                    
+                    # Only reindex players with IDs higher than the one who left
+                    new_players_dict = {}
+                    for k, player in self.state.map.players_dict.items():
+                        if k > player_id:
+                            # This player had a higher ID than the one who left, so decrease by 1
+                            new_players_dict[k-1] = player
+                            player.team = k-1  # Update the player's team attribute too
+                        else:
+                            # This player had a lower ID, keep the same ID
+                            new_players_dict[k] = player
+                    
+                    self.state.map.players_dict = new_players_dict
 
                 elif "update" in received_message:
                     context = dict_message["get_context_to_send"]
