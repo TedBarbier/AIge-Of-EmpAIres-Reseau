@@ -254,7 +254,8 @@ class AIProfile:
                     for building in training_buildings:
                         print(player.linked_map.get_entity_by_id(building))
                         print(player.linked_map.get_entity_by_id(building))
-                        player.linked_map.get_entity_by_id(building).train_unit(player, self.choose_units(player.linked_map.get_entity_by_id(building)))
+                        if isinstance(player.linked_map.get_entity_by_id(building), (Barracks, Stable, ArcheryRange)):
+                            player.linked_map.get_entity_by_id(building).train_unit(player, self.choose_units(player.linked_map.get_entity_by_id(building)))
                     # resources_to_collect=("wood",'W')
                     # for temp_resources in [("gold",'G'),("food",'F')]:
                     #     if context['resources'][temp_resources[0]]<context['resources'][resources_to_collect[0]]:
@@ -361,7 +362,8 @@ class AIProfile:
                         self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context,keys_to_include=keys_to_consider, player=player)
                     for building in training_buildings:
                         print(player.linked_map.get_entity_by_id(building))
-                        player.linked_map.get_entity_by_id(building).train_unit(player, self.choose_units(context['player'].linked_map.get_entity_by_id(building)))  
+                        if isinstance(player.linked_map.get_entity_by_id(building), (Barracks, Stable, ArcheryRange)):
+                            player.linked_map.get_entity_by_id(building).train_unit(player, self.choose_units(player.linked_map.get_entity_by_id(building)))
                     resources_to_collect=("wood",'W')
                     for temp_resources in [("gold",'G'),("food",'F')]:
                         if context['resources'][temp_resources[0]]<context['resources'][resources_to_collect[0]]:
@@ -486,7 +488,8 @@ class AIProfile:
                         self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, keys_to_include=keys_to_consider, player=player)
                     for building in training_buildings:
                         print(player.linked_map.get_entity_by_id(building))
-                        player.linked_map.get_entity_by_id(building).train_unit(player,self.choose_units(player.linked_map.get_entity_by_id(building)))
+                        if isinstance(player.linked_map.get_entity_by_id(building), (Barracks, Stable, ArcheryRange)):
+                            player.linked_map.get_entity_by_id(building).train_unit(player, self.choose_units(player.linked_map.get_entity_by_id(building)))
                     resources_to_collect=("wood",'W')
                     for temp_resources in [("gold",'G'),("food",'F')]:
                         if context['resources'][temp_resources[0]]<context['resources'][resources_to_collect[0]]:
