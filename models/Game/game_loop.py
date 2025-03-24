@@ -160,7 +160,7 @@ class GameLoop:
                 elif "update" in received_message:
                     context = dict_message["get_context_to_send"]
                     if context["player"] != self.num_players and dict_message["update"] is not None:
-                        print(self.state.map.players_dict[context["player"]], context["player"])
+                        print(self.state.map.players_dict, context["player"])
                         player = self.state.map.players_dict[context["player"]]
                         strategy = context["strategy"]
                         ai_profile = self.state.map.players_dict[self.num_players].ai_profile
