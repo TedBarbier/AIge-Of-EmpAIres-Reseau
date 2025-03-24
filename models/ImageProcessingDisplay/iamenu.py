@@ -38,7 +38,7 @@ class IAMenu:
 
         if self.is_multiplayer:
             # Mode multijoueur: afficher seulement le joueur spécifié par num_player
-            player_index = self.num_player - 1 # Ajuster l'index car num_player est 1-indexé
+            player_index = self.num_player # Ajuster l'index car num_player est 1-indexé
             if 0 <= player_index < len(self.sliders): # Vérification pour éviter les erreurs d'index
                 slider_set = self.sliders[player_index]
                 player_label = f"Player {self.num_player} (IA)" # Indiquer que c'est l'IA en multijoueur
@@ -79,7 +79,7 @@ class IAMenu:
         # Gestion des clics pour seulement les sliders affichés (important en multijoueur)
         sliders_to_check = []
         if self.is_multiplayer:
-            player_index = self.num_player - 1
+            player_index = self.num_player
             if 0 <= player_index < len(self.sliders):
                 sliders_to_check.append(self.sliders[player_index])
         else:
@@ -96,7 +96,37 @@ class IAMenu:
         return None
 
     def get_ai_values(self):
-        return [(s["aggressive_value"], s["defensive_value"]) for s in self.sliders]
+        result = []
+        if self.is_multiplayer:
+            s = self.sliders[self.num_player]
+            if s["defensive_value"] >= s["aggressive_value"]-0.5 and s["defensive_value"] <= s["aggressive_value"]+0.5 :
+                result.append("balanced")
+                result.append(s["aggressive_value"])
+                result.append(s["defensive_value"])
+            elif s["defensive_value"] > s["aggressive_value"]:
+                result.append("defensive")
+                result.append(s["aggressive_value"])
+                result.append(s["defensive_value"])
+            else:
+                result.append("aggressive")
+                result.append(s["aggressive_value"])
+                result.append(s["defensive_value"])
+            return result
+        else:
+            for s in self.sliders:
+                if s["defensive_value"] >= s["aggressive_value"]-0.5 and s["defensive_value"] <= s["aggressive_value"]+0.5 :
+                    result.append("balanced")
+                    result.append(s["aggressive_value"])
+                    result.append(s["defensive_value"])
+                elif s["defensive_value"] > s["aggressive_value"]:
+                    result.append("defensive")
+                    result.append(s["aggressive_value"])
+                    result.append(s["defensive_value"])
+                else:
+                    result.append("aggressive")
+                    result.append(s["aggressive_value"])
+                    result.append(s["defensive_value"])
+            return result
 
 
 if __name__ == '__main__':

@@ -118,7 +118,7 @@ class GameLoop:
                 if "Map" in received_message:
                     map_data = dict_message["Map"]
                     self.state.map.players_dict[self.num_players].reset(
-                        map_data["nb_cellX"], map_data["nb_cellY"], self.num_players
+                        map_data["nb_cellX"], map_data["nb_cellY"], self.num_players, map_data["ai_profile"]
                     )
                     self.state.selected_mode = map_data["mode"]
                     self.state.selected_map_type = map_data["map_type"]
@@ -129,19 +129,19 @@ class GameLoop:
                     self.state.map.score_players = map_data["score_players"]
                     self.state.polygon = map_data["polygon"]
                     self.num_players += 1
-                    self.state.start_game(self.num_players)
+                    self.state.start_game(self.num_players, map_data["ai_profile"])
                     self.state.map._place_player_starting_areas_multi(
                         self.state.selected_mode, self.state.selected_players,
-                        self.num_players, 1, self.state.polygon
+                        self.num_players, 1, self.state.polygon, self.state.ai_config_values,
                     )
                     self.state.states = PLAY
-                    self.reseau.send_action_via_udp({"players": self.num_players})
+                    self.reseau.send_action_via_udp({"players": self.num_players, "ai_profile": self.ai_config_values})
 
                 elif "players" in received_message:
                     team_joueur_rejoignant = int(dict_message["players"])
                     self.state.map._place_player_starting_areas_multi(
                         self.state.selected_mode, self.state.selected_players,
-                        self.num_players, team_joueur_rejoignant, self.state.polygon
+                        self.num_players,team_joueur_rejoignant, self.state.polygon, dict_message["ai_profile"]
                     )
 
                 elif "speed" in received_message:
@@ -159,6 +159,7 @@ class GameLoop:
 
                 elif "update" in received_message:
                     context = dict_message["get_context_to_send"]
+                    print(context["strategy"])
                     if context["player"] != self.num_players and dict_message["update"] is not None:
                         player = self.state.map.players_dict[context["player"]]
                         strategy = context["strategy"]
@@ -248,9 +249,9 @@ class GameLoop:
         if event.type == pygame.MOUSEBUTTONDOWN:
             ai_values = self.iamenu.handle_click(event.pos)
             if ai_values:
-                self.ai_config_values = ai_values # Store AI values
+                self.state.ai_config_values = ai_values # Store AI values
                 if self.state.is_multiplayer:
-                    self.state.start_game() #ai_config_values=self.ai_config_values
+                    self.state.start_game(ai_config=self.state.ai_config_values) #ai_config_values=self.ai_config_values
                     map_send = {"Map" :{
                         "nb_cellX" : self.state.map.nb_CellX,
                         "nb_cellY" : self.state.map.nb_CellY,
@@ -262,6 +263,7 @@ class GameLoop:
                         "polygon" : self.state.polygon,
                         "team_player": 1, # On va dire que celui qui envoie sa map se prétend équipe 1 (temporaire)
                         "score_players" : self.state.map.score_players,
+                        "ai_profile" : self.state.ai_config_values
                     }}
                     # UTILISER send_action_via_udp (qui est déjà en BROADCAST selon toi)
                     self.reseau.send_action_via_udp(map_send) # <<-- Utiliser send_action_via_udp (broadcast)

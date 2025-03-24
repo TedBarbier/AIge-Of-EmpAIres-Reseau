@@ -254,7 +254,7 @@ def choose_strategy(Player):
 
 class Player:
     
-    def __init__(self, cell_Y, cell_X, team, num_players, is_multiplayer= False):
+    def __init__(self, cell_Y, cell_X, team, num_players, is_multiplayer= False, ai_config = None):
         self.team = team
         self.cell_Y = cell_Y
         self.cell_X = cell_X
@@ -275,7 +275,8 @@ class Player:
         # elif not is_multiplayer:
         #     strat = choose_strategy(self)
         # else:
-        strat = ["aggressive",1,1] 
+        strat = ai_config if ai_config else ["balanced",1,1]
+        print(strat)
         if is_multiplayer and self.team == self.num_players:
             self.ai_profile = AIProfile(strat[0],strat[1],strat[2])
         elif is_multiplayer:
@@ -660,7 +661,7 @@ class Player:
         self.game_handler.send.send_action_via_udp(context_to_send)
         self.refl_acc=0
 
-    def reset(self, cell_Y, cell_X, team):
+    def reset(self, cell_Y, cell_X, team, ai_values):
         self.team = team
         self.cell_Y = cell_Y
         self.cell_X = cell_X
@@ -674,7 +675,8 @@ class Player:
         self.linked_map = None
 
         self.decision_tree= tree
-        strat = ["balanced",1,1] #choose_strategy(self)
+        strat = ai_values if ai_values else ["balanced",1,1] #choose_strategy(self)
+        print(strat)
         self.ai_profile = None
         udp_host = "127.0.0.1"
         udp_port = 12345

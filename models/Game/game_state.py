@@ -33,6 +33,7 @@ class GameState:
         self.music_state = ""
         self.is_multiplayer = False  # Initialize is_multiplayer to False by default (for solo)
         self.polygon = None
+        self.ai_config_values = None
 
 
 
@@ -67,17 +68,18 @@ class GameState:
         self.display_mode = ISO2D # Mode d'affichage par défaut
         self.is_multiplayer = False # Ensure is_multiplayer is reset to False for a new solo game
         self.polygon = None  # Reset the polygon attribute to None
+        self.ai_config_values = None  # Reset the AI configuration values to None
 
     def endgame(self):
         if self.map.state == "end":
             self.states = END
 
-    def start_game(self, team=1):
+    def start_game(self, team=1, ai_config=None):
         """Méthode pour démarrer la génération de la carte après que l'utilisateur ait validé ses choix."""
         if self.is_multiplayer == False:
             self.map.generate_map(self.selected_map_type, self.selected_mode, self.selected_players)
         else:
-            self.polygon = self.map.generate_map_multi(self.selected_map_type, self.selected_mode, self.selected_players, team, self.polygon)
+            self.polygon = self.map.generate_map_multi(self.selected_map_type, self.selected_mode, self.selected_players, team, self.polygon, ai_config)
 
     def set_map_size(self, X, Y):
         self.map = Map(X, Y)
