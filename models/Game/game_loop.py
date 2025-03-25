@@ -104,7 +104,8 @@ class GameLoop:
                 self.state.map.score_players = map_data["score_players"]
                 self.state.polygon = map_data["polygon"]
                 self.num_players += 1
-                self.state.start_game(self.num_players, self.ai_config_values, self.network_manager)
+                # Correction: remplacer self.ai_config_values par self.state.ai_config_values
+                self.state.start_game(self.num_players, self.state.ai_config_values, self.network_manager)
                 self.state.map._place_player_starting_areas_multi(
                     self.state.selected_mode, self.state.selected_players,
                     self.num_players, 1, self.state.polygon, map_data["ai_profile"], self.network_manager
@@ -112,7 +113,7 @@ class GameLoop:
                 self.state.states = PLAY
                 # Utiliser la version asyncio pour envoyer
                 asyncio.create_task(
-                    self.send_network_message({"players": self.num_players, "ai_profile": self.ai_config_values})
+                    self.send_network_message({"players": self.num_players, "ai_profile": self.state.ai_config_values})
                 )
 
             elif "players" in received_message:

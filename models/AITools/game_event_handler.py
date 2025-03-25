@@ -22,7 +22,6 @@ class GameEventHandler:
         
     async def ensure_network_initialized(self):
         """S'assure que le réseau est initialisé avant d'envoyer des messages."""
-        print("ensure network initialized", type(self.network_manager))
         
         # Si le gestionnaire de réseau n'existe pas, obtenir l'instance existante ou créer une nouvelle
         if self.network_manager is None:
