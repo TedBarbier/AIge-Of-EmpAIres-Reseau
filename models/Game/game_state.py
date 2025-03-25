@@ -74,12 +74,12 @@ class GameState:
         if self.map.state == "end":
             self.states = END
 
-    def start_game(self, team=1, ai_config=None):
+    def start_game(self, team=1, ai_config=None, network_manager=None):
         """Méthode pour démarrer la génération de la carte après que l'utilisateur ait validé ses choix."""
         if self.is_multiplayer == False:
             self.map.generate_map(self.selected_map_type, self.selected_mode, self.selected_players)
         else:
-            self.polygon = self.map.generate_map_multi(self.selected_map_type, self.selected_mode, self.selected_players, team, self.polygon, ai_config)
+            self.polygon = self.map.generate_map_multi(self.selected_map_type, self.selected_mode, self.selected_players, team, self.polygon, ai_config, network_manager)
 
     def set_map_size(self, X, Y):
         self.map = Map(X, Y)
