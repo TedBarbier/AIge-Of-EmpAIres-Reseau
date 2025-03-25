@@ -82,10 +82,7 @@ class UserInterface:
             display_image(ICONS["si"], pos[0], pos[1]+y_offset+50, self.screen, 0x04)
             display_image(ICONS["hi"], pos[0], pos[1]+y_offset+100, self.screen, 0x04)
             display_image(ICONS["ai"], pos[0], pos[1]+y_offset+150, self.screen, 0x04)
-            display_image(ICONS["ci"], pos[0], pos[1]+y_offset+200, self.screen, 0x04)
-            display_image(ICONS["mi"], pos[0], pos[1]+y_offset+250, self.screen, 0x04)
-            display_image(ICONS["xi"], pos[0], pos[1]+y_offset+300, self.screen, 0x04)
-            y_offset += 350
+            y_offset += 200
 
         if self.display_builds:
             display_image(ICONS["Ti"], pos[0], pos[1]+y_offset, self.screen, 0x04)

@@ -28,7 +28,6 @@ class AIProfile:
         if len(player.get_entities_by_class(['F']))<1:
             if player.get_current_resources()["wood"]>=61:
                 result = player.build_entity(player.get_entities_by_class('v',is_free=True), 'F')
-                print("farm")
                 return  'F'
             else :
                 v_ids = player.get_entities_by_class(['v'],is_free=True)
@@ -79,9 +78,7 @@ class AIProfile:
                 building = player.linked_map.get_entity_by_id(new_building_id)
 
                 if building.state == BUILDING_ACTIVE:
-                    print("cr test")
                     return representation
-                print("cr")
                 return representation
 
             elif result[0] == 0:
@@ -190,7 +187,6 @@ class AIProfile:
 
         try:
             for action in actions:
-                print("ag action", action)
                 if action == "Training villagers!":
                     for towncenter_id in player.get_entities_by_class(['T']):
                         towncenter=player.linked_map.get_entity_by_id(towncenter_id)
@@ -215,11 +211,9 @@ class AIProfile:
                         keys_to_consider = ['B','S','A']
                         repr=self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context,keys_to_include=keys_to_consider,player=player)
                         if repr != 0 and repr is not None:
-                            print("bal repr", repr)
                             self.repr.append(repr)
                             return "Building Structure!"
                     for building in training_buildings:
-                        print(player.linked_map.get_entity_by_id(building))
                         if isinstance(player.linked_map.get_entity_by_id(building), (Barracks, Stable, ArcheryRange)):
                             resultat = player.linked_map.get_entity_by_id(building).train_unit(player, self.choose_units(player.linked_map.get_entity_by_id(building)))
                             if resultat == 5:
@@ -251,22 +245,18 @@ class AIProfile:
                     return "Train military units!"
                 
                 elif action == "Building structure!":
-                    if build_repr is not None:
-                        print("taille", self.taille, self.taille<len(build_repr))
+                    #if build_repr is not None:
                     if build_repr == [] or build_repr is None:
                         repr = self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
                         if repr != 0 and repr is not None:
-                            print("bal repr", repr)
                             self.repr.append(repr)
                         return "Building structure!"
                     elif self.taille<len(build_repr):
-                        print("taille",self.taille)
                         result=player.build_entity(player.get_entities_by_class(['v'], is_free=True), build_repr[self.taille])
                         if result[1] != "" and result[0] == 1:
                             self.taille+=1
                         return "Building structure!"
                     else:
-                        print("else")
                         action = "Gathering resources!"
                     
                 
@@ -275,10 +265,8 @@ class AIProfile:
                     return "Building House!"
                 
                 if action == "Gathering resources!":
-                    print("gr")
                     resources_to_collect=("wood",'W')
                     for temp_resources in [("gold",'G'),("food",'F')]:
-                        print(context['resources'], player.get_current_resources(), context["resources"] == player.get_current_resources())
                         if context['resources'][temp_resources[0]]<context['resources'][resources_to_collect[0]]:
                             resources_to_collect=temp_resources
                     v_ids = player.get_entities_by_class(['v'],is_free=True)
@@ -300,7 +288,6 @@ class AIProfile:
                             v.collect_entity(c_ids[c_pointer])
                             counter += 1
                         else:
-                            print("full")
                             for unit in [player.linked_map.get_entity_by_id(v_id) for v_id in player.get_entities_by_class(['v'],is_free=True)]:
                                 if unit.is_full():
                                     unit.drop_to_entity(player.entity_closest_to(["T","C"], unit.cell_Y, unit.cell_X, is_dead = True))
@@ -332,7 +319,6 @@ class AIProfile:
 
         try:
             for action in actions:
-                print("def action",action)
                 if action == "Training villagers!":
                     for towncenter_id in player.get_entities_by_class(['T']):
                         towncenter=player.linked_map.get_entity_by_id(towncenter_id)
@@ -348,11 +334,9 @@ class AIProfile:
                         keys_to_consider = ['S','A','T']
                         repr=self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context,keys_to_include=keys_to_consider, player=player)
                         if repr != 0 and repr is not None:
-                            print("def repr", repr)
                             self.repr.append(repr)
                             return "Building Structure!"
                     for building in training_buildings:
-                        print(player.linked_map.get_entity_by_id(building))
                         if isinstance(player.linked_map.get_entity_by_id(building), (Barracks, Stable, ArcheryRange)):
                             resultat = player.linked_map.get_entity_by_id(building).train_unit(player, self.choose_units(player.linked_map.get_entity_by_id(building)))
                             if resultat == 5:
@@ -391,22 +375,18 @@ class AIProfile:
                     return "Attacking the enemy!"
                 
                 elif action == "Building structure!":
-                    if build_repr is not None:
-                        print("taille", self.taille, self.taille<len(build_repr))
+                    #if build_repr is not None:
                     if build_repr == [] or build_repr is None:
                         repr = self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
                         if repr != 0 and repr is not None:
-                            print("bal repr", repr)
                             self.repr.append(repr)
                         return "Building structure!"
                     elif self.taille<len(build_repr):
-                        print("taille",self.taille)
                         result=player.build_entity(player.get_entities_by_class(['v'], is_free=True), build_repr[self.taille])
                         if result[1] != "" and result[0] == 1:
                             self.taille+=1
                         return "Building structure!"
                     else:
-                        print("else")
                         action = "Gathering resources!"
                     
                 
@@ -415,7 +395,6 @@ class AIProfile:
                     return "Building House!"
                 
                 if action == "Gathering resources!":
-                    print("gr")
                     resources_to_collect=("wood",'W')
                     for temp_resources in [("gold",'G'),("food",'F')]:
                         if context['resources'][temp_resources[0]]<context['resources'][resources_to_collect[0]]:
@@ -439,7 +418,6 @@ class AIProfile:
                             v.collect_entity(c_ids[c_pointer])
                             counter += 1
                         else:
-                            print("full")
                             for unit in [player.linked_map.get_entity_by_id(v_id) for v_id in player.get_entities_by_class(['v'],is_free=True)]:
                                 if unit.is_full():
                                     unit.drop_to_entity(player.entity_closest_to(["T","C"], unit.cell_Y, unit.cell_X, is_dead = True))
@@ -470,7 +448,6 @@ class AIProfile:
 
         try:
             for action in actions:
-                print("bal action",action)
                 if action == "Training villagers!":
                     for towncenter_id in player.get_entities_by_class(['T']):
                         towncenter=player.linked_map.get_entity_by_id(towncenter_id)
@@ -498,11 +475,9 @@ class AIProfile:
                         keys_to_consider = ['T','B','S']
                         repr=self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, keys_to_include=keys_to_consider, player=player)
                         if repr != 0 and repr is not None:
-                            print("bal repr", repr)
                             self.repr.append(repr)
                             return "Building Structure!"
                     for building in training_buildings:
-                        print(player.linked_map.get_entity_by_id(building))
                         if isinstance(player.linked_map.get_entity_by_id(building), (Barracks, Stable, ArcheryRange)):
                             resultat = player.linked_map.get_entity_by_id(building).train_unit(player, self.choose_units(player.linked_map.get_entity_by_id(building)))
                             if resultat == 5:
@@ -542,22 +517,18 @@ class AIProfile:
                     return "Attacking the enemy!"
                 
                 elif action == "Building structure!":
-                    if build_repr is not None:
-                        print("taille", self.taille, self.taille<len(build_repr))
+                    #if build_repr is not None:
                     if build_repr == [] or build_repr is None:
                         repr = self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
                         if repr != 0 and repr is not None:
-                            print("bal repr", repr)
                             self.repr.append(repr)
                         return "Building structure!"
                     elif self.taille<len(build_repr):
-                        print("taille",self.taille)
                         result=player.build_entity(player.get_entities_by_class(['v'], is_free=True), build_repr[self.taille])
                         if result[1] != "" and result[0] == 1:
                             self.taille+=1
                         return "Building structure!"
                     else:
-                        print("else")
                         action = "Gathering resources!"
                     
                 
@@ -566,7 +537,6 @@ class AIProfile:
                     return "Building House!"
                 
                 if action == "Gathering resources!":
-                    print("gr")
                     resources_to_collect=("wood",'W')
                     for temp_resources in [("gold",'G'),("food",'F')]:
                         if context['resources'][temp_resources[0]]<context['resources'][resources_to_collect[0]]:
@@ -590,7 +560,6 @@ class AIProfile:
                             v.collect_entity(c_ids[c_pointer])
                             counter += 1
                         else:
-                            print("full")
                             for unit in [player.linked_map.get_entity_by_id(v_id) for v_id in player.get_entities_by_class(['v'],is_free=True)]:
                                 if unit.is_full():
                                     unit.drop_to_entity(player.entity_closest_to(["T","C"], unit.cell_Y, unit.cell_X, is_dead = True))
