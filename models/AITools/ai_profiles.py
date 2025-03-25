@@ -329,7 +329,7 @@ class AIProfile:
                     return "Training villagers!"            
                 elif action == "Train military units!":
                     # Train military units in training buildings
-                    training_buildings = context['buildings']['training']
+                    training_buildings = player.get_entities_by_class(['B','S','A'])
                     if not training_buildings:
                         keys_to_consider = ['S','A','T']
                         repr=self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context,keys_to_include=keys_to_consider, player=player)
@@ -470,7 +470,7 @@ class AIProfile:
 
                 elif action == "Train military units!":
                     # Train military units in training buildings
-                    training_buildings = context['buildings']['training']
+                    training_buildings = player.get_entities_by_class(['B','S','A'])
                     if not training_buildings:
                         keys_to_consider = ['T','B','S']
                         repr=self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, keys_to_include=keys_to_consider, player=player)
