@@ -22,12 +22,25 @@ class GameEventHandler:
         
     async def ensure_network_initialized(self):
         """S'assure que le réseau est initialisé avant d'envoyer des messages."""
-        print("ensure network initialized",type(self.network_manager))#, self.network_manager.transport)
+        print("ensure network initialized", type(self.network_manager))
+        
+        # Si le gestionnaire de réseau n'existe pas, obtenir l'instance existante ou créer une nouvelle
         if self.network_manager is None:
-            self.network_manager = NetworkManager()
-            await self.network_manager.start()
+            self.network_manager = NetworkManager.get_instance()
+            if self.network_manager.transport is None:
+                success = await self.network_manager.start()
+                if not success:
+                    print("Échec de l'initialisation du réseau. Utilisation du mode hors ligne.")
+                    return False
+            return True
+        # Si le gestionnaire existe mais n'est pas correctement initialisé
         elif self.network_manager.transport is None:
-            await self.network_manager.start()
+            success = await self.network_manager.start()
+            if not success:
+                print("Échec de l'initialisation du réseau. Utilisation du mode hors ligne.")
+                return False
+        
+        return self.network_manager.transport is not None
     
     async def process_ai_decisions_async(self, tree):
         """Version asynchrone de process_ai_decisions"""

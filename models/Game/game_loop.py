@@ -52,8 +52,10 @@ class GameLoop:
 
     async def init_network(self):
         """Initialise le gestionnaire de réseau."""
-        self.network_manager = NetworkManager(self.async_handle_message)
-        return await self.network_manager.start()
+        # Obtenir l'instance unique du NetworkManager (ou créer si nécessaire)
+        self.network_manager = NetworkManager.get_instance(self.async_handle_message)
+        success = await self.network_manager.start()
+        return success
 
     async def async_handle_message(self, dict_message, received_message):
         """Gère les messages réseau de façon asynchrone."""
@@ -114,8 +116,6 @@ class GameLoop:
                     self.send_network_message({"players": self.num_players, "ai_profile": self.ai_config_values})
                 )
 
-            # Reste du code de gestion des messages identique
-            # ... (conserver le reste de la logique handle_message existante)
             elif "players" in received_message:
                 team_joueur_rejoignant = int(dict_message["players"])
                 if team_joueur_rejoignant not in self.state.map.players_dict.keys():
@@ -188,7 +188,7 @@ class GameLoop:
             if loaded:
                 pygame.display.set_mode(
                     (self.state.screen_width, self.state.screen_height),
-                    pygame.HWSURFACpygame.HWSURFACE | pygame.DOUBLEBUF | pygame.RESIZABLE,
+                    pygame.HWSURFACE | pygame.DOUBLEBUF | pygame.RESIZABLE,
                 )
                 if self.state.states == PAUSE:
                     self.state.states = PLAY
@@ -211,7 +211,7 @@ class GameLoop:
                     self.state.set_screen_size(20, 20)
                     pygame.display.set_mode(
                         (self.state.screen_width, self.state.screen_height),
-                        pygame.HWSURFACpygame.HWSURFACE | pygame.DOUBLEBUF,
+                        pygame.HWSURFACE | pygame.DOUBLEBUF,
                     )
             elif start_menu_action == "multiplayer": # If multiplayer is clicked
                 self.num_players = 1
@@ -230,7 +230,7 @@ class GameLoop:
                     self.state.set_screen_size(20, 20)
                     pygame.display.set_mode(
                         (self.state.screen_width, self.state.screen_height),
-                        pygame.HWSURFACpygame.HWSURFACE | pygame.DOUBLEBUF,
+                        pygame.HWSURFACE | pygame.DOUBLEBUF,
                     )
             else:
                 # Check if clicking on player count or cell count enables editing
@@ -249,8 +249,6 @@ class GameLoop:
         elif event.type == pygame.KEYDOWN:
             # Handle keyboard events for editing
             self.startmenu.handle_keydown(event)
-
-
 
     def handle_config_events(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -317,10 +315,8 @@ class GameLoop:
 
     def handle_play_events(self, event, mouse_x, mouse_y, dt):
         if event.type == pygame.MOUSEBUTTONDOWN:
-
             if event.button == LEFT_CLICK:
                 entity_id = self.state.map.mouse_get_entity(self.state.camera, mouse_x, mouse_y)
-
                 self.state.mouse_held = True
         elif event.type == pygame.MOUSEBUTTONUP:
             self.state.mouse_held = False
@@ -373,13 +369,13 @@ class GameLoop:
 
         # Sauvegarder et charger
         if keys[pygame.K_F11]:
-            self.state.set_screen_size(self.screen.get_width(), self.state.screen_height())
+            self.state.set_screen_size(self.screen.get_width(), self.state.screen_height)
             self.state.save()
 
         if keys[pygame.K_F12]:
             loaded = self.state.load()
             if loaded:
-                pygame.display.set_mode((self.state.screen_width, self.state.screen_height), pygame.HWSURFACpygame.HWSURFACE | pygame.DOUBLEBUF | pygame.RESIZABLE)
+                pygame.display.set_mode((self.state.screen_width, self.state.screen_height), pygame.HWSURFACE | pygame.DOUBLEBUF | pygame.RESIZABLE)
                 if self.state.states == PAUSE:
                     self.state.toggle_pause()
 
@@ -389,7 +385,7 @@ class GameLoop:
             self.state.toggle_pause()
 
         # Pause
-        if keys[pygame.K_p] or keys[pygame.K_ESCAPE] :
+        if keys[pygame.K_p] or keys[pygame.K_ESCAPE]:
             self.state.toggle_pause()
 
         # Mouvement de la caméra
@@ -462,18 +458,22 @@ class GameLoop:
     async def run_async(self):
         """Version asynchrone de la boucle principale."""
         # Initialiser le réseau une fois pour tous
-        if not await self.init_network():
-            print("Échec de l'initialisation réseau. Mode hors ligne forcé.")
-            self.network_manager = NetworkManager()
-            await self.network_manager.start()  # Tenter quand même d'initialiser
+        network_initialized = False
+        try:
+            network_initialized = await self.init_network()
+            if not network_initialized:
+                print("Échec de l'initialisation réseau. Mode hors ligne forcé.")
+        except Exception as e:
+            print(f"Erreur lors de l'initialisation réseau : {e}")
         
-        # S'assurer que tous les objets utilisent le même NetworkManager
-        if self.state.map:
+        # S'assurer que tous les objets utilisent le même NetworkManager si le réseau est initialisé
+        if network_initialized and self.state.map:
             for player in self.state.map.players_dict.values():
                 if player and player.game_handler:
                     player.game_handler.network_manager = self.network_manager
         
         running = True
+        
         while running:
             dt = self.clock.tick(FPS)
             self.screen_width, self.screen_height = self.screen.get_width(), self.screen.get_height()
