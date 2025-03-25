@@ -157,13 +157,27 @@ class GameLoop:
                 action=self.dict_action[context["player"]][0]
 
                 if context["player"] != self.num_players and dict_message["update"] is not None:
+                    gold, wood, food = self.state.map.players_dict[context["player"]].get_current_ressources()["gold"],self.state.map.players_dict[context["player"]].get_current_ressources()["wood"], self.state.map.players_dict[context["player"]].get_current_ressources()["food"] 
+                    data_gold, data_wood, data_food = context["ressources"]["gold"],context["ressources"]["wood"],context["ressources"]["food"]
+                    if gold < data_gold:
+                        self.state.map.players_dict[context["player"]].add_ressources("gold", data_gold-gold)
+                    else:
+                        self.state.map.players_dict[context["player"]].remove_ressources("gold", gold-data_gold)
+                    if wood < data_wood:
+                        self.state.map.players_dict[context["player"]].add_ressources("wood", data_wood-wood)
+                    else:
+                        self.state.map.players_dict[context["player"]].remove_ressources("wood", wood-data_wood)
+                    if food < data_food:
+                        self.state.map.players_dict[context["player"]].add_ressources("food", data_food-food)
+                    else:
+                        self.state.map.players_dict[context["player"]].remove_ressources("food", food-data_food)
+                    
                     if context["player"] not in self.state.map.players_dict.keys():
                         print( "Player not found")
                     else:
                         player = self.state.map.players_dict[context["player"]]
                         strategy = context["strategy"]
                         ai_profile = self.state.map.players_dict[self.num_players].ai_profile
-                        print("repr",context["build_repr"])
                         if strategy == "aggressive":
                             result=ai_profile._aggressive_strategy(action, context, player,context["build_repr"])
                             if result==self.dict_action[context["player"]][0]:
