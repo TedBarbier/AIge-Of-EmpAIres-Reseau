@@ -243,7 +243,7 @@ class AIProfile:
                     return "Train military units!"
                 
                 elif action == "Building structure!":
-                    if build_repr is not None:
+                    #if build_repr is not None:
                     if build_repr == [] or build_repr is None:
                         repr = self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
                         if repr != 0 and repr is not None:
@@ -371,7 +371,7 @@ class AIProfile:
                     return "Attacking the enemy!"
                 
                 elif action == "Building structure!":
-                    if build_repr is not None:
+                    #if build_repr is not None:
                     if build_repr == [] or build_repr is None:
                         repr = self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
                         if repr != 0 and repr is not None:
@@ -511,7 +511,7 @@ class AIProfile:
                     return "Attacking the enemy!"
                 
                 elif action == "Building structure!":
-                    if build_repr is not None:
+                    #if build_repr is not None:
                     if build_repr == [] or build_repr is None:
                         repr = self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
                         if repr != 0 and repr is not None:
