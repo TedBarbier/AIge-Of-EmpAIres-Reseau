@@ -159,19 +159,24 @@ class GameLoop:
                 if context["player"] != self.num_players and dict_message["update"] is not None:
                     gold, wood, food = self.state.map.players_dict[context["player"]].get_current_resources()["gold"],self.state.map.players_dict[context["player"]].get_current_resources()["wood"], self.state.map.players_dict[context["player"]].get_current_resources()["food"] 
                     data_gold, data_wood, data_food = context["resources"]["gold"],context["resources"]["wood"],context["resources"]["food"]
-                    print("gold:", type(gold), "data_gold:", type(data_gold))
                     if gold < data_gold:
                         self.state.map.players_dict[context["player"]].add_resources({"gold": data_gold-gold})
-                    elif gold > data_gold:
-                        self.state.map.players_dict[context["player"]].remove_resources({"gold": gold-data_gold})
+                        print("retouche resources")
+                    # elif gold > data_gold:
+                    #     self.state.map.players_dict[context["player"]].remove_resources({"gold": gold-data_gold})
+                    #     print("retouche resources")
                     if wood < data_wood:
                         self.state.map.players_dict[context["player"]].add_resources({"wood": data_wood-wood})
-                    elif wood > data_wood:
-                        self.state.map.players_dict[context["player"]].remove_resources({"wood": wood-data_wood})
+                        print("retouche resources")
+                    # elif wood > data_wood:
+                    #     self.state.map.players_dict[context["player"]].remove_resources({"wood": wood-data_wood})
+                    #     print("retouche resources")
                     if food < data_food:
                         self.state.map.players_dict[context["player"]].add_resources({"food": data_food-food})
-                    elif food > data_food:
-                        self.state.map.players_dict[context["player"]].remove_resources({"food": food-data_food})
+                        print("retouche resources")
+                    # elif food > data_food:
+                    #     self.state.map.players_dict[context["player"]].remove_resources({"food": food-data_food})
+                    #     print("retouche resources")
                     
                     if context["player"] not in self.state.map.players_dict.keys():
                         print( "Player not found")
