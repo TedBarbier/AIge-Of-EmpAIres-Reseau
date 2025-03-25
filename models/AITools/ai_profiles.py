@@ -170,6 +170,7 @@ class AIProfile:
         """
         Implement the aggressive strategy by prioritizing attacks and military training.
         """
+        print("aggressive")
         target_ratios_building = {
             'T': 0.13,   
             'C': 0.125,   
@@ -198,9 +199,14 @@ class AIProfile:
                     return "Training villagers!"
                 elif action == "Attacking the enemy!":
                     villager_free=[player.linked_map.get_entity_by_id(v_id) for v_id in player.get_entities_by_class(['v'],is_free=True)]
-                    unit_list = context['units']['military_free']+villager_free[:len(villager_free)//2]
+                    unit_list_id=player.get_entities_by_class(['h','a','s'],is_free=True)
+                    unit_list=[player.linked_map.get_entity_by_id(id) for id in unit_list_id]
+                    unit_list+=villager_free[:len(villager_free)//2]
+                    # unit_list = context['units']['military_free']+villager_free[:len(villager_free)//2]
                     context['enemy_id'] = self.closest_enemy_building(context, player_a=player)
                     for unit in unit_list:
+                        print(unit)
+                        print(unit_list)
                         unit.attack_entity(context['enemy_id'])
                     return "Attacking the enemy!"
 
@@ -299,6 +305,7 @@ class AIProfile:
             player.is_busy = False
 
     def _defensive_strategy(self, actions, context, player=None,build_repr=None):
+        print("defensive")
         """
         Implement the defensive strategy by focusing on repairs and defenses.
         """
@@ -432,6 +439,7 @@ class AIProfile:
         """
         Implement the balanced strategy by combining gathering, training, and attacks.
         """
+        print("balanced")
         if player is not None:
             actions=[actions]
         if player is None:
