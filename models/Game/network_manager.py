@@ -64,25 +64,39 @@ class NetworkManager:
             
         self.loop = asyncio.get_event_loop()
         
-        # Créer le protocole de réception
+        # Créer le protocole de réception - Simplifié comme dans test2.py
         class UDPServerProtocol(asyncio.DatagramProtocol):
             def __init__(self, network_manager):
                 self.network_manager = network_manager
             
             def connection_made(self, transport):
                 self.network_manager.transport = transport
+                # Configurer la socket pour de meilleures performances
+                sock = transport.get_extra_info('socket')
+                if sock:
+                    # Augmenter considérablement les buffers socket
+                    sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 16 * 1024 * 1024)  # 16Mo
+                    sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 16 * 1024 * 1024)  # 16Mo
                 
             def datagram_received(self, data, addr):
+                # Version simplifiée comme dans test2.py
                 received_message = data.decode('utf-8')
                 self.network_manager.packets_received += 1
-                if self.network_manager.message_handler:    
-                    asyncio.create_task(self.network_manager._process_message(received_message, addr))
+                
+                # Traitement immédiat sans attendre - plus rapide
+                if self.network_manager.message_handler:
+                    # Traitement immédiat, sans create_task qui pourrait retarder l'exécution
+                    self.network_manager.loop.create_task(
+                        self.network_manager._process_message_directly(received_message, addr)
+                    )
         
         # Créer le point de terminaison pour la réception
         try:
             self.transport, self.protocol = await self.loop.create_datagram_endpoint(
                 lambda: UDPServerProtocol(self),
-                local_addr=self.receive_address
+                local_addr=self.receive_address,
+                allow_broadcast=True,  # Permettre broadcast pour plus de flexibilité
+                reuse_port=False  # Ne pas réutiliser le port pour éviter les conflits
             )
             print(f"Réseau initialisé : écoute sur {self.receive_address}")
             return True
@@ -93,16 +107,21 @@ class NetworkManager:
             print(f"Erreur lors de l'initialisation du réseau : {e}")
             return False
         
-    async def _process_message(self, message: str, addr: Tuple[str, int]):
-        """Traite les messages reçus et appelle le gestionnaire de messages."""
+    async def _process_message_directly(self, message: str, addr: Tuple[str, int]):
+        """Traite directement les messages sans file d'attente intermédiaire."""
         try:
             dict_message = json.loads(message)
             if self.message_handler:
                 await self.message_handler(dict_message, message)
         except json.JSONDecodeError:
-            print(f"Erreur : message mal formaté reçu : {message}")
+            # Ne pas afficher le message complet, juste le nombre pour gagner du temps
+            print(f"Erreur : message mal formaté reçu : paquet {message}#{self.packets_received}")
         except Exception as e:
             print(f"Erreur lors du traitement du message : {e}")
+    
+    # Version deprecated - Gardée pour compatibilité
+    async def _process_message(self, message: str, addr: Tuple[str, int]):
+        await self._process_message_directly(message, addr)
     
     async def send_message(self, message: Union[Dict, str]):
         """Envoie un message réseau de façon asynchrone."""
@@ -111,14 +130,19 @@ class NetworkManager:
             return False
             
         try:
-            # Convertir en JSON si c'est un dictionnaire
+            # Optimiser l'envoi en minimisant les conversions
             if isinstance(message, dict):
                 message_json = json.dumps(message)
+                bytes_data = message_json.encode('utf-8')
+            elif isinstance(message, str):
+                bytes_data = message.encode('utf-8')
             else:
-                message_json = message
+                # Fallback pour tout autre type
+                message_json = json.dumps({"data": str(message)})
+                bytes_data = message_json.encode('utf-8')
                 
-            # Envoyer le message
-            self.transport.sendto(message_json.encode('utf-8'), self.send_address)
+            # Envoyer le message directement
+            self.transport.sendto(bytes_data, self.send_address)
             self.packets_sent += 1
             return True
         except Exception as e:

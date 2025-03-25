@@ -58,8 +58,9 @@ class GameLoop:
         return success
 
     async def async_handle_message(self, dict_message, received_message):
-        """Gère les messages réseau de façon asynchrone."""
-        await self.message_queue.put((dict_message, received_message))
+        """Gère les messages réseau de façon asynchrone - traitement immédiat."""
+        # Traiter immédiatement le message plutôt que de le mettre en file d'attente
+        self.handle_message_content(dict_message, received_message)
         
     async def send_network_message(self, message):
         """Envoie un message réseau de façon asynchrone."""
@@ -68,20 +69,18 @@ class GameLoop:
         return False
 
     async def process_network_messages(self):
-        """Traite tous les messages en attente dans la file."""
-        try:
-            while not self.message_queue.empty():
-                dict_message, received_message = await self.message_queue.get()
-                self.handle_message_content(dict_message, received_message)
-                self.message_queue.task_done()
-        except Exception as e:
-            print(f"Erreur lors du traitement des messages réseau : {e}")
+        """
+        Cette méthode est maintenant obsolète car les messages sont traités immédiatement.
+        Maintenue pour compatibilité avec le code existant.
+        """
+        pass
     
     def handle_message_content(self, dict_message, received_message):
         """Traite le contenu d'un message réseau."""
         try:
-            # Comptage des paquets pour la compatibilité
-            if self.network_manager:
+            # Réduire les journalisations pour améliorer les performances
+            # Log seulement tous les 500 paquets
+            if self.network_manager and self.network_manager.packets_received % 500 == 0:
                 packets_sent = self.network_manager.packets_sent
                 packets_received = self.network_manager.packets_received
                 print(f"Paquets envoyés: {packets_sent}, Paquets reçus: {packets_received}")
@@ -508,11 +507,8 @@ class GameLoop:
             if self.state.states == PLAY:
                 self.update_game_state(dt)
                 
-                # Traitement des messages réseau périodiquement
-                self.network_update_timer += dt
-                if self.network_update_timer >= self.NETWORK_UPDATE_INTERVAL:
-                    await self.process_network_messages()
-                    self.network_update_timer = 0
+                # Suppression de l'appel périodique à process_network_messages
+                # car les messages sont maintenant traités immédiatement à leur arrivée
                 
             elif self.state.states == CONFIG_IA:
                 pygame.mouse.set_visible(True)
