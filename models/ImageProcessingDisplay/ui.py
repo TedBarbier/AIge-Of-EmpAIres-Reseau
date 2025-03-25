@@ -21,9 +21,6 @@ class UserInterface:
                     ('s', 50),
                     ('h', 100),
                     ('a', 150),
-                    ('c', 200),
-                    ('m', 250),
-                    ('x', 300),
                 ]
             # Représentations attendues des constructions avec leur offset respectif
             expected_build_representations = [
@@ -53,7 +50,7 @@ class UserInterface:
                     self.screen.blit(texte, (player_pos[0], player_pos[1] + player_offset + unit_offset))
 
                 # Mise à jour de l'offset global après les unités
-                player_offset += 350  # Ajustez l'offset global si nécessaire
+                player_offset += 200  # Ajustez l'offset global si nécessaire
             if self.display_builds:
                 for build_representation, build_offset in expected_build_representations:
                     # Vérifie si la représentation de construction existe dans entities_dict
