@@ -13,11 +13,10 @@ class GameEventHandler:
         all_action = []
         context = self.get_context_for_player()
         actions = self.ai_profiles.decide_action(tree, context)
-        print(actions)
         dict_actions={"update":actions, "get_context_to_send" : self.get_context_to_send()}
         dict_actions['get_context_to_send']["build_repr"]=self.ai_profiles.repr
         self.send.send_action_via_udp(dict_actions)
-        # dict_actions['get_context_to_send']["build_repr"]=None
+        dict_actions['get_context_to_send']["build_repr"]=None
         all_action.append(actions)
 
  
