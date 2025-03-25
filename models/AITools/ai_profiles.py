@@ -214,40 +214,21 @@ class AIProfile:
                     # Train military units in training buildings
                     training_buildings = player.get_entities_by_class(['B','S','A'])
                     if not training_buildings:
+                        if build_repr is not None and self.taille<len(build_repr):
+                            result=player.build_entity(player.get_entities_by_class(['v'], is_free=True), build_repr[self.taille])
+                            if result[1] != "" and result[0] == 1:
+                                self.taille+=1
+                            return "Train military units!"
                         keys_to_consider = ['B','S','A']
                         repr=self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context,keys_to_include=keys_to_consider,player=player)
                         if repr != 0 and repr is not None:
                             self.repr.append(repr)
-                            return "Building Structure!"
+                            return "Train military units!"
                     for building in training_buildings:
                         if isinstance(player.linked_map.get_entity_by_id(building), (Barracks, Stable, ArcheryRange)):
                             resultat = player.linked_map.get_entity_by_id(building).train_unit(player, self.choose_units(player.linked_map.get_entity_by_id(building)))
                             if resultat == 5:
                                 return "Train military units!"
-                    # resources_to_collect=("wood",'W')
-                    # for temp_resources in [("gold",'G'),("food",'F')]:
-                    #     if context['resources'][temp_resources[0]]<context['resources'][resources_to_collect[0]]:
-                    #         resources_to_collect=temp_resources
-                    # v_ids = context['player'].get_entities_by_class(['v'],is_free=True)
-                    # c_ids = context['player'].ect(resources_to_collect[1], context['player'].cell_Y, context['player'].cell_X)
-                    # counter = 0
-                    # c_pointer = 0
-                    # for id in v_ids:
-                    #     v = context['player'].linked_map.get_entity_by_id(id)
-                    #     if not v.is_full():
-                    #         if counter == 3:
-                    #             counter = 0
-                    #             if c_pointer<len(c_ids)-1:
-                    #                 c_pointer += 1
-                    #         v.collect_entity(c_ids[c_pointer])
-                    #         counter += 1
-                    #     if v.is_full():
-                    #         v.drop_to_entity(context['player'].entity_closest_to(["T","C"], v.cell_Y, v.cell_X, is_dead = True))
-                    # self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
-                    # if repr != 0 and repr is not None:
-                    #         print("bal repr", repr)
-                    #         self.repr.append(repr)
-                    #         # return "Building Structure!"
                     return "Train military units!"
                 
                 elif action == "Building structure!":
@@ -309,11 +290,6 @@ class AIProfile:
         """
         Implement the defensive strategy by focusing on repairs and defenses.
         """
-        if player is not None:
-            actions=[actions]
-        
-        if player is None:
-            player = context['player']
         target_ratios_building = {
             'T': 0.13,  
             'C': 0.145,   
@@ -323,63 +299,57 @@ class AIProfile:
             'A': 0.16,   
             'K': 0.19
         }
+        if player is not None:
+            actions=[actions]
+        
+        if player is None:
+            player = context['player']
+        
 
         try:
             for action in actions:
                 if action == "Training villagers!":
                     for towncenter_id in player.get_entities_by_class(['T']):
                         towncenter=player.linked_map.get_entity_by_id(towncenter_id)
+
                         resultat = towncenter.train_unit(player,'v')
                         if resultat != None:
                             if player.get_current_resources()['food']<50:
                                 return "Gathering resources!"
-                    return "Training villagers!"            
+                    return "Training villagers!"
+                elif action == "Attacking the enemy!":
+                    unit_list_id=player.get_entities_by_class(['h','a','s'],is_free=True)
+                    temp_unit_list=[player.linked_map.get_entity_by_id(id) for id in unit_list_id]
+                    unit_list=temp_unit_list[:len(unit_list)//2]
+                    # unit_list = context['units']['military_free']+villager_free[:len(villager_free)//2]
+                    context['enemy_id'] = self.closest_enemy_building(context, player_a=player)
+                    for unit in unit_list:
+                        print(unit)
+                        print(unit_list)
+                        unit.attack_entity(context['enemy_id'])
+                    return "Attacking the enemy!"
+
                 elif action == "Train military units!":
                     # Train military units in training buildings
                     training_buildings = player.get_entities_by_class(['B','S','A'])
                     if not training_buildings:
-                        keys_to_consider = ['S','A','T']
-                        repr=self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context,keys_to_include=keys_to_consider, player=player)
+                        if build_repr is not None and self.taille<len(build_repr):
+                            print("boucle",build_repr)
+                            result=player.build_entity(player.get_entities_by_class(['v'], is_free=True), build_repr[self.taille])
+                            if result[1] != "" and result[0] == 1:
+                                self.taille+=1
+                            return "Train military units!"
+                        keys_to_consider = ['B','S','A']
+                        repr=self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context,keys_to_include=keys_to_consider,player=player)
                         if repr != 0 and repr is not None:
                             self.repr.append(repr)
-                            return "Building Structure!"
+                            return "Train military units!"
                     for building in training_buildings:
                         if isinstance(player.linked_map.get_entity_by_id(building), (Barracks, Stable, ArcheryRange)):
                             resultat = player.linked_map.get_entity_by_id(building).train_unit(player, self.choose_units(player.linked_map.get_entity_by_id(building)))
                             if resultat == 5:
                                 return "Train military units!"
-                    resources_to_collect=("wood",'W')
-                    for temp_resources in [("gold",'G'),("food",'F')]:
-                        if context['resources'][temp_resources[0]]<context['resources'][resources_to_collect[0]]:
-                            resources_to_collect=temp_resources
-                    # v_ids = context['player'].get_entities_by_class(['v'],is_free=True)
-                    # c_ids = context['player'].ect(resources_to_collect[1], context['player'].cell_Y, context['player'].cell_X)
-                    # counter = 0
-                    # c_pointer = 0
-                    # for id in v_ids:
-                    #     v = context['player'].linked_map.get_entity_by_id(id)
-                    #     if not v.is_full():
-                    #         if counter == 3:
-                    #             counter = 0
-                    #             if c_pointer<len(c_ids)-1:
-                    #                 c_pointer += 1
-                    #         v.collect_entity(c_ids[c_pointer])
-                    #         counter += 1
-                    #     if v.is_full():
-                    #         v.drop_to_entity(context['player'].entity_closest_to(["T","C"], v.cell_Y, v.cell_X, is_dead = True))
-                    # self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
-                    # if repr != 0 and repr is not None:
-                    #         print("bal repr", repr)
-                    #         self.repr.append(repr)
-                    #         return "Building Structure!"
                     return "Train military units!"
-                    
-                elif action == "Attacking the enemy!":
-                    unit_list = context['units']['military_free'][:len(context['units']['military_free'])//2]
-                    context['enemy_id'] = self.closest_enemy_building(context, player_a=player)
-                    for unit in unit_list:
-                        unit.attack_entity(context['enemy_id'])
-                    return "Attacking the enemy!"
                 
                 elif action == "Building structure!":
                     #if build_repr is not None:
@@ -430,7 +400,7 @@ class AIProfile:
                                     unit.drop_to_entity(player.entity_closest_to(["T","C"], unit.cell_Y, unit.cell_X, is_dead = True))
                     return "Gathering resources!"
 
-                
+            # Default to gathering resources if no attack actions are possible
             return "Gathering resources!"
         finally:
             player.is_busy = False
@@ -440,10 +410,6 @@ class AIProfile:
         Implement the balanced strategy by combining gathering, training, and attacks.
         """
         print("balanced")
-        if player is not None:
-            actions=[actions]
-        if player is None:
-            player = context['player']
         target_ratios_building = {
             'T': 0.15,   
             'C': 0.10,   
@@ -453,76 +419,53 @@ class AIProfile:
             'A': 0.13,   
             'K': 0.14
         }
+        if player is not None:
+            actions=[actions]
+        if player is None:
+            player = context['player']
 
         try:
             for action in actions:
                 if action == "Training villagers!":
                     for towncenter_id in player.get_entities_by_class(['T']):
                         towncenter=player.linked_map.get_entity_by_id(towncenter_id)
+
                         resultat = towncenter.train_unit(player,'v')
                         if resultat != None:
                             if player.get_current_resources()['food']<50:
                                 return "Gathering resources!"
                     return "Training villagers!"
-
-                elif action == "Dropping off resources!":
-                    # Drop resources in storage buildings
-                    villagers = player.get_entities_by_class(['v'],is_free=True)
-                    for villager_id in villagers:
-                        if villager.is_full():
-                            villager = player.linked_map.get_entity_by_id(villager_id)
-                            if context['drop_off_id'] is None:
-                                return "Dropped of resources"
-                            villager.drop_to_entity(player.entity_closest_to(["T","C"], villager.cell_Y, villager.cell_X, is_dead = True))  # Drop off resources
-                    return "Dropping off resources!"
+                elif action == "Attacking the enemy!":
+                    unit_list_id=player.get_entities_by_class(['h','a','s'],is_free=True)
+                    unit_list=[player.linked_map.get_entity_by_id(id) for id in unit_list_id]
+                    # unit_list = context['units']['military_free']+villager_free[:len(villager_free)//2]
+                    context['enemy_id'] = self.closest_enemy_building(context, player_a=player)
+                    for unit in unit_list:
+                        print(unit)
+                        print(unit_list)
+                        unit.attack_entity(context['enemy_id'])
+                    return "Attacking the enemy!"
 
                 elif action == "Train military units!":
                     # Train military units in training buildings
                     training_buildings = player.get_entities_by_class(['B','S','A'])
                     if not training_buildings:
-                        keys_to_consider = ['T','B','S']
-                        repr=self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, keys_to_include=keys_to_consider, player=player)
+                        if build_repr is not None and self.taille<len(build_repr):
+                            result=player.build_entity(player.get_entities_by_class(['v'], is_free=True), build_repr[self.taille])
+                            if result[1] != "" and result[0] == 1:
+                                self.taille+=1
+                            return "Train military units!"
+                        keys_to_consider = ['B','S','A']
+                        repr=self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context,keys_to_include=keys_to_consider,player=player)
                         if repr != 0 and repr is not None:
                             self.repr.append(repr)
-                            return "Building Structure!"
+                            return "Train military units!"
                     for building in training_buildings:
                         if isinstance(player.linked_map.get_entity_by_id(building), (Barracks, Stable, ArcheryRange)):
                             resultat = player.linked_map.get_entity_by_id(building).train_unit(player, self.choose_units(player.linked_map.get_entity_by_id(building)))
                             if resultat == 5:
                                 return "Train military units!"
-                    resources_to_collect=("wood",'W')
-                    for temp_resources in [("gold",'G'),("food",'F')]:
-                        if context['resources'][temp_resources[0]]<context['resources'][resources_to_collect[0]]:
-                            resources_to_collect=temp_resources
-                    
-                    # v_ids = context['player'].get_entities_by_class(['v'],is_free=True)
-                    # c_ids = context['player'].ect(resources_to_collect[1], context['player'].cell_Y, context['player'].cell_X)
-                    # counter = 0
-                    # c_pointer = 0
-                    # for id in v_ids:
-                    #     v = context['player'].linked_map.get_entity_by_id(id)
-                    #     if not v.is_full():
-                    #         if counter == 3:
-                    #             counter = 0
-                    #             if c_pointer<len(c_ids)-1:
-                    #                 c_pointer += 1
-                    #         v.collect_entity(c_ids[c_pointer])
-                    #         counter += 1
-                    #     if v.is_full():
-                    #         v.drop_to_entity(context['player'].entity_closest_to(["T","C"], v.cell_Y, v.cell_X, is_dead = True))
-                    # repr=self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
-                    # if repr != 0 and repr is not None:
-                    #         print("bal repr", repr)
-                    #         self.repr.append(repr)
-                    #         return "Building Structure!"
                     return "Train military units!"
-
-                elif action == "Attacking the enemy!":
-                    unit_list = context['units']['military_free']
-                    context['enemy_id'] = self.closest_enemy_building(context, player_a=player)
-                    for unit in unit_list:
-                        unit.attack_entity(context['enemy_id'])
-                    return "Attacking the enemy!"
                 
                 elif action == "Building structure!":
                     #if build_repr is not None:
@@ -572,9 +515,8 @@ class AIProfile:
                                 if unit.is_full():
                                     unit.drop_to_entity(player.entity_closest_to(["T","C"], unit.cell_Y, unit.cell_X, is_dead = True))
                     return "Gathering resources!"
-                
+
+            # Default to gathering resources if no attack actions are possible
             return "Gathering resources!"
         finally:
             player.is_busy = False
-        
-
