@@ -197,6 +197,7 @@ class GameLoop:
                             print(self.num_players)
                             ai_profile = self.state.map.players_dict[self.num_players].ai_profile
                             print("repr",build_list_repr)
+                            print("message", dict_message)
                             if strategy == "aggressive":
                                 result=ai_profile._aggressive_strategy(action, context, player,build_list_repr)
                                 if result==self.dict_action[context["player"]][0]:

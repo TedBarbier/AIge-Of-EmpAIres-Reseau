@@ -213,7 +213,11 @@ class AIProfile:
                     training_buildings = context['buildings']['training']
                     if not training_buildings:
                         keys_to_consider = ['B','S','A']
-                        self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context,keys_to_include=keys_to_consider,player=player)
+                        repr=self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context,keys_to_include=keys_to_consider,player=player)
+                        if repr != 0 and repr is not None:
+                            print("bal repr", repr)
+                            self.repr.append(repr)
+                            return "Building Structure!"
                     for building in training_buildings:
                         print(player.linked_map.get_entity_by_id(building))
                         print(player.linked_map.get_entity_by_id(building))
@@ -238,7 +242,11 @@ class AIProfile:
                     #         counter += 1
                     #     if v.is_full():
                     #         v.drop_to_entity(context['player'].entity_closest_to(["T","C"], v.cell_Y, v.cell_X, is_dead = True))
-                    self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
+                    # self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
+                    # if repr != 0 and repr is not None:
+                    #         print("bal repr", repr)
+                    #         self.repr.append(repr)
+                    #         # return "Building Structure!"
                     return "Train military units!"
                 
                 elif action == "Building structure!":
@@ -337,7 +345,11 @@ class AIProfile:
                     training_buildings = context['buildings']['training']
                     if not training_buildings:
                         keys_to_consider = ['S','A','T']
-                        self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context,keys_to_include=keys_to_consider, player=player)
+                        repr=self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context,keys_to_include=keys_to_consider, player=player)
+                        if repr != 0 and repr is not None:
+                            print("def repr", repr)
+                            self.repr.append(repr)
+                            return "Building Structure!"
                     for building in training_buildings:
                         print(player.linked_map.get_entity_by_id(building))
                         if isinstance(player.linked_map.get_entity_by_id(building), (Barracks, Stable, ArcheryRange)):
@@ -361,7 +373,11 @@ class AIProfile:
                     #         counter += 1
                     #     if v.is_full():
                     #         v.drop_to_entity(context['player'].entity_closest_to(["T","C"], v.cell_Y, v.cell_X, is_dead = True))
-                    self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
+                    # self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
+                    # if repr != 0 and repr is not None:
+                    #         print("bal repr", repr)
+                    #         self.repr.append(repr)
+                    #         return "Building Structure!"
                     return "Train military units!"
                     
                 elif action == "Attacking the enemy!":
@@ -477,7 +493,11 @@ class AIProfile:
                     training_buildings = context['buildings']['training']
                     if not training_buildings:
                         keys_to_consider = ['T','B','S']
-                        self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, keys_to_include=keys_to_consider, player=player)
+                        repr=self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, keys_to_include=keys_to_consider, player=player)
+                        if repr != 0 and repr is not None:
+                            print("bal repr", repr)
+                            self.repr.append(repr)
+                            return "Building Structure!"
                     for building in training_buildings:
                         print(player.linked_map.get_entity_by_id(building))
                         if isinstance(player.linked_map.get_entity_by_id(building), (Barracks, Stable, ArcheryRange)):
@@ -502,7 +522,11 @@ class AIProfile:
                     #         counter += 1
                     #     if v.is_full():
                     #         v.drop_to_entity(context['player'].entity_closest_to(["T","C"], v.cell_Y, v.cell_X, is_dead = True))
-                    self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
+                    # repr=self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
+                    # if repr != 0 and repr is not None:
+                    #         print("bal repr", repr)
+                    #         self.repr.append(repr)
+                    #         return "Building Structure!"
                     return "Train military units!"
 
                 elif action == "Attacking the enemy!":
