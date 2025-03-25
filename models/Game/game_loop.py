@@ -157,19 +157,20 @@ class GameLoop:
                 action=self.dict_action[context["player"]][0]
 
                 if context["player"] != self.num_players and dict_message["update"] is not None:
+                    print(self.state.map.players_dict[context["player"]])
                     gold, wood, food = self.state.map.players_dict[context["player"]].get_current_ressources()["gold"],self.state.map.players_dict[context["player"]].get_current_ressources()["wood"], self.state.map.players_dict[context["player"]].get_current_ressources()["food"] 
                     data_gold, data_wood, data_food = context["ressources"]["gold"],context["ressources"]["wood"],context["ressources"]["food"]
                     if gold < data_gold:
                         self.state.map.players_dict[context["player"]].add_ressources("gold", data_gold-gold)
-                    else:
+                    elif gold > data_gold:
                         self.state.map.players_dict[context["player"]].remove_ressources("gold", gold-data_gold)
                     if wood < data_wood:
                         self.state.map.players_dict[context["player"]].add_ressources("wood", data_wood-wood)
-                    else:
+                    elif wood > data_wood:
                         self.state.map.players_dict[context["player"]].remove_ressources("wood", wood-data_wood)
                     if food < data_food:
                         self.state.map.players_dict[context["player"]].add_ressources("food", data_food-food)
-                    else:
+                    elif food > data_food:
                         self.state.map.players_dict[context["player"]].remove_ressources("food", food-data_food)
                     
                     if context["player"] not in self.state.map.players_dict.keys():
