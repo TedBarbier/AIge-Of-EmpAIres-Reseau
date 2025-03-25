@@ -115,7 +115,6 @@ class GameLoop:
                 asyncio.create_task(
                     self.send_network_message({"players": self.num_players, "ai_profile": self.state.ai_config_values})
                 )
-
             elif "players" in received_message:
                 team_joueur_rejoignant = int(dict_message["players"])
                 if team_joueur_rejoignant not in self.state.map.players_dict.keys():
@@ -124,7 +123,6 @@ class GameLoop:
                     self.state.selected_mode, self.state.selected_players,
                     self.num_players,team_joueur_rejoignant, self.state.polygon, dict_message["ai_profile"], self.network_manager
                 )
-
             elif "speed" in received_message:
                 self.state.set_speed(int(dict_message["speed"]))
 
