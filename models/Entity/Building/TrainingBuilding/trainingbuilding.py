@@ -61,8 +61,8 @@ class TrainingBuilding(Building):
                             player.add_population()
                             player.current_population += 1
                             self.unit_being_trained = unit
-
                             self.time_left = self.unit_being_trained.training_time * ONE_SEC
+                            return 5
                     else:
                         self.linked_map.id_generator.free_ticket(unit.id)
                         return TRAIN_NOT_AFFORDABLE
