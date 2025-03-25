@@ -113,20 +113,11 @@ class AIProfile:
 
     def choose_units(self, building):
         if isinstance(building, Barracks):
-            units_list = ['s','x']
-            seed(time.perf_counter())
-            n = randint(0, 1)
-            return units_list[n]
+            return 's'
         elif isinstance(building, Stable):
-            units_list = ['h','c']
-            seed(time.perf_counter())
-            n = randint(0, 1)
-            return units_list[n]
+            return 'h'
         elif isinstance(building, ArcheryRange):
-            units_list = ['a','m']
-            seed(time.perf_counter())
-            n = randint(0, 1)
-            return units_list[n]
+            return 'a'
         
     def closest_player(self,context, player_a=None):
         if player_a is None:
