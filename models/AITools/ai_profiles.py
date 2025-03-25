@@ -206,7 +206,7 @@ class AIProfile:
 
                 elif action == "Train military units!":
                     # Train military units in training buildings
-                    training_buildings = context['buildings']['training']
+                    training_buildings = player.get_entities_by_class(['B','S','A'])
                     if not training_buildings:
                         keys_to_consider = ['B','S','A']
                         repr=self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context,keys_to_include=keys_to_consider,player=player)
@@ -215,7 +215,9 @@ class AIProfile:
                             return "Building Structure!"
                     for building in training_buildings:
                         if isinstance(player.linked_map.get_entity_by_id(building), (Barracks, Stable, ArcheryRange)):
-                            player.linked_map.get_entity_by_id(building).train_unit(player, self.choose_units(player.linked_map.get_entity_by_id(building)))
+                            resultat = player.linked_map.get_entity_by_id(building).train_unit(player, self.choose_units(player.linked_map.get_entity_by_id(building)))
+                            if resultat == 5:
+                                return "Train military units!"
                     # resources_to_collect=("wood",'W')
                     # for temp_resources in [("gold",'G'),("food",'F')]:
                     #     if context['resources'][temp_resources[0]]<context['resources'][resources_to_collect[0]]:
@@ -336,7 +338,9 @@ class AIProfile:
                             return "Building Structure!"
                     for building in training_buildings:
                         if isinstance(player.linked_map.get_entity_by_id(building), (Barracks, Stable, ArcheryRange)):
-                            player.linked_map.get_entity_by_id(building).train_unit(player, self.choose_units(player.linked_map.get_entity_by_id(building)))
+                            resultat = player.linked_map.get_entity_by_id(building).train_unit(player, self.choose_units(player.linked_map.get_entity_by_id(building)))
+                            if resultat == 5:
+                                return "Train military units!"
                     resources_to_collect=("wood",'W')
                     for temp_resources in [("gold",'G'),("food",'F')]:
                         if context['resources'][temp_resources[0]]<context['resources'][resources_to_collect[0]]:
@@ -475,7 +479,9 @@ class AIProfile:
                             return "Building Structure!"
                     for building in training_buildings:
                         if isinstance(player.linked_map.get_entity_by_id(building), (Barracks, Stable, ArcheryRange)):
-                            player.linked_map.get_entity_by_id(building).train_unit(player, self.choose_units(player.linked_map.get_entity_by_id(building)))
+                            resultat = player.linked_map.get_entity_by_id(building).train_unit(player, self.choose_units(player.linked_map.get_entity_by_id(building)))
+                            if resultat == 5:
+                                return "Train military units!"
                     resources_to_collect=("wood",'W')
                     for temp_resources in [("gold",'G'),("food",'F')]:
                         if context['resources'][temp_resources[0]]<context['resources'][resources_to_collect[0]]:
