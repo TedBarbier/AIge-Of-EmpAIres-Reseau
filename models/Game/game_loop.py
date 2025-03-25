@@ -185,7 +185,7 @@ class GameLoop:
                     if self.dict_action[context["player"]] ==[]:
                         self.dict_action[context["player"]].append("Gathering resources!")
                     action=self.dict_action[context["player"]][0]
-
+                    build_list_repr=context["build_repr"]
                     if context["player"] != self.num_players and dict_message["update"] is not None:
                         if context["player"] not in self.state.map.players_dict.keys():
                             print( "Player not found")
@@ -194,18 +194,19 @@ class GameLoop:
                             strategy = context["strategy"]
                             # if self.state.map.players_dict[context["player"]].get_current_resources()!=context["resources"]:
                             #     print()
+                            print(self.num_players)
                             ai_profile = self.state.map.players_dict[self.num_players].ai_profile
-                            print("repr",context["build_repr"])
+                            print("repr",build_list_repr)
                             if strategy == "aggressive":
-                                result=ai_profile._aggressive_strategy(action, context, player,context["build_repr"])
+                                result=ai_profile._aggressive_strategy(action, context, player,build_list_repr)
                                 if result==self.dict_action[context["player"]][0]:
                                     self.dict_action[context["player"]].pop(0)
                             elif strategy == "defensive":
-                                result=ai_profile._defensive_strategy(action, context, player,context["build_repr"])
+                                result=ai_profile._defensive_strategy(action, context, player,build_list_repr)
                                 if result== self.dict_action[context["player"]][0]:
                                     self.dict_action[context["player"]].pop(0)
                             elif strategy == "balanced":
-                                result=ai_profile._balanced_strategy(action, context, player,context["build_repr"])
+                                result=ai_profile._balanced_strategy(action, context, player,build_list_repr)
                                 if result==self.dict_action[context["player"]][0]:
                                     self.dict_action[context["player"]].pop(0)
                 else:
