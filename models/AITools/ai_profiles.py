@@ -193,7 +193,7 @@ class AIProfile:
                         towncenter=player.linked_map.get_entity_by_id(towncenter_id)
 
                         resultat = towncenter.train_unit(player,'v')
-                        if resultat != None:
+                        if resultat != 5:
                             if player.get_current_resources()['food']<50:
                                 return "Gathering resources!"
                     return "Training villagers!"
@@ -204,9 +204,10 @@ class AIProfile:
                     unit_list+=villager_free[:len(villager_free)//2]
                     # unit_list = context['units']['military_free']+villager_free[:len(villager_free)//2]
                     context['enemy_id'] = self.closest_enemy_building(context, player_a=player)
+                    print("unit_list", unit_list_id, player.team)
+                    print("context_ennemy_id", context['enemy_id'], player.team)
                     for unit in unit_list:
-                        print(unit)
-                        print(unit_list)
+                        print("unit", unit, player.team)
                         unit.attack_entity(context['enemy_id'])
                     return "Attacking the enemy!"
 
@@ -313,7 +314,7 @@ class AIProfile:
                         towncenter=player.linked_map.get_entity_by_id(towncenter_id)
 
                         resultat = towncenter.train_unit(player,'v')
-                        if resultat != None:
+                        if resultat != 5:
                             if player.get_current_resources()['food']<50:
                                 return "Gathering resources!"
                     return "Training villagers!"
@@ -431,7 +432,7 @@ class AIProfile:
                         towncenter=player.linked_map.get_entity_by_id(towncenter_id)
 
                         resultat = towncenter.train_unit(player,'v')
-                        if resultat != None:
+                        if resultat != 5:
                             if player.get_current_resources()['food']<50:
                                 return "Gathering resources!"
                     return "Training villagers!"
