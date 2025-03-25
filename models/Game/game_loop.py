@@ -157,8 +157,7 @@ class GameLoop:
                 action=self.dict_action[context["player"]][0]
 
                 if context["player"] != self.num_players and dict_message["update"] is not None:
-                    print(self.state.map.players_dict[context["player"]])
-                    gold, wood, food = self.state.map.players_dict[context["player"]].get_current_ressources()["gold"],self.state.map.players_dict[context["player"]].get_current_ressources()["wood"], self.state.map.players_dict[context["player"]].get_current_ressources()["food"] 
+                    gold, wood, food = self.state.map.players_dict[context["player"]].get_current_resources()["gold"],self.state.map.players_dict[context["player"]].get_current_resources()["wood"], self.state.map.players_dict[context["player"]].get_current_resources()["food"] 
                     data_gold, data_wood, data_food = context["ressources"]["gold"],context["ressources"]["wood"],context["ressources"]["food"]
                     if gold < data_gold:
                         self.state.map.players_dict[context["player"]].add_ressources("gold", data_gold-gold)
