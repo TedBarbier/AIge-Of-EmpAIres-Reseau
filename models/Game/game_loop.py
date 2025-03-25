@@ -1,17 +1,14 @@
 # gameloop.py
 import pygame
 import tkinter as tk
-import socket
-import select
+import asyncio
 from tkinter import messagebox, Button, Tk
-import socket # Import socket for networking
-import json # Import json for networking
+import json
 
 from ImageProcessingDisplay import UserInterface, EndMenu, StartMenu, PauseMenu, IAMenu, MultiplayerMenu
 from GLOBAL_VAR import *
 from Game.game_state import *
-from Game.reseau import *
-
+from Game.network_manager import NetworkManager
 
 class GameLoop:
     def __init__(self):
@@ -37,180 +34,153 @@ class GameLoop:
         self.multiplayer_menu = MultiplayerMenu(self.screen) # Instantiate MultiplayerMenu
         self.action_in_progress = False
         self.num_players = 1
-        self.udp_socket_to_receive = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.udp_socket_to_receive.bind(("127.0.0.1", 1234))
-        self.reseau=Send()
-        self.ai_config_values = None # To store AI config values after IAMenu confirmation
+        
+        # Gestionnaire de réseau avec asyncio uniquement
+        self.network_manager = None
         self.dict_action = {}
+        
+        # Créer un EventLoop asyncio
+        self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
+        
+        # File d'attente pour les messages réseau
+        self.message_queue = asyncio.Queue()
+        
+        # Pour mesurer le temps entre les updates réseau
+        self.network_update_timer = 0
+        self.NETWORK_UPDATE_INTERVAL = ONE_SEC * 0.05  # 50ms
 
+    async def init_network(self):
+        """Initialise le gestionnaire de réseau."""
+        self.network_manager = NetworkManager(self.async_handle_message)
+        return await self.network_manager.start()
 
-    def string_to_dict(self, string_data):
-        """
-        Transforme une chaîne de caractères en dictionnaire Python.
-        ... (rest of the docstring as before)
-        """
+    async def async_handle_message(self, dict_message, received_message):
+        """Gère les messages réseau de façon asynchrone."""
+        await self.message_queue.put((dict_message, received_message))
+        
+    async def send_network_message(self, message):
+        """Envoie un message réseau de façon asynchrone."""
+        if self.network_manager:
+            return await self.network_manager.send_message(message)
+        return False
+
+    async def process_network_messages(self):
+        """Traite tous les messages en attente dans la file."""
         try:
-            dictionnaire = json.loads(string_data)
-            return dictionnaire
-        except json.JSONDecodeError as e:
-            print(f"Erreur de décodage JSON : La chaîne n'est pas un JSON valide.\nErreur : {e}")
-            return None
-
-    # def handle_message(self, dt, camera, screen):
-    #     buffersize = 8192
-    #     readable, _, _ = select.select([self.udp_socket_to_receive], [], [], 0)
-    #     for s in readable:
-    #         data, addr = s.recvfrom(buffersize)
-    #         if data:
-    #             received_message = data.decode('utf-8')
-    #             if "Map" in received_message:
-    #                 dict = self.string_to_dict(received_message)
-    #                 self.state.map.players_dict[self.num_players].reset(dict["Map"]["nb_cellX"], dict["Map"]["nb_cellY"], self.num_players)
-    #                 self.state.selected_mode = dict["Map"]["mode"]
-    #                 self.state.selected_map_type = dict["Map"]["map_type"]
-    #                 self.state.selected_players = dict["Map"]["nb_max_players"]
-    #                 self.state.speed = dict["Map"]["speed"]
-    #                 self.state.map = Map(dict["Map"]["nb_cellX"], dict["Map"]["nb_cellY"])
-    #                 self.state.map.seed = dict["Map"]["seed"]
-    #                 self.state.map.score_players = dict["Map"]["score_players"]
-    #                 self.state.polygon = dict["Map"]["polygon"]
-    #                 self.num_players += 1
-    #                 self.state.start_game(self.num_players)
-    #                 self.state.map._place_player_starting_areas_multi(self.state.selected_mode, self.state.selected_players, self.num_players, 1, self.state.polygon)
-    #                 self.state.states = PLAY
-    #                 self.reseau.send_action_via_udp({"players": self.num_players})
-    #             elif "players" in received_message:
-    #                 dict = self.string_to_dict(received_message)
-    #                 team_joueur_rejoignant = int(dict["players"])
-    #                 self.state.map._place_player_starting_areas_multi(self.state.selected_mode, self.state.selected_players, self.num_players, team_joueur_rejoignant, self.state.polygon)
-    #             elif "speed" in received_message:
-    #                 dict = self.string_to_dict(received_message)
-    #                 self.state.set_speed(int(dict["speed"]))
-    #             elif "quit" in received_message:
-    #                 dict = self.string_to_dict(received_message)
-    #                 self.state.map.players_dict.pop(dict["quit"])
-    #                 for player in self.state.map.players_dict.keys():
-    #                     self.state.map.players_dict[player-1]  = self.state.map.players_dict[player].values()
-    #                     self.state.map.players_dict.pop(player)
-    #                 self.num_players -= 1
-    #             elif "update" in received_message:
-    #                 dict = self.string_to_dict(received_message)
-    #                 if dict["get_context_to_send"]["player"] != self.num_players and dict["update"] is not None:
-    #                     player=self.state.map.players_dict[dict["get_context_to_send"]["player"]]
-    #                     if dict["get_context_to_send"]["strategy"] == "aggressive":
-    #                         self.state.map.players_dict[self.num_players].ai_profile._aggressive_strategy(dict["update"], dict["get_context_to_send"],player)
-    #                     elif dict["get_context_to_send"]["strategy"] == "defensive":
-    #                         self.state.map.players_dict[self.num_players].ai_profile._defensive_strategy(dict["update"], dict["get_context_to_send"],player)
-    #                     elif dict["get_context_to_send"]["strategy"] == "balanced":
-    #                         self.state.map.players_dict[self.num_players].ai_profile._balanced_strategy(dict["update"], dict["get_context_to_send"],player)
-    #             else:
-    #                 return received_message
-
-    def handle_message(self, dt, camera, screen):
-        buffersize = 8192
-        readable, _, _ = select.select([self.udp_socket_to_receive], [], [], 0)
-
-        for s in readable:
-            data, addr = s.recvfrom(buffersize)
-            if data:
-                received_message = data.decode('utf-8')
-                dict_message = self.string_to_dict(received_message)
-                self.reseau.packets_received += 1
-                print(f"Paquets envoyés: {self.reseau.packets_sent}, Paquets reçus: {self.reseau.packets_received}")
-
-                if "Map" in received_message:
-                    map_data = dict_message["Map"]
-                    print("self.num_players", self.num_players)
-                    if self.num_players not in self.state.map.players_dict.keys():
-                            return "Player not found"
-                    else:
-                        self.state.map.players_dict[self.num_players].reset(
-                    map_data["nb_cellX"], map_data["nb_cellY"], self.num_players, map_data["ai_profile"]
-                    )
-                    self.state.selected_mode = map_data["mode"]
-                    self.state.selected_map_type = map_data["map_type"]
-                    self.state.selected_players = map_data["nb_max_players"]
-                    self.state.speed = map_data["speed"]
-                    self.state.map = Map(map_data["nb_cellX"], map_data["nb_cellY"])
-                    self.state.map.seed = map_data["seed"]
-                    self.state.map.score_players = map_data["score_players"]
-                    self.state.polygon = map_data["polygon"]
-                    self.num_players += 1
-                    self.state.start_game(self.num_players, self.ai_config_values)
-                    self.state.map._place_player_starting_areas_multi(
-                        self.state.selected_mode, self.state.selected_players,
-                        self.num_players, 1, self.state.polygon, map_data["ai_profile"]
-                    )
-                    self.state.states = PLAY
-                    self.reseau.send_action_via_udp({"players": self.num_players, "ai_profile": self.ai_config_values})
-
-                elif "players" in received_message:
-                    team_joueur_rejoignant = int(dict_message["players"])
-                    if team_joueur_rejoignant not in self.state.map.players_dict.keys():
-                        self.dict_action[team_joueur_rejoignant]=[]
-                    self.state.map._place_player_starting_areas_multi(
-                        self.state.selected_mode, self.state.selected_players,
-                        self.num_players,team_joueur_rejoignant, self.state.polygon, dict_message["ai_profile"]
-                    )
-
-                elif "speed" in received_message:
-                    self.state.set_speed(int(dict_message["speed"]))
-
-                elif "quit" in received_message:
-                    player_id = dict_message["quit"]
-                    self.state.map.players_dict.pop(player_id)
-                    self.num_players -= 1
-                    
-                    # Only reindex players with IDs higher than the one who left
-                    new_players_dict = {}
-                    for k, player in self.state.map.players_dict.items():
-                        if k > player_id:
-                            # This player had a higher ID than the one who left, so decrease by 1
-                            new_players_dict[k-1] = player
-                            player.team = k-1  # Update the player's team attribute too
-                        else:
-                            # This player had a lower ID, keep the same ID
-                            new_players_dict[k] = player
-                    
-                    self.state.map.players_dict = new_players_dict
-
-                elif "update" in received_message:
-                    context = dict_message["get_context_to_send"]
-                    if context["player"] not in self.dict_action.keys():
-                        self.dict_action[context["player"]]=[]
-                    if self.dict_action[context["player"]]==[] and dict_message["update"] != None:
-                        self.dict_action[context["player"]].append(dict_message["update"])
-                    if dict_message["update"] != "Gathering resources!" and dict_message["update"] != None and dict_message["update"] != self.dict_action[context["player"]][-1]:
-                        self.dict_action[context["player"]].append(dict_message["update"])
-                    if self.dict_action[context["player"]] ==[]:
-                        self.dict_action[context["player"]].append("Gathering resources!")
-                    action=self.dict_action[context["player"]][0]
-
-                    if context["player"] != self.num_players and dict_message["update"] is not None:
-                        if context["player"] not in self.state.map.players_dict.keys():
-                            print( "Player not found")
-                        else:
-                            player = self.state.map.players_dict[context["player"]]
-                            strategy = context["strategy"]
-                            # if self.state.map.players_dict[context["player"]].get_current_resources()!=context["resources"]:
-                            #     print()
-                            ai_profile = self.state.map.players_dict[self.num_players].ai_profile
-                            print("repr",context["build_repr"])
-                            if strategy == "aggressive":
-                                result=ai_profile._aggressive_strategy(action, context, player,context["build_repr"])
-                                if result==self.dict_action[context["player"]][0]:
-                                    self.dict_action[context["player"]].pop(0)
-                            elif strategy == "defensive":
-                                result=ai_profile._defensive_strategy(action, context, player,context["build_repr"])
-                                if result== self.dict_action[context["player"]][0]:
-                                    self.dict_action[context["player"]].pop(0)
-                            elif strategy == "balanced":
-                                result=ai_profile._balanced_strategy(action, context, player,context["build_repr"])
-                                if result==self.dict_action[context["player"]][0]:
-                                    self.dict_action[context["player"]].pop(0)
+            while not self.message_queue.empty():
+                dict_message, received_message = await self.message_queue.get()
+                self.handle_message_content(dict_message, received_message)
+                self.message_queue.task_done()
+        except Exception as e:
+            print(f"Erreur lors du traitement des messages réseau : {e}")
+    
+    def handle_message_content(self, dict_message, received_message):
+        """Traite le contenu d'un message réseau."""
+        try:
+            # Comptage des paquets pour la compatibilité
+            if self.network_manager:
+                packets_sent = self.network_manager.packets_sent
+                packets_received = self.network_manager.packets_received
+                print(f"Paquets envoyés: {packets_sent}, Paquets reçus: {packets_received}")
+            
+            if "Map" in received_message:
+                map_data = dict_message["Map"]
+                print("self.num_players", self.num_players)
+                if self.num_players not in self.state.map.players_dict.keys():
+                    return "Player not found"
                 else:
-                    return received_message
+                    self.state.map.players_dict[self.num_players].reset(
+                        map_data["nb_cellX"], map_data["nb_cellY"], 
+                        self.num_players, map_data["ai_profile"]
+                    )
+                self.state.selected_mode = map_data["mode"]
+                self.state.selected_map_type = map_data["map_type"]
+                self.state.selected_players = map_data["nb_max_players"]
+                self.state.speed = map_data["speed"]
+                self.state.map = Map(map_data["nb_cellX"], map_data["nb_cellY"])
+                self.state.map.seed = map_data["seed"]
+                self.state.map.score_players = map_data["score_players"]
+                self.state.polygon = map_data["polygon"]
+                self.num_players += 1
+                self.state.start_game(self.num_players, self.ai_config_values, self.network_manager)
+                self.state.map._place_player_starting_areas_multi(
+                    self.state.selected_mode, self.state.selected_players,
+                    self.num_players, 1, self.state.polygon, map_data["ai_profile"], self.network_manager
+                )
+                self.state.states = PLAY
+                # Utiliser la version asyncio pour envoyer
+                asyncio.create_task(
+                    self.send_network_message({"players": self.num_players, "ai_profile": self.ai_config_values})
+                )
 
+            # Reste du code de gestion des messages identique
+            # ... (conserver le reste de la logique handle_message existante)
+            elif "players" in received_message:
+                team_joueur_rejoignant = int(dict_message["players"])
+                if team_joueur_rejoignant not in self.state.map.players_dict.keys():
+                    self.dict_action[team_joueur_rejoignant]=[]
+                self.state.map._place_player_starting_areas_multi(
+                    self.state.selected_mode, self.state.selected_players,
+                    self.num_players,team_joueur_rejoignant, self.state.polygon, dict_message["ai_profile"], self.network_manager
+                )
+
+            elif "speed" in received_message:
+                self.state.set_speed(int(dict_message["speed"]))
+
+            elif "quit" in received_message:
+                player_id = dict_message["quit"]
+                self.state.map.players_dict.pop(player_id)
+                self.num_players -= 1
+                
+                # Only reindex players with IDs higher than the one who left
+                new_players_dict = {}
+                for k, player in self.state.map.players_dict.items():
+                    if k > player_id:
+                        # This player had a higher ID than the one who left, so decrease by 1
+                        new_players_dict[k-1] = player
+                        player.team = k-1  # Update the player's team attribute too
+                    else:
+                        # This player had a lower ID, keep the same ID
+                        new_players_dict[k] = player
+                
+                self.state.map.players_dict = new_players_dict
+
+            elif "update" in received_message:
+                context = dict_message["get_context_to_send"]
+                if context["player"] not in self.dict_action.keys():
+                    self.dict_action[context["player"]]=[]
+                if self.dict_action[context["player"]]==[] and dict_message["update"] != None:
+                    self.dict_action[context["player"]].append(dict_message["update"])
+                if dict_message["update"] != "Gathering resources!" and dict_message["update"] != None and dict_message["update"] != self.dict_action[context["player"]][-1]:
+                    self.dict_action[context["player"]].append(dict_message["update"])
+                if self.dict_action[context["player"]] ==[]:
+                    self.dict_action[context["player"]].append("Gathering resources!")
+                action=self.dict_action[context["player"]][0]
+
+                if context["player"] != self.num_players and dict_message["update"] is not None:
+                    if context["player"] not in self.state.map.players_dict.keys():
+                        print( "Player not found")
+                    else:
+                        player = self.state.map.players_dict[context["player"]]
+                        strategy = context["strategy"]
+                        ai_profile = self.state.map.players_dict[self.num_players].ai_profile
+                        print("repr",context["build_repr"])
+                        if strategy == "aggressive":
+                            result=ai_profile._aggressive_strategy(action, context, player,context["build_repr"])
+                            if result==self.dict_action[context["player"]][0]:
+                                self.dict_action[context["player"]].pop(0)
+                        elif strategy == "defensive":
+                            result=ai_profile._defensive_strategy(action, context, player,context["build_repr"])
+                            if result== self.dict_action[context["player"]][0]:
+                                self.dict_action[context["player"]].pop(0)
+                        elif strategy == "balanced":
+                            result=ai_profile._balanced_strategy(action, context, player,context["build_repr"])
+                            if result==self.dict_action[context["player"]][0]:
+                                self.dict_action[context["player"]].pop(0)
+            
+        except Exception as e:
+            print(f"Erreur dans handle_message_content: {e}")
 
     def handle_start_events(self, event):
         if pygame.key.get_pressed()[pygame.K_F12]:
@@ -327,20 +297,19 @@ class GameLoop:
                                 "score_players" : self.state.map.score_players,
                                 "ai_profile" : self.state.ai_config_values
                             }}
-                            self.reseau.send_action_via_udp(map_send)
+                            # Correction: utiliser asyncio.create_task pour l'appel à la coroutine
+                            asyncio.create_task(self.send_network_message(map_send))
                             self.state.states = PLAY
                         else:
                             self.state.start_game()
                             self.state.states = PLAY
 
-
-
-
-    def handle_pause_events(self,dt, event):
+    def handle_pause_events(self, dt, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
             result = self.pausemenu.handle_click(event.pos, self.state)
             if result == "main_menu" and self.state.is_multiplayer:
-                self.reseau.send_action_via_udp({"quit": self.num_players})
+                # Correction: utiliser asyncio.create_task pour l'appel à la coroutine
+                asyncio.create_task(self.send_network_message({"quit": self.num_players}))
 
     def handle_end_events(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -361,8 +330,9 @@ class GameLoop:
             elif event.y == -1:
                 self.state.camera.adjust_zoom(dt, -0.1, SCREEN_WIDTH, SCREEN_HEIGHT)
 
-
-    def handle_keyboard_inputs(self, move_flags, dt):
+    async def handle_keyboard_inputs_async(self, dt):
+        """Version asynchrone de handle_keyboard_inputs."""
+        move_flags = 0  # Initialiser move_flags ici
         keys = pygame.key.get_pressed()
         scale = 2 if keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT] else 1
 
@@ -375,27 +345,27 @@ class GameLoop:
         # Changer la vitesse de Jeu
         if keys[pygame.K_1]:
             self.state.set_speed(self.state.speed+0.1)
-            self.reseau.send_action_via_udp({"speed": self.state.speed+0.1})
+            asyncio.create_task(self.send_network_message({"speed": self.state.speed+0.1}))
         if keys[pygame.K_2]:
             self.state.set_speed(self.state.speed-0.1)
-            self.reseau.send_action_via_udp({"speed": self.state.speed-0.1})
+            asyncio.create_task(self.send_network_message({"speed": self.state.speed-0.1}))
 
         if keys[pygame.K_3]:
             self.state.set_speed(0.3)
             if self.state.is_multiplayer:
-                self.reseau.send_action_via_udp({"speed": 0.3})
+                asyncio.create_task(self.send_network_message({"speed": 0.3}))
         if keys[pygame.K_4]:
             self.state.set_speed(1)
             if self.state.is_multiplayer:
-                self.reseau.send_action_via_udp({"speed": 1})
+                asyncio.create_task(self.send_network_message({"speed": 1}))
         if keys[pygame.K_5]:
             self.state.set_speed(2)
             if self.state.is_multiplayer:
-                self.reseau.send_action_via_udp({"speed": 2})
+                asyncio.create_task(self.send_network_message({"speed": 2}))
         if keys[pygame.K_6]:
             self.state.set_speed(8)
             if self.state.is_multiplayer:
-                self.reseau.send_action_via_udp({"speed": 8})
+                asyncio.create_task(self.send_network_message({"speed": 8}))
 
         # Basculer le mode d'affichage
         if keys[pygame.K_F10]:
@@ -449,6 +419,8 @@ class GameLoop:
         self.state.terminal_camera.move_flags = move_flags
         self.state.terminal_camera.move(dt)
         self.state.camera.move(dt, 5 * scale)
+        
+        return move_flags
 
     def update_game_state(self, dt):
         if not (self.state.states == PAUSE) or self.state.is_multiplayer: # Ne pas mettre à jour l'état du jeu dans le menu multijoueur ou pause
@@ -480,8 +452,27 @@ class GameLoop:
         self.screen.blit(CURSOR_IMG, (mouse_x, mouse_y))
         pygame.display.flip()
 
+    async def handle_pause_events_async(self, dt, event):
+        """Version asynchrone de handle_pause_events."""
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            result = self.pausemenu.handle_click(event.pos, self.state)
+            if result == "main_menu" and self.state.is_multiplayer:
+                await self.send_network_message({"quit": self.num_players})
 
-    def run(self):
+    async def run_async(self):
+        """Version asynchrone de la boucle principale."""
+        # Initialiser le réseau une fois pour tous
+        if not await self.init_network():
+            print("Échec de l'initialisation réseau. Mode hors ligne forcé.")
+            self.network_manager = NetworkManager()
+            await self.network_manager.start()  # Tenter quand même d'initialiser
+        
+        # S'assurer que tous les objets utilisent le même NetworkManager
+        if self.state.map:
+            for player in self.state.map.players_dict.values():
+                if player and player.game_handler:
+                    player.game_handler.network_manager = self.network_manager
+        
         running = True
         while running:
             dt = self.clock.tick(FPS)
@@ -492,13 +483,13 @@ class GameLoop:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
-                if self.state.states == START: # Utiliser START ici
+                if self.state.states == START:
                     self.state.change_music("start")
                     self.handle_start_events(event)
-                elif self.state.states == CONFIG_IA: # Handle events for CONFIG_IA state
+                elif self.state.states == CONFIG_IA:
                     self.handle_config_events(event)
                 elif self.state.states == PAUSE:
-                    self.handle_pause_events(dt, event)
+                    await self.handle_pause_events_async(dt, event)
                 elif self.state.states == PLAY:
                     self.state.change_music(self.state.map.state)
                     self.handle_play_events(event, mouse_x, mouse_y, dt)
@@ -508,20 +499,33 @@ class GameLoop:
             if self.state.mouse_held:
                 self.state.map.minimap.update_camera(self.state.camera, mouse_x, mouse_y)
 
-            if not (self.state.states == START or self.state.states == CONFIG_IA): # No keyboard input in START and CONFIG_IA
-                self.handle_keyboard_inputs(move_flags, dt)
+            if not (self.state.states == START or self.state.states == CONFIG_IA):
+                # Correction: passer uniquement dt sans move_flags qui est maintenant initialisé dans la méthode
+                move_flags = await self.handle_keyboard_inputs_async(dt)
 
             self.state.update(dt)
 
             if self.state.states == PLAY:
                 self.update_game_state(dt)
-                if self.state.is_multiplayer:
-                    self.handle_message(dt, self.state.camera, self.screen)
+                
+                # Traitement des messages réseau périodiquement
+                self.network_update_timer += dt
+                if self.network_update_timer >= self.NETWORK_UPDATE_INTERVAL:
+                    await self.process_network_messages()
+                    self.network_update_timer = 0
+                
             elif self.state.states == CONFIG_IA:
-                pygame.mouse.set_visible(True) # Show mouse cursor in config menu
-
+                pygame.mouse.set_visible(True)
 
             self.render_display(dt, mouse_x, mouse_y)
+            
+            # Petite pause pour laisser d'autres coroutines s'exécuter
+            await asyncio.sleep(0.001)
 
+        # Nettoyage
+        if self.network_manager:
+            self.network_manager.close()
 
-        pygame.quit()
+    def run(self):
+        """Point d'entrée principal, exécute la boucle asyncio."""
+        asyncio.run(self.run_async())

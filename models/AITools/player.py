@@ -5,6 +5,7 @@ from .ai_profiles import*
 from tkinter import messagebox, Button, Scale, Tk, Label, Frame, Grid, HORIZONTAL, N, W, E, S
 from random import randint,seed
 import time
+import asyncio
 
 
 CLASS_MAPPING = {
@@ -254,7 +255,7 @@ def choose_strategy(Player):
 
 class Player:
     
-    def __init__(self, cell_Y, cell_X, team, num_players, is_multiplayer= False, ai_config = None):
+    def __init__(self, cell_Y, cell_X, team, num_players, is_multiplayer= False, ai_config = None, network_manager=None):
         self.team = team
         self.cell_Y = cell_Y
         self.cell_X = cell_X
@@ -268,7 +269,7 @@ class Player:
 
         self.entities_dict = {}
         self.linked_map = None
-
+        self.network_manager = network_manager
         self.decision_tree= tree
         # if self.team == self.num_players and self.is_multiplayer:
         #     strat = choose_strategy(self)
@@ -284,13 +285,13 @@ class Player:
             self.ai_profile = AIProfile(strat[0],strat[1],strat[2])
         udp_host = "127.0.0.1"
         udp_port = 12345
-        self.game_handler = GameEventHandler(self.linked_map,self,self.ai_profile)
+        self.game_handler = GameEventHandler(self.linked_map,self,self.ai_profile, self.network_manager)
 
         self.refl_acc = 0
         self.is_busy = False
 
         self.life_time = 0
-        self.all_context = GameEventHandler.get_context_for_player(self.game_handler)
+        self.all_context = self.game_handler.get_context_for_player()
         if self.ai_profile is not None:
             print(self.ai_profile.strategy)
 
@@ -638,15 +639,42 @@ class Player:
     def get_buildings(self, is_free = False):
         return self.get_entities_by_class(["T","C","H","K","F","S","B","A"], is_free)
 
+    async def player_turn_async(self, dt):
+        """Version asynchrone de player_turn"""
+        # S'assurer que le réseau est initialisé
+        await self.game_handler.ensure_network_initialized()
+        
+        decision = await self.game_handler.process_ai_decisions_async(self.decision_tree)
+        context_to_send = self.create_info_entity()
+        
+        # Envoyer via NetworkManager
+        await self.game_handler.network_manager.send_message(context_to_send)
+            
+        self.refl_acc = 0
+        return decision
+
+    def player_turn(self, dt):
+        """Version synchrone pour compatibilité"""
+        decision = self.game_handler.process_ai_decisions(self.decision_tree)
+        context_to_send = self.create_info_entity()
+        
+        # Utiliser asyncio même dans la version synchrone
+        asyncio.create_task(self.game_handler.ensure_and_send_message(context_to_send))
+        
+        self.refl_acc = 0
+
     def update(self, dt):
         self.life_time += dt/ONE_SEC
 
         self.update_population(dt)
 
-        self.refl_acc +=dt
-        if self.refl_acc>ONE_SEC/3:
+        self.refl_acc += dt
+        if self.refl_acc > ONE_SEC/3:
             if self.is_multiplayer and self.team == self.num_players:
-                self.player_turn(dt)
+                # Pour rester compatible avec le code existant, nous appelons 
+                # la version synchrone, mais dans un contexte qui supporte asyncio,
+                asyncio.create_task(self.player_turn_async(dt))
+                #self.player_turn(dt)
             elif not self.is_multiplayer:
                 self.player_turn(dt)
 
@@ -663,7 +691,8 @@ class Player:
     def player_turn(self,dt):
         decision = self.game_handler.process_ai_decisions(self.decision_tree)
         context_to_send = self.create_info_entity()
-        self.game_handler.send.send_action_via_udp(context_to_send)
+        # Utilisation du network_manager au lieu de send
+        asyncio.create_task(self.game_handler.network_manager.send_message(context_to_send))
         self.refl_acc=0
 
     def reset(self, cell_Y, cell_X, team, ai_values):
@@ -685,13 +714,13 @@ class Player:
         self.ai_profile = None
         udp_host = "127.0.0.1"
         udp_port = 12345
-        self.game_handler = GameEventHandler(self.linked_map,self,self.ai_profile)
+        self.game_handler = GameEventHandler(self.linked_map,self,self.ai_profile, self.network_manager)
 
         self.refl_acc = 0
         self.is_busy = False
 
         self.life_time = 0
-        self.all_context = GameEventHandler.get_context_for_player(self.game_handler)
+        self.all_context = self.game_handler.get_context_for_player()
 
         # # decision = self.ai_profile.decide_action(self.decision_tree, context)
         # return decision
