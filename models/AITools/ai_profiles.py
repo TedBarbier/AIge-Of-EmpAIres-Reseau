@@ -341,7 +341,7 @@ class AIProfile:
                 elif action == "Attacking the enemy!":
                     unit_list_id=player.get_entities_by_class(['h','a','s'],is_free=True)
                     temp_unit_list=[player.linked_map.get_entity_by_id(id) for id in unit_list_id]
-                    unit_list=temp_unit_list[:len(unit_list)//2]
+                    unit_list=temp_unit_list[:len(temp_unit_list)//2]
                     # unit_list = context['units']['military_free']+villager_free[:len(villager_free)//2]
                     context['enemy_id'] = self.closest_enemy_building(context, player_a=player)
                     for unit in unit_list:
