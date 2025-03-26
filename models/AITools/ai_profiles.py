@@ -174,7 +174,7 @@ class AIProfile:
         """
         if player is None:
             player = context['player']
-        print(actions, context, player)
+        print("strategy", actions, context, player.team)
         
         target_ratios_building = {
             'T': 0.13,   

@@ -152,7 +152,7 @@ class GameLoop:
 
             elif "update" in received_message:
                 context = dict_message["get_context_to_send"]
-                print(context)
+                print("gameloop", context)
                 if context["player"] not in self.dict_action.keys():
                     self.dict_action[context["player"]]=[]
                 if self.dict_action[context["player"]]==[] and dict_message["update"] != None:
