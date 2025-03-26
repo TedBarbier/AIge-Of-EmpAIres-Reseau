@@ -174,8 +174,6 @@ class AIProfile:
         """
         if player is None:
             player = context['player']
-        print("strategy", actions, context, player.team)
-        
         target_ratios_building = {
             'T': 0.13,   
             'C': 0.13,   
@@ -188,7 +186,7 @@ class AIProfile:
 
         try:
             for action in actions:
-
+                print(action, player.team)
                 if action == "Attacking the enemy!":
                     villager_free=[player.linked_map.get_entity_by_id(v_id) for v_id in player.get_entities_by_class(['v'],is_free=True)]
                     unit_list = context['units']['military_free']+villager_free[:len(villager_free)//2]

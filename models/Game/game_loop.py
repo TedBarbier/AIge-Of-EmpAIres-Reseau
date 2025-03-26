@@ -161,7 +161,7 @@ class GameLoop:
                     self.dict_action[context["player"]].append(dict_message["update"])
                 if self.dict_action[context["player"]] ==[]:
                     self.dict_action[context["player"]].append("Gathering resources!")
-                action=self.dict_action[context["player"]][0]
+                action=[self.dict_action[context["player"]][0]]
 
                 if context["player"] != self.num_players and dict_message["update"] is not None:
                     # Vérifier si le joueur existe dans le dictionnaire
