@@ -6,14 +6,14 @@ import time
 from random import *
 
 class AIProfile:
-    def __init__(self, player ,strategy, aggressiveness=1.0, defense=1.0):
+    def __init__(self, strategy, aggressiveness=1.0, defense=1.0):
         """
         Initialize the AI profile with a specific strategy.
         :param strategy: Strategy type ('aggressive', 'defensive', 'balanced')
         :param aggressiveness: Aggressiveness level
         :param defense: Defense level
         """
-        self.player = player
+
         self.strategy = strategy
         self.aggressiveness = aggressiveness
         self.defense = defense
@@ -23,7 +23,7 @@ class AIProfile:
     def compare_ratios(self, actual_ratios, target_ratios, context, keys_to_include=None, player=None, build_repr=None):
 
         if player is None:
-            player = self.player
+            player = context['player']
 
         if len(player.get_entities_by_class(['F']))<1:
             if player.get_current_resources()["wood"]>=61:
@@ -173,8 +173,7 @@ class AIProfile:
         :param build_repr: Optional list of building representations to construct
         """
         if player is None:
-            player = self.player
-        print(type(player), player.team)
+            player = context['player']
         target_ratios_building = {
             'T': 0.13,   
             'C': 0.13,   
@@ -211,15 +210,10 @@ class AIProfile:
                     return "Building structure!"
                 
                 elif action == "Training villagers!":
-                    for towncenter_id in player.get_entities_by_class(['T']):
-                        towncenter=player.linked_map.get_entity_by_id(towncenter_id)
-                        towncenter.train_unit(player,'v')
-                        if player.get_current_resources()['food']<50:
-                            return "Training villagers!"
-                    return "Training villagers!"
+                    return self.train_villager(context, player)
 
                 elif action == "Gathering resources!":
-                    return self.gather_resources(context)
+                    return self.gather_resources(context, player)
         finally:
             player.is_busy = False
             
@@ -232,7 +226,7 @@ class AIProfile:
         :param build_repr: Optional list of building representations to construct
         """
         if player is None:
-            player = self.player
+            player = context['player']
             
         target_ratios_building = {
             'T': 0.13,  
@@ -261,7 +255,7 @@ class AIProfile:
                     self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player, build_repr=build_repr)
                     return "Train military units!"
                 elif action == "Training villagers!":
-                    return self.train_villager(context)
+                    return self.train_villager(context, player)
                 elif action == "Attacking the enemy!":
                     unit_list = context['units']['military_free'][:len(context['units']['military_free'])//2]
                     context['enemy_id'] = self.closest_enemy_building(context, player_a=player)
@@ -273,7 +267,7 @@ class AIProfile:
                     self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player, build_repr=build_repr)
                     return "Building structure!"
                 elif action == "Gathering resources!":
-                    return self.gather_resources(context)
+                    return self.gather_resources(context, player)
                 
         finally:
             player.is_busy = False
@@ -287,7 +281,7 @@ class AIProfile:
         :param build_repr: Optional list of building representations to construct
         """
         if player is None:
-            player = self.player
+            player = context['player']
             
         target_ratios_building = {
             'T': 0.2,   
@@ -302,9 +296,9 @@ class AIProfile:
         try:
             for action in actions:
                 if action == "Gathering resources!":
-                    return self.gather_resources(context)
+                    return self.gather_resources(context, player)
                 if action == "Training villagers!":
-                    return self.train_villager(context)
+                    return self.train_villager(context, player)
                 elif action == "Train military units!":
                     # Train military units in training buildings
                     training_buildings = context['buildings']['training']
@@ -338,17 +332,17 @@ class AIProfile:
         return "Gathering resources!"
     
 
-    def gather_resources(self, context):
+    def gather_resources(self, context, player):
         resources_to_collect=("wood",'W')
         for temp_resources in [("gold",'G'),("food",'F')]:
             if context['resources'][temp_resources[0]]<context['resources'][resources_to_collect[0]]:
                 resources_to_collect=temp_resources
-        v_ids = context['player'].get_entities_by_class(['v'],is_free=True)
-        c_ids = context['player'].ect(resources_to_collect[1], context['player'].cell_Y, context['player'].cell_X)
+        v_ids = player.get_entities_by_class(['v'],is_free=True)
+        c_ids = player.ect(resources_to_collect[1], player.cell_Y, player.cell_X)
         counter = 0
         c_pointer = 0
         for id in v_ids:
-            v = context['player'].linked_map.get_entity_by_id(id)
+            v = player.linked_map.get_entity_by_id(id)
             if not v.is_full():
                 if counter == 3:
                     counter = 0
@@ -360,18 +354,18 @@ class AIProfile:
                 self.drop_resources(context)
         return "Gathering resources!"
     
-    def drop_resources(self, context):
-        for unit in [context['player'].linked_map.get_entity_by_id(v_id) for v_id in context['player'].get_entities_by_class(['v'],is_free=True)]:
+    def drop_resources(self, context, player):
+        for unit in [player.linked_map.get_entity_by_id(v_id) for v_id in player.get_entities_by_class(['v'],is_free=True)]:
 
             if unit.is_full():
-                unit.drop_to_entity(context['player'].entity_closest_to(["T","C"], unit.cell_Y, unit.cell_X, is_dead = True))
+                unit.drop_to_entity(player.entity_closest_to(["T","C"], unit.cell_Y, unit.cell_X, is_dead = True))
         return "Dropping off resources!"
 
-    def train_villager(self, context):
-        for towncenter_id in context['player'].get_entities_by_class(['T']):
-            towncenter=context['player'].linked_map.get_entity_by_id(towncenter_id)
-            towncenter.train_unit(context['player'],'v')
-            if context['player'].get_current_resources()['food']<50:
-                self.gather_resources(context)
+    def train_villager(self, context, player):
+        for towncenter_id in player.get_entities_by_class(['T']):
+            towncenter=player.linked_map.get_entity_by_id(towncenter_id)
+            towncenter.train_unit(player,'v')
+            if player.get_current_resources()['food']<50:
+                self.gather_resources(context, player)
         return "Training villagers!"
     
