@@ -188,7 +188,24 @@ class AIProfile:
 
         try:
             for action in actions:
-                if action == "Training villagers!":
+                if action == "Building structure!" or (build_repr is not None and self.taille<len(build_repr)):
+                    #if build_repr is not None:
+                    if build_repr == [] or build_repr is None:
+                        repr = self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
+                        if repr != 0 and repr is not None:
+                            self.repr.append(repr)
+                        return "Building structure!"
+                    elif self.taille<len(build_repr):
+                        result=player.build_entity(player.get_entities_by_class(['v'], is_free=True), build_repr[self.taille])
+                        if result[1] != "" and result[0] == 1:
+                            self.taille+=1
+                            return "Building structure!"
+                        else:
+                            action="Gathering resources!"
+                    else:
+                        action = "Gathering resources!"
+
+                elif action == "Training villagers!":
                     for towncenter_id in player.get_entities_by_class(['T']):
                         towncenter=player.linked_map.get_entity_by_id(towncenter_id)
 
@@ -231,21 +248,6 @@ class AIProfile:
                             if resultat == 5:
                                 return "Train military units!"
                     return "Train military units!"
-                
-                elif action == "Building structure!":
-                    #if build_repr is not None:
-                    if build_repr == [] or build_repr is None:
-                        repr = self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
-                        if repr != 0 and repr is not None:
-                            self.repr.append(repr)
-                        return "Building structure!"
-                    elif self.taille<len(build_repr):
-                        result=player.build_entity(player.get_entities_by_class(['v'], is_free=True), build_repr[self.taille])
-                        if result[1] != "" and result[0] == 1:
-                            self.taille+=1
-                        return "Building structure!"
-                    else:
-                        action = "Gathering resources!"
                     
                 
                 elif action == "Building House!":
@@ -309,7 +311,25 @@ class AIProfile:
 
         try:
             for action in actions:
-                if action == "Training villagers!":
+                if action == "Building structure!" or (build_repr is not None and self.taille<len(build_repr)):
+                    #if build_repr is not None:
+                    if build_repr == [] or build_repr is None:
+                        repr = self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
+                        if repr != 0 and repr is not None:
+                            self.repr.append(repr)
+                        return "Building structure!"
+                    elif self.taille<len(build_repr):
+                        result=player.build_entity(player.get_entities_by_class(['v'], is_free=True), build_repr[self.taille])
+                        if result[1] != "" and result[0] == 1:
+                            self.taille+=1
+                            return "Building structure!"
+                        else:
+                            action="Gathering resources!"
+                    else:
+                        action = "Gathering resources!"
+
+
+                elif action == "Training villagers!":
                     for towncenter_id in player.get_entities_by_class(['T']):
                         towncenter=player.linked_map.get_entity_by_id(towncenter_id)
 
@@ -351,21 +371,6 @@ class AIProfile:
                             if resultat == 5:
                                 return "Train military units!"
                     return "Train military units!"
-                
-                elif action == "Building structure!":
-                    #if build_repr is not None:
-                    if build_repr == [] or build_repr is None:
-                        repr = self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
-                        if repr != 0 and repr is not None:
-                            self.repr.append(repr)
-                        return "Building structure!"
-                    elif self.taille<len(build_repr):
-                        result=player.build_entity(player.get_entities_by_class(['v'], is_free=True), build_repr[self.taille])
-                        if result[1] != "" and result[0] == 1:
-                            self.taille+=1
-                        return "Building structure!"
-                    else:
-                        action = "Gathering resources!"
                     
                 
                 elif action == "Building House!":
@@ -427,7 +432,24 @@ class AIProfile:
 
         try:
             for action in actions:
-                if action == "Training villagers!":
+                if action == "Building structure!" or (build_repr is not None and self.taille<len(build_repr)):
+                    #if build_repr is not None:
+                    if build_repr == [] or build_repr is None:
+                        repr = self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
+                        if repr != 0 and repr is not None:
+                            self.repr.append(repr)
+                        return "Building structure!"
+                    elif self.taille<len(build_repr):
+                        result=player.build_entity(player.get_entities_by_class(['v'], is_free=True), build_repr[self.taille])
+                        if result[1] != "" and result[0] == 1:
+                            self.taille+=1
+                            return "Building structure!"
+                        else:
+                            action="Gathering resources!"
+                    else:
+                        action = "Gathering resources!"
+
+                elif action == "Training villagers!":
                     for towncenter_id in player.get_entities_by_class(['T']):
                         towncenter=player.linked_map.get_entity_by_id(towncenter_id)
 
@@ -467,21 +489,6 @@ class AIProfile:
                             if resultat == 5:
                                 return "Train military units!"
                     return "Train military units!"
-                
-                elif action == "Building structure!":
-                    #if build_repr is not None:
-                    if build_repr == [] or build_repr is None:
-                        repr = self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player)
-                        if repr != 0 and repr is not None:
-                            self.repr.append(repr)
-                        return "Building structure!"
-                    elif self.taille<len(build_repr):
-                        result=player.build_entity(player.get_entities_by_class(['v'], is_free=True), build_repr[self.taille])
-                        if result[1] != "" and result[0] == 1:
-                            self.taille+=1
-                        return "Building structure!"
-                    else:
-                        action = "Gathering resources!"
                     
                 
                 elif action == "Building House!":
