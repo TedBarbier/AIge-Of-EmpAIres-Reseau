@@ -219,8 +219,8 @@ class AIProfile:
                             return "Training villagers!"
                     return "Training villagers!"
 
-            # Default to gathering resources if no attack actions are possible
-            return "Gathering resources!"
+                elif action == "Gathering resources!":
+                    return gather_resources(context)
         finally:
             player.is_busy = False
             
@@ -273,6 +273,8 @@ class AIProfile:
                 elif action == "Building structure!":
                     self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player, build_repr=build_repr)
                     return "Building structure!"
+                elif action == "Gathering resources!":
+                    return gather_resources(context)
                 
         finally:
             player.is_busy = False
