@@ -351,7 +351,7 @@ class AIProfile:
                 v.collect_entity(c_ids[c_pointer])
                 counter += 1
             else:
-                self.drop_resources(context)
+                self.drop_resources(context, player)
         return "Gathering resources!"
     
     def drop_resources(self, context, player):
