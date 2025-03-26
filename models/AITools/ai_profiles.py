@@ -188,6 +188,7 @@ class AIProfile:
 
         try:
             for action in actions:
+
                 if action == "Attacking the enemy!":
                     villager_free=[player.linked_map.get_entity_by_id(v_id) for v_id in player.get_entities_by_class(['v'],is_free=True)]
                     unit_list = context['units']['military_free']+villager_free[:len(villager_free)//2]
@@ -209,6 +210,14 @@ class AIProfile:
                 elif action == "Building structure!":
                     self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player, build_repr=build_repr)
                     return "Building structure!"
+                
+                elif action == "Training villagers!":
+                    for towncenter_id in player.get_entities_by_class(['T']):
+                        towncenter=player.linked_map.get_entity_by_id(towncenter_id)
+                        towncenter.train_unit(player,'v')
+                        if player.get_current_resources()['food']<50:
+                            return "Training villagers!"
+                    return "Training villagers!"
 
             # Default to gathering resources if no attack actions are possible
             return "Gathering resources!"
@@ -252,7 +261,8 @@ class AIProfile:
                             resources_to_collect=temp_resources
                     self.compare_ratios(context['buildings']['ratio'], target_ratios_building, context, player=player, build_repr=build_repr)
                     return "Train military units!"
-                    
+                elif action == "Training villagers!":
+                    return train_villager(context)
                 elif action == "Attacking the enemy!":
                     unit_list = context['units']['military_free'][:len(context['units']['military_free'])//2]
                     context['enemy_id'] = self.closest_enemy_building(context, player_a=player)
@@ -291,40 +301,9 @@ class AIProfile:
         try:
             for action in actions:
                 if action == "Gathering resources!":
-                    resources_to_collect=("wood",'W')
-                    for temp_resources in [("gold",'G'),("food",'F')]:
-                        if context['resources'][temp_resources[0]]<context['resources'][resources_to_collect[0]]:
-                            resources_to_collect=temp_resources
-                    v_ids = player.get_entities_by_class(['v'],is_free=True)
-                    c_ids = player.ect(resources_to_collect[1], player.cell_Y, player.cell_X)
-                    counter = 0
-                    c_pointer = 0
-                    for id in v_ids:
-                        v = player.linked_map.get_entity_by_id(id)
-                        if not v.is_full():
-                            if counter == 3:
-                                counter = 0
-                                if c_pointer<len(c_ids)-1:
-                                    c_pointer += 1
-                            v.collect_entity(c_ids[c_pointer])
-                            counter += 1
-                        else:
-                            if context['drop_off_id'] is None:
-                                return "Gathering resources!"
-                            v.drop_to_entity(player.entity_closest_to(["T","C"], v.cell_Y, v.cell_X, is_dead = True))
-                    return "Gathering resources!"
-
-                elif action == "Dropping off resources!":
-                    # Drop resources in storage buildings
-                    villagers = player.get_entities_by_class(['v'],is_free=True)
-                    for villager_id in villagers:
-                        villager = player.linked_map.get_entity_by_id(villager_id)
-                        if villager and villager.is_full():
-                            if context['drop_off_id'] is None:
-                                return "Dropping off resources!"
-                            villager.drop_to_entity(player.entity_closest_to(["T","C"], villager.cell_Y, villager.cell_X, is_dead = True))
-                    return "Dropping off resources!"
-
+                    return gather_resources(context)
+                if action == "Training villagers!":
+                    return train_villager(context)
                 elif action == "Train military units!":
                     # Train military units in training buildings
                     training_buildings = context['buildings']['training']
@@ -380,6 +359,13 @@ class AIProfile:
                 drop_resources(context)
         return "Gathering resources!"
     
+    def drop_resources(context):
+        for unit in [context['player'].linked_map.get_entity_by_id(v_id) for v_id in context['player'].get_entities_by_class(['v'],is_free=True)]:
+
+            if unit.is_full():
+                unit.drop_to_entity(context['player'].entity_closest_to(["T","C"], unit.cell_Y, unit.cell_X, is_dead = True))
+        return "Dropping off resources!"
+
     def train_villager(context):
         for towncenter_id in context['player'].get_entities_by_class(['T']):
             towncenter=context['player'].linked_map.get_entity_by_id(towncenter_id)
