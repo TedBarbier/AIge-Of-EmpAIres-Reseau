@@ -79,8 +79,8 @@ TEAM_COLORS = {
 }
 
 MUSIC = {
-    "start":"Sounds/Menu3.mp3",
-    "normal":"Sounds/Normal3.mp3",
+    "start":"Sounds/Menu.mp3",
+    "normal":"Sounds/Normal.mp3",
     "battle":"Sounds/Battle.mp3",
     "end":"Sounds/Menu.mp3"
 }
