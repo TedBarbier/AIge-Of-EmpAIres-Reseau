@@ -50,6 +50,9 @@ class GameEventHandler:
         context = self.get_context_for_player()
         actions = self.ai_profiles.decide_action(tree, context)
         dict_actions = {"update": actions, "get_context_to_send": self.get_context_to_send()}
+        
+        # Ajouter la liste des représentations de bâtiments à construire
+        # Cette liste sera utilisée sur le client distant pour exécuter les mêmes constructions
         dict_actions['get_context_to_send']["build_repr"] = self.ai_profiles.repr
         
         # Ajoute l'action à la liste des actions en attente

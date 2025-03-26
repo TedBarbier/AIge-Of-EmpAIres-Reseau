@@ -163,45 +163,30 @@ class GameLoop:
                 action=self.dict_action[context["player"]][0]
 
                 if context["player"] != self.num_players and dict_message["update"] is not None:
-                    gold, wood, food = self.state.map.players_dict[context["player"]].get_current_resources()["gold"],self.state.map.players_dict[context["player"]].get_current_resources()["wood"], self.state.map.players_dict[context["player"]].get_current_resources()["food"] 
-                    data_gold, data_wood, data_food = context["resources"]["gold"],context["resources"]["wood"],context["resources"]["food"]
-                    # if gold < data_gold:
-                    #     self.state.map.players_dict[context["player"]].add_resources({"gold": data_gold-gold})
-                    #     print("retouche resources")
-                    # # elif gold > data_gold:
-                    # #     self.state.map.players_dict[context["player"]].remove_resources({"gold": gold-data_gold})
-                    # #     print("retouche resources")
-                    # if wood < data_wood:
-                    #     self.state.map.players_dict[context["player"]].add_resources({"wood": data_wood-wood})
-                    #     print("retouche resources")
-                    # # elif wood > data_wood:
-                    # #     self.state.map.players_dict[context["player"]].remove_resources({"wood": wood-data_wood})
-                    # #     print("retouche resources")
-                    # if food < data_food:
-                    #     self.state.map.players_dict[context["player"]].add_resources({"food": data_food-food})
-                    #     print("retouche resources")
-                    # elif food > data_food:
-                    #     self.state.map.players_dict[context["player"]].remove_resources({"food": food-data_food})
-                    #     print("retouche resources")
-                    
+                    # Vérifier si le joueur existe dans le dictionnaire
                     if context["player"] not in self.state.map.players_dict.keys():
-                        print( "Player not found")
+                        print("Player not found")
                     else:
                         player = self.state.map.players_dict[context["player"]]
                         strategy = context["strategy"]
-                        print("strat adverse",strategy)
+                        print("strat adverse", strategy)
                         ai_profile = self.state.map.players_dict[self.num_players].ai_profile
+                        
+                        # Récupérer les représentations de bâtiments si disponibles
+                        build_repr = context.get("build_repr", None)
+                        
+                        # Appeler la stratégie appropriée avec le joueur et build_repr
                         if strategy == "aggressive":
-                            result=ai_profile._aggressive_strategy(action, context, player,context["build_repr"])
-                            if result==self.dict_action[context["player"]][0]:
+                            result = ai_profile._aggressive_strategy(action, context, player, build_repr)
+                            if result == self.dict_action[context["player"]][0]:
                                 self.dict_action[context["player"]].pop(0)
                         elif strategy == "defensive":
-                            result=ai_profile._defensive_strategy(action, context, player,context["build_repr"])
-                            if result== self.dict_action[context["player"]][0]:
+                            result = ai_profile._defensive_strategy(action, context, player, build_repr) 
+                            if result == self.dict_action[context["player"]][0]:
                                 self.dict_action[context["player"]].pop(0)
                         elif strategy == "balanced":
-                            result=ai_profile._balanced_strategy(action, context, player,context["build_repr"])
-                            if result==self.dict_action[context["player"]][0]:
+                            result = ai_profile._balanced_strategy(action, context, player, build_repr)
+                            if result == self.dict_action[context["player"]][0]:
                                 self.dict_action[context["player"]].pop(0)
             
         except Exception as e:
