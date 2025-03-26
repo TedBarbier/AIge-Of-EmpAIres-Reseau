@@ -152,6 +152,7 @@ class GameLoop:
 
             elif "update" in received_message:
                 context = dict_message["get_context_to_send"]
+                print(context)
                 if context["player"] not in self.dict_action.keys():
                     self.dict_action[context["player"]]=[]
                 if self.dict_action[context["player"]]==[] and dict_message["update"] != None:
@@ -176,7 +177,6 @@ class GameLoop:
                         
                         # Appeler la stratégie appropriée avec le joueur et build_repr
                         if strategy == "aggressive":
-                            print("agressive")
                             result = ai_profile._aggressive_strategy(action, context, player, build_repr)
                             if result == self.dict_action[context["player"]][0]:
                                 self.dict_action[context["player"]].pop(0)
