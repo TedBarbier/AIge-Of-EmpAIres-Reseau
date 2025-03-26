@@ -87,7 +87,7 @@ class GameLoop:
             
             if "Map" in received_message:
                 map_data = dict_message["Map"]
-                print("self.num_players", self.num_players)
+                print("avant le reset",self.num_players,self.state.map.players_dict[self.num_players].strat)
                 if self.num_players not in self.state.map.players_dict.keys():
                     return "Player not found"
                 else:
@@ -108,13 +108,14 @@ class GameLoop:
                 self.num_players += 1
                 # Correction: remplacer self.ai_config_values par self.state.ai_config_values
                 self.state.start_game(self.num_players, self.state.ai_config_values, self.network_manager)
-                print("après le lancement de la partie", self.num_players, self.state.map.players_dict[self.num_players].strat)
-                print("après le lancement de la partie", 1, self.state.map.players_dict[1].strat)
+                
                 self.state.map._place_player_starting_areas_multi(
                     self.state.selected_mode, self.state.selected_players,
                     self.num_players, 1, self.state.polygon, map_data["ai_profile"], self.network_manager
                 )
                 self.state.states = PLAY
+                print("après le lancement de la partie", self.num_players, self.state.map.players_dict[self.num_players].strat)
+                print("après le lancement de la partie", 1, self.state.map.players_dict[1].strat)
                 # Utiliser la version asyncio pour envoyer
                 asyncio.create_task(
                     self.send_network_message({"players": self.num_players, "ai_profile": self.state.ai_config_values})
