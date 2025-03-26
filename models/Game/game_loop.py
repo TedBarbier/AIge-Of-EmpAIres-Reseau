@@ -95,8 +95,8 @@ class GameLoop:
                         map_data["nb_cellX"], map_data["nb_cellY"], 
                         self.num_players, map_data["ai_profile"]
                     )
-                print("après le reset",self.num_players,self.state.map.players_dict[self.num_players].ai_profile)
-                print("après le reset", 1, self.state.map.players_dict[1].ai_profile)
+                print("après le reset",self.num_players,self.state.map.players_dict[self.num_players].strat)
+                print("après le reset", 1, self.state.map.players_dict[1].strat)
                 self.state.selected_mode = map_data["mode"]
                 self.state.selected_map_type = map_data["map_type"]
                 self.state.selected_players = map_data["nb_max_players"]
@@ -108,8 +108,8 @@ class GameLoop:
                 self.num_players += 1
                 # Correction: remplacer self.ai_config_values par self.state.ai_config_values
                 self.state.start_game(self.num_players, self.state.ai_config_values, self.network_manager)
-                print("après le lancement de la partie", self.num_players, self.state.map.players_dict[self.num_players].ai_profile)
-                print("après le lancement de la partie", 1, self.state.map.players_dict[1].ai_profile)
+                print("après le lancement de la partie", self.num_players, self.state.map.players_dict[self.num_players].strat)
+                print("après le lancement de la partie", 1, self.state.map.players_dict[1].strat)
                 self.state.map._place_player_starting_areas_multi(
                     self.state.selected_mode, self.state.selected_players,
                     self.num_players, 1, self.state.polygon, map_data["ai_profile"], self.network_manager

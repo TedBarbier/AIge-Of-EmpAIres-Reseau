@@ -276,13 +276,13 @@ class Player:
         # elif not is_multiplayer:
         #     strat = choose_strategy(self)
         # else:
-        strat = ai_config if ai_config else ["balanced",1,1]
+        self.strat = ai_config if ai_config else ["balanced",1,1]
         if is_multiplayer and self.team == self.num_players:
-            self.ai_profile = AIProfile(strat[0],strat[1],strat[2])
+            self.ai_profile = AIProfile(self.strat[0],self.strat[1],self.strat[2])
         elif is_multiplayer:
             self.ai_profile = None
         else:
-            self.ai_profile = AIProfile(strat[0],strat[1],strat[2])
+            self.ai_profile = AIProfile(self.strat[0],self.strat[1],self.strat[2])
         udp_host = "127.0.0.1"
         udp_port = 12345
         self.game_handler = GameEventHandler(self.linked_map,self,self.ai_profile, self.network_manager)
@@ -709,9 +709,9 @@ class Player:
         self.linked_map = None
 
         self.decision_tree= tree
-        strat = ai_values if ai_values else ["balanced",1,1] #choose_strategy(self)
-        print(strat)
-        self.ai_profile = None
+        self.strat = ai_values if ai_values else ["balanced",1,1] #choose_strategy(self)
+        print(self.strat)
+        self.ai_profile = AIProfile(self.strat[0],self.strat[1],self.strat[2])
         udp_host = "127.0.0.1"
         udp_port = 12345
         self.game_handler = GameEventHandler(self.linked_map,self,self.ai_profile, self.network_manager)
