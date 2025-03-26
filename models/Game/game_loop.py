@@ -169,7 +169,6 @@ class GameLoop:
                     else:
                         player = self.state.map.players_dict[context["player"]]
                         strategy = context["strategy"]
-                        print("strat adverse", strategy)
                         ai_profile = self.state.map.players_dict[self.num_players].ai_profile
                         
                         # Récupérer les représentations de bâtiments si disponibles
@@ -177,6 +176,7 @@ class GameLoop:
                         
                         # Appeler la stratégie appropriée avec le joueur et build_repr
                         if strategy == "aggressive":
+                            print("agressive")
                             result = ai_profile._aggressive_strategy(action, context, player, build_repr)
                             if result == self.dict_action[context["player"]][0]:
                                 self.dict_action[context["player"]].pop(0)

@@ -155,7 +155,6 @@ class AIProfile:
         if context['player'].is_busy:
             return
         actions = tree.decide(context)
-        print(actions)
 
         # Call the appropriate strategy
         if self.strategy == "aggressive":
