@@ -1,10 +1,9 @@
 from GLOBAL_VAR import *
 from idgen import *
-#from AITools.player import *
-from shapely.geometry import Point, Polygon
 import math
 from shape import *
 import json
+import time  # Ajout de l'import time
 
 class Entity():
     def __init__(self, id_gen, cell_Y, cell_X, position, team, representation, sq_size = 1,id = None):
@@ -44,6 +43,10 @@ class Entity():
         self.HitboxClass = None
         self.walkable = False
         
+        # Propriétés réseau
+        self.network_owner = team  # Par défaut, le propriétaire réseau est l'équipe de l'entité
+        self.last_sync_time = time.time()  # Timestamp de la dernière synchronisation
+        
     def __repr__(self):
         return f"ent<{self.id},{self.representation},Y:{self.cell_Y},X:{self.cell_X},sz:{self.sq_size}>"
     
@@ -74,18 +77,26 @@ class Entity():
     def is_free(self):
         return True
     
+    def can_be_modified_by(self, player_id):
+        """Vérifie si le joueur a l'autorité pour modifier cette entité."""
+        # Si l'entité a un propriétaire réseau défini, vérifier que c'est ce joueur
+        if hasattr(self, 'network_owner'):
+            return self.network_owner == player_id
+        
+        # Sinon, vérifier que l'entité appartient au joueur (équipe)
+        return self.team == player_id
+    
     """Méthodes de conversion pour transmission réseau"""    
     def to_network_dict(self):
         """Convertit l'entité en dictionnaire pour transmission réseau"""
         entity_data = {
             "id": self.id,
-            # "type": self.__class__.__name__,
             "representation": self.representation,
             "team": self.team,
             "cell_X": self.cell_X,
-            "cell_Y": self.cell_Y
-            # "sq_size": self.sq_size
-            # "walkable": self.walkable
+            "cell_Y": self.cell_Y,
+            "network_owner": getattr(self, 'network_owner', self.team),
+            "last_sync": time.time()
         }
         
         # Ajout de la position si elle existe
@@ -98,17 +109,15 @@ class Entity():
         # Ajout des propriétés spécifiques aux sous-classes
         if hasattr(self, "hp"):
             entity_data["hp"] = self.hp
-            # entity_data["max_hp"] = self.max_hp if hasattr(self, "max_hp") else self.hp
             
-        # if hasattr(self, "state"):
-        #     entity_data["state"] = self.state
-        
-        # if hasattr(self, "animation_frame"):
-        #     entity_data["animation_frame"] = self.animation_frame
+        if hasattr(self, "state"):
+            entity_data["state"] = self.state
             
-        #  if hasattr(self, "animation_direction"):
-        #      entity_data["animation_direction"] = self.animation_direction
-        
+        if hasattr(self, "target"):
+            entity_data["target"] = getattr(self, "target", None)
+            
+        if hasattr(self, "resources"):
+            entity_data["resources"] = getattr(self, "resources", 0)
         
         return entity_data
     
@@ -142,11 +151,18 @@ class Entity():
         if hasattr(self, "state") and "state" in data:
             self.state = data["state"]
             
-        if hasattr(self, "animation_frame") and "animation_frame" in data:
-            self.animation_frame = data["animation_frame"]
+        if hasattr(self, "target") and "target" in data:
+            self.target = data["target"]
             
-        if hasattr(self, "animation_direction") and "animation_direction" in data:
-            self.animation_direction = data["animation_direction"]
+        if hasattr(self, "resources") and "resources" in data:
+            self.resources = data["resources"]
+            
+        # Mise à jour des propriétés réseau
+        if "network_owner" in data:
+            self.network_owner = data["network_owner"]
+            
+        if "last_sync" in data:
+            self.last_sync_time = data["last_sync"]
             
     def to_network_json(self):
         """Convertit l'entité en JSON pour transmission réseau"""

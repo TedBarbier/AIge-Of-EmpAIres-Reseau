@@ -2,6 +2,7 @@ import asyncio
 import json
 from typing import Dict, Any, Callable, Optional, Tuple, Union
 import socket
+import time
 
 # Singleton pour garder une référence à l'instance unique
 _NETWORK_MANAGER_INSTANCE = None
@@ -130,6 +131,12 @@ class NetworkManager:
             return False
             
         try:
+            # Ajouter automatiquement l'identifiant de session et timestamp si absent
+            if isinstance(message, dict) and "session_id" not in message:
+                message["session_id"] = f"session-{id(self)}"
+            if isinstance(message, dict) and "timestamp" not in message:
+                message["timestamp"] = time.time()
+            
             # Optimiser l'envoi en minimisant les conversions
             if isinstance(message, dict):
                 message_json = json.dumps(message)
@@ -144,6 +151,11 @@ class NetworkManager:
             # Envoyer le message directement
             self.transport.sendto(bytes_data, self.send_address)
             self.packets_sent += 1
+            
+            # Log pour les messages volumineux ou importants
+            if len(bytes_data) > 1000:
+                print(f"Message volumineux envoyé: {len(bytes_data)} octets")
+            
             return True
         except Exception as e:
             print(f"Erreur lors de l'envoi du message : {e}")
