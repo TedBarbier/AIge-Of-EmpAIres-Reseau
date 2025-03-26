@@ -6,14 +6,14 @@ import time
 from random import *
 
 class AIProfile:
-    def __init__(self, strategy, aggressiveness=1.0, defense=1.0):
+    def __init__(self, player ,strategy, aggressiveness=1.0, defense=1.0):
         """
         Initialize the AI profile with a specific strategy.
         :param strategy: Strategy type ('aggressive', 'defensive', 'balanced')
         :param aggressiveness: Aggressiveness level
         :param defense: Defense level
         """
-
+        self.player = player
         self.strategy = strategy
         self.aggressiveness = aggressiveness
         self.defense = defense
@@ -23,7 +23,7 @@ class AIProfile:
     def compare_ratios(self, actual_ratios, target_ratios, context, keys_to_include=None, player=None, build_repr=None):
 
         if player is None:
-            player = context['player']
+            player = self.player
 
         if len(player.get_entities_by_class(['F']))<1:
             if player.get_current_resources()["wood"]>=61:
@@ -173,7 +173,8 @@ class AIProfile:
         :param build_repr: Optional list of building representations to construct
         """
         if player is None:
-            player = context['player']
+            player = self.player
+        print(type(player), player.team)
         target_ratios_building = {
             'T': 0.13,   
             'C': 0.13,   
@@ -231,7 +232,7 @@ class AIProfile:
         :param build_repr: Optional list of building representations to construct
         """
         if player is None:
-            player = context['player']
+            player = self.player
             
         target_ratios_building = {
             'T': 0.13,  
@@ -286,7 +287,7 @@ class AIProfile:
         :param build_repr: Optional list of building representations to construct
         """
         if player is None:
-            player = context['player']
+            player = self.player
             
         target_ratios_building = {
             'T': 0.2,   
