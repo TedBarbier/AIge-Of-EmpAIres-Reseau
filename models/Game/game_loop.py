@@ -87,7 +87,7 @@ class GameLoop:
             
             if "Map" in received_message:
                 map_data = dict_message["Map"]
-                print("self.num_players", self.num_players)
+                print("avant le reset",self.num_players,self.state.map.players_dict[self.num_players].strat)
                 if self.num_players not in self.state.map.players_dict.keys():
                     return "Player not found"
                 else:
@@ -95,6 +95,8 @@ class GameLoop:
                         map_data["nb_cellX"], map_data["nb_cellY"], 
                         self.num_players, map_data["ai_profile"]
                     )
+                print("après le reset",self.num_players,self.state.map.players_dict[self.num_players].strat)
+                print("après le reset", 1, self.state.map.players_dict[1].strat)
                 self.state.selected_mode = map_data["mode"]
                 self.state.selected_map_type = map_data["map_type"]
                 self.state.selected_players = map_data["nb_max_players"]
@@ -106,11 +108,14 @@ class GameLoop:
                 self.num_players += 1
                 # Correction: remplacer self.ai_config_values par self.state.ai_config_values
                 self.state.start_game(self.num_players, self.state.ai_config_values, self.network_manager)
+                
                 self.state.map._place_player_starting_areas_multi(
                     self.state.selected_mode, self.state.selected_players,
                     self.num_players, 1, self.state.polygon, map_data["ai_profile"], self.network_manager
                 )
                 self.state.states = PLAY
+                print("après le lancement de la partie", self.num_players, self.state.map.players_dict[self.num_players].strat)
+                print("après le lancement de la partie", 1, self.state.map.players_dict[1].strat)
                 # Utiliser la version asyncio pour envoyer
                 asyncio.create_task(
                     self.send_network_message({"players": self.num_players, "ai_profile": self.state.ai_config_values})
@@ -123,6 +128,7 @@ class GameLoop:
                     self.state.selected_mode, self.state.selected_players,
                     self.num_players,team_joueur_rejoignant, self.state.polygon, dict_message["ai_profile"], self.network_manager
                 )
+                print("quand un joueur s'ajoute", ((i, self.state.map.players_dict[i].strat) for i in self.state.map.players_dict.keys()))
             elif "speed" in received_message:
                 self.state.set_speed(int(dict_message["speed"]))
 
