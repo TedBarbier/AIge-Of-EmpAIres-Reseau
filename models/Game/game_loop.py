@@ -128,6 +128,7 @@ class GameLoop:
                     self.state.selected_mode, self.state.selected_players,
                     self.num_players,team_joueur_rejoignant, self.state.polygon, dict_message["ai_profile"], self.network_manager
                 )
+                print("quand un joueur s'ajoute", ((i, self.state.map.players_dict[i].strat) for i in self.state.map.players_dict.keys()))
             elif "speed" in received_message:
                 self.state.set_speed(int(dict_message["speed"]))
 

@@ -700,7 +700,7 @@ class Player:
         self.cell_Y = cell_Y
         self.cell_X = cell_X
         self.storages_id = set() # resource storages
-        self.houses_id = set() # towncenters and habitats
+        self.houses_id = set() # towncenters and habitatsqf
 
         self.current_population = 0
         self.homeless_units = 0
