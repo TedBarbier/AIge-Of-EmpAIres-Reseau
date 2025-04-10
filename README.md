@@ -1,2 +1,2 @@
-# AIge-Of-EmpAIres-R-seau
+# AIge-Of-EmpAIres-Réseau
 Mise en réseau du projet précédent AIge Of EmpAIre
